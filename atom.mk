@@ -10,7 +10,8 @@ LOCAL_DESCRIPTION := Firmware instance manager daemon
 LOCAL_CATEGORY_PATH := simulator/
 
 LOCAL_LIBRARIES := \
-	libulog
+	libulog \
+	libpomp
 
 LOCAL_SRC_FILES += \
 	$(call all-c-files-in,src)
