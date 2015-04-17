@@ -14,7 +14,9 @@ LOCAL_LIBRARIES := \
 	libpomp
 
 LOCAL_SRC_FILES := \
-	$(call all-c-files-in,src)
+	$(call all-c-files-under,src)
+
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/src
 
 LOCAL_COPY_FILES := \
 	resources/adjectives:usr/share/$(LOCAL_MODULE)/ \

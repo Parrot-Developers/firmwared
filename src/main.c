@@ -25,7 +25,9 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared);
 
-#include "libpomp.h"
+#include <libpomp.h>
+
+#include <commands.h>
 
 #define SOCK_GROUP "firmwared"
 #define DEFAULT_SOCKET_PATH "/var/run/firmwared.sock"
@@ -155,6 +157,8 @@ int main(int argc, char *argv[])
 		ULOGE("init_main: err=%d(%s)", ret, strerror(-ret));
 		goto out;
 	}
+
+	command_list();
 
 	while (ctx.loop) {
 		ret = pomp_ctx_wait_and_process(ctx.pomp, -1);
