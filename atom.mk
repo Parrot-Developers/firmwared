@@ -13,7 +13,11 @@ LOCAL_LIBRARIES := \
 	libulog \
 	libpomp
 
-LOCAL_SRC_FILES += \
+LOCAL_SRC_FILES := \
 	$(call all-c-files-in,src)
+
+LOCAL_COPY_FILES := \
+	resources/adjectives:usr/share/$(LOCAL_MODULE)/ \
+	resources/names:usr/share/$(LOCAL_MODULE)/
 
 include $(BUILD_EXECUTABLE)
