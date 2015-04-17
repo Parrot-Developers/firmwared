@@ -7,6 +7,8 @@
  * @copyright Copyright (C) 2015 Parrot S.A.
  */
 #include <errno.h>
+#include <stdbool.h>
+#include <string.h>
 
 #include "commands.h"
 
@@ -14,33 +16,114 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_commands);
 
-int command_invoke(const struct pomp_msg *msg)
+#define COMMANDS_MAX 20
+
+static struct command commands[COMMANDS_MAX];
+
+static struct command *command_find(const char *name)
 {
-	ULOGE("%s STUB !!!", __func__);
+	int i;
 
-	// lookup for the command
-	// invoke
+	for (i = 0; i < COMMANDS_MAX; i++)
+		if (commands[i].name == NULL)
+			return NULL;
+		else if (strcmp(name, commands[i].name) == 0)
+			return commands + i;
 
-	return -ENOSYS;
+	return NULL;
+}
+
+static bool str_is_invalid(const char *str)
+{
+	return str == NULL || *str == '\0';
+}
+
+static bool command_is_invalid(const struct command *cmd)
+{
+	return cmd == NULL || cmd->help == NULL || str_is_invalid(cmd->name) ||
+				cmd->handler == NULL;
+}
+
+static void command_dump(const struct command *cmd)
+{
+	ULOGD("\t%s(%p):\n\"%s\"", cmd->name, cmd->handler, cmd->help);
+}
+
+int command_invoke(struct pomp_decoder *dec, const struct pomp_msg *msg)
+{
+	int ret;
+	char *name = NULL;
+	const struct command *cmd;
+
+	pomp_decoder_init(dec, msg);
+	ret = pomp_decoder_read_str(dec, &name);
+	pomp_decoder_clear(dec);
+	if (ret < 0) {
+		ULOGE("pomp_decoder_read_str: %s", strerror(-ret));
+		return ret;
+	}
+
+	cmd = command_find(name);
+	if (cmd == NULL) {
+		ULOGE("command \"%s\" isn't implemented", name);
+		return -ENOSYS;
+	}
+
+	return cmd->handler(msg);
 }
 
 int command_register(const struct command *cmd)
 {
-	ULOGE("%s STUB !!!", __func__);
+	const struct command *needle;
+	int i;
 
-	return -ENOSYS;
+	if (command_is_invalid(cmd))
+		return -EINVAL;
+
+	/* command name must be unique */
+	needle = command_find(cmd->name);
+	if (needle != NULL)
+		return -EEXIST;
+
+	/* find first free slot */
+	for (i = 0; i < COMMANDS_MAX; i++)
+		if (commands[i].name == NULL)
+			break;
+
+	if (i >= COMMANDS_MAX)
+		return -ENOMEM;
+
+	commands[i] = *cmd;
+
+	return 0;
 }
 
 int command_unregister(const char *name)
 {
-	ULOGE("%s STUB !!!", __func__);
+	struct command *needle;
+	struct command *max = commands + COMMANDS_MAX - 1;
 
-	return -ENOSYS;
+	needle = command_find(name);
+	if (needle != NULL)
+		return -EEXIST;
+
+	for (; needle < max; needle++)
+		*needle = *(needle + 1);
+	memset(needle + 1, 0, sizeof(*needle)); /* NULL guard */
+
+	return 0;
 }
 
-int command_list(void)
+void command_list(void)
 {
-	ULOGE("%s STUB !!!", __func__);
+	int i;
+	const struct command *cmd;
 
-	return -ENOSYS;
+	ULOGD("Registered commands so far, are :");
+	for (i = 0; i < COMMANDS_MAX ; i++) {
+		cmd = commands + i;
+		if (cmd->name == NULL)
+			return;
+		command_dump(cmd);
+	}
 }

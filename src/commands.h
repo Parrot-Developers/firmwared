@@ -17,9 +17,9 @@ struct command {
 	int (*handler)(const struct pomp_msg *msg); // TODO
 };
 
-int command_invoke(const struct pomp_msg *msg);
+int command_invoke(struct pomp_decoder *dec, const struct pomp_msg *msg);
 int command_register(const struct command *cmd);
 int command_unregister(const char *name);
-int command_list(void);
+void command_list(void);
 
 #endif /* COMMANDS_H_ */

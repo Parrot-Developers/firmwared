@@ -22,4 +22,6 @@ LOCAL_COPY_FILES := \
 	resources/adjectives:usr/share/$(LOCAL_MODULE)/ \
 	resources/names:usr/share/$(LOCAL_MODULE)/
 
+LOCAL_CFLAGS := -DPOMP_ENABLE_ADVANCED_API
+
 include $(BUILD_EXECUTABLE)

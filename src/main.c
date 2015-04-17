@@ -36,17 +36,23 @@ static char *socket_path = DEFAULT_SOCKET_PATH;
 static struct main_ctx {
 	struct pomp_ctx *pomp;
 	bool loop;
+	struct pomp_decoder *decoder;
 } ctx;
 
-static void event_cb(struct pomp_ctx *ctx, enum pomp_event event,
+static void event_cb(struct pomp_ctx *pomp, enum pomp_event event,
 		struct pomp_conn *conn, const struct pomp_msg *msg,
 		void *userdata)
 {
-	char *buf = NULL;
-	int i;
+	struct main_ctx *ctx = userdata;
+	int ret;
 
 	ULOGD("%s : event=%d(%s) conn=%p msg=%p", __func__,
 			event, pomp_event_str(event), conn, msg);
+
+	if (ctx == NULL) {
+		ULOGC("%s : invalid userdata parameter", __func__);
+		return;
+	}
 
 	switch (event) {
 	case POMP_EVENT_CONNECTED:
@@ -56,9 +62,11 @@ static void event_cb(struct pomp_ctx *ctx, enum pomp_event event,
 		break;
 
 	case POMP_EVENT_MSG:
-		pomp_msg_read(msg, "%ms%d", &buf, &i);
-		ULOGD("MSG: %s%d", buf, i);
-		free(buf);
+		ret = command_invoke(ctx->decoder, msg);
+		if (ret < 0) {
+			ULOGE("command_invoke: %s", strerror(-ret));
+			return;
+		}
 		break;
 
 	default:
@@ -98,6 +106,10 @@ static void clean_main(struct main_ctx *ctx)
 		pomp_ctx_stop(ctx->pomp);
 		pomp_ctx_destroy(ctx->pomp);
 		ctx->pomp = NULL;
+		if (ctx->decoder != NULL) {
+			pomp_decoder_destroy(ctx->decoder);
+			ctx->decoder = NULL;
+		}
 	}
 	memset(ctx, 0, sizeof(*ctx));
 
@@ -122,7 +134,7 @@ static int init_main(struct main_ctx *ctx)
 	struct sockaddr_storage addr_storage;
 	size_t s;
 
-	ctx->pomp = pomp_ctx_new(&event_cb, NULL);
+	ctx->pomp = pomp_ctx_new(&event_cb, ctx);
 	if (ctx->pomp == NULL) {
 		ULOGE("pomp_ctx_new failed");
 		return -ENOMEM;
@@ -135,6 +147,12 @@ static int init_main(struct main_ctx *ctx)
 		goto err;
 	}
 	change_sock_group_mode();
+
+	ctx->decoder = pomp_decoder_new();
+	if (ctx->decoder == NULL) {
+		ULOGE("pomp_decoder_new failed");
+		goto err;
+	}
 
 	ctx->loop = true;
 
