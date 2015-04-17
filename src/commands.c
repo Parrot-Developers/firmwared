@@ -46,18 +46,18 @@ static bool command_is_invalid(const struct command *cmd)
 
 static void command_dump(const struct command *cmd)
 {
-	ULOGD("\t%s(%p):\n\"%s\"", cmd->name, cmd->handler, cmd->help);
+	ULOGD("\t%s[%p]:\n\"%s\"", cmd->name, cmd->handler, cmd->help);
 }
 
-int command_invoke(struct pomp_decoder *dec, const struct pomp_msg *msg)
+int command_invoke(struct firmwared *f, const struct pomp_msg *msg)
 {
 	int ret;
 	char *name = NULL;
 	const struct command *cmd;
 
-	pomp_decoder_init(dec, msg);
-	ret = pomp_decoder_read_str(dec, &name);
-	pomp_decoder_clear(dec);
+	pomp_decoder_init(f->decoder, msg);
+	ret = pomp_decoder_read_str(f->decoder, &name);
+	pomp_decoder_clear(f->decoder);
 	if (ret < 0) {
 		ULOGE("pomp_decoder_read_str: %s", strerror(-ret));
 		return ret;
@@ -69,7 +69,7 @@ int command_invoke(struct pomp_decoder *dec, const struct pomp_msg *msg)
 		return -ENOSYS;
 	}
 
-	return cmd->handler(msg);
+	return cmd->handler(f, msg);
 }
 
 int command_register(const struct command *cmd)

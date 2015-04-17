@@ -15,11 +15,11 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_command_ping);
 
-#include <commands.h>
+#include "commands.h"
 
 #define COMMAND_NAME "PING"
 
-static int ping_command_handler(const struct pomp_msg *msg)
+static int ping_command_handler(struct firmwared *f, const struct pomp_msg *msg)
 {
 	ULOGE("%s STUB !!!", __func__);
 
