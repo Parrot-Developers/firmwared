@@ -40,8 +40,29 @@ static void event_cb(struct pomp_ctx *ctx, enum pomp_event event,
 		struct pomp_conn *conn, const struct pomp_msg *msg,
 		void *userdata)
 {
+	char *buf = NULL;
+	int i;
+
 	ULOGD("%s : event=%d(%s) conn=%p msg=%p", __func__,
 			event, pomp_event_str(event), conn, msg);
+
+	switch (event) {
+	case POMP_EVENT_CONNECTED:
+		break;
+
+	case POMP_EVENT_DISCONNECTED:
+		break;
+
+	case POMP_EVENT_MSG:
+		pomp_msg_read(msg, "%ms%d", &buf, &i);
+		ULOGD("MSG: %s%d", buf, i);
+		free(buf);
+		break;
+
+	default:
+		ULOGW("Unknown event : %d", event);
+		break;
+	}
 }
 
 static void change_sock_group_mode()
