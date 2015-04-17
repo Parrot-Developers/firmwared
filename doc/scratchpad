@@ -1,0 +1,3 @@
+# get a random woman name
+GET -b http://www.behindthename.com/ '/random/random.php?number=1&gender=f&surname=&all=yes' | grep '<a class="plain" href="/name/' | sed 's/<[^<]*>//g' | recode html..utf-8
+# liste d'adjectifs tirée de http://www.dailywritingtips.com/100-exquisite-adjectives/
