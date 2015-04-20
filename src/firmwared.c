@@ -30,7 +30,9 @@ ULOG_DECLARE_TAG(firmwared);
 
 #define SOCK_GROUP "firmwared"
 #define DEFAULT_SOCKET_PATH "/var/run/firmwared.sock"
-static char *socket_path = DEFAULT_SOCKET_PATH;
+#define FIRMWARED_SOCKET_PATH_ENV "FIRMWARED_SOCKET_PATH"
+
+static char *socket_path;
 
 static size_t setup_address(struct sockaddr_storage *addr_storage)
 {
@@ -91,13 +93,13 @@ static void change_sock_group_mode()
 		return;
 	}
 
-	ret = chown(DEFAULT_SOCKET_PATH, -1, g->gr_gid);
+	ret = chown(socket_path, -1, g->gr_gid);
 	if (ret == -1) {
 		ULOGE("chown(%s, -1, %jd) error", socket_path,
 				(intmax_t)g->gr_gid);
 		return;
 	}
-	ret = chmod(DEFAULT_SOCKET_PATH, 0660);
+	ret = chmod(socket_path, 0660);
 	if (ret == -1) {
 		ULOGE("chmod(%s, 0660) error", socket_path);
 		return;
@@ -116,6 +118,9 @@ int firmwared_init(struct firmwared *ctx)
 		return -ENOMEM;
 	}
 
+	socket_path = getenv(FIRMWARED_SOCKET_PATH_ENV);
+	if (socket_path == NULL)
+		socket_path = DEFAULT_SOCKET_PATH;
 	s = setup_address(&addr_storage);
 	ret = pomp_ctx_listen(ctx->pomp, (struct sockaddr *)&addr_storage, s);
 	if (ret < 0) {
