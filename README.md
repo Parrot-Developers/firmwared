@@ -83,3 +83,14 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   transitional state, reached by an instance after a *KILL* command has been
   issued  
   soon after, the firmware should reach the *READY* state
+
+## Implementation details
+
+### Error handling
+
+The general rule of thumb is :
+
+ * most of the time, the return value is for error reporting, a negative errno-
+ compatible value is returned on error, while 0 indicates success.
+ * if a pointer is returned then a NULL return indicates an error iif errno is
+ set to non-zero
