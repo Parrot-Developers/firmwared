@@ -170,3 +170,13 @@ void firmwared_clean(struct firmwared *ctx)
 
 }
 
+uint32_t firmwared_get_msg_id(struct firmwared *ctx)
+{
+	if (ctx == NULL)
+		return UINT32_MAX;
+
+	if (ctx->msg_id == UINT32_MAX)
+		ctx->msg_id = 0;
+
+	return ctx->msg_id++;
+}
