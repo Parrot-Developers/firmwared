@@ -29,17 +29,26 @@ entities types are named *folders*.
   installs locally a firmware present on the remote firmwares pool
 * *DROP* REMOTE_FIRMWARE_IDENTIFIER  
   removes an remote firmware installed locally
-* *START* FIRMWARE_IDENTIFIER  
-  launches an instance of the given firmware
+* *PREPARE* FIRMWARE_IDENTIFIER  
+  creates an instance of the given firmware, in the *READY* state
+* *START* INSTANCE_IDENTIFIER  
+  launches an instance, which switches to the *STARTED* state
 * *KILL* INSTANCE_IDENTIFIER  
   kills an instance, all the processes are killed, the instance is still
-  registered and it's rw aufs layer is still present
+  registered and it's rw aufs layer is still present  
+  the instance must be in the *STARTED* state..
+  the instance switches to the *STOPPING* state, before switching back to the
+  *READY* state
 * *REAP* INSTANCE_IDENTIFIER  
-  unregister an instance and remove it's rw aufs layer
+  unregister an instance and remove it's rw aufs layer  
+  the instance must be in the *STOPPED* state
 * *HELP* COMMAND
   sends back a little help on a given command
 
 ### Notifications
+
+There are two types of notifications, unicast (marked as "answer to an XXX
+command) and broadcast (marked as "notification in reaction to an XXX command).
 
 * *PONG* CID  
   answer to a *PING*
@@ -49,14 +58,28 @@ entities types are named *folders*.
   answer to a *SHOW* command. The actual content of the INFORMATION_STRING is
   dependent on the FOLDER queried and is for display purpose
 * *PULLED* CID FIRMWARE_ID FIRMWARE_NAME  
-  answer to a *PULL* command
+  notification in reaction to a *PULL* command
 * *DROPPED* CID FIRMWARE_ID FIRMWARE_NAME  
-  answer to a *DROP* command
+  notification in reaction to a *DROP* command
 * *STARTED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
-  answer to a *START* command
+  notification in reaction to a *START* command
 * *STOPPED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
-  answer to a *STOP* command
+  notification in reaction to a *STOP* command
 * *REAPED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
-  answer to a *REAP* command
+  notification in reaction to a *REAP* command
 * *HELP* CID COMMAND HELP_TEXT
   answer to a *REAP* command
+
+### Instance states
+
+* *READY*
+  an instance of a firmware has been created and is ready to be started  
+  this state is reach after a *PREPARE* command on a firmware, or after a *KILL*
+  command, issued on a *STARTED* instance
+* *STARTED*  
+  the instance is currently running, that is, it's pid 1 is alive  
+  this state is reached after a *START* command, issued on a STOPPED instance
+* *STOPPING*
+  transitional state, reached by an instance after a *KILL* command has been
+  issued  
+  soon after, the firmware should reach the *READY* state
