@@ -11,7 +11,9 @@ LOCAL_CATEGORY_PATH := simulator/
 
 LOCAL_LIBRARIES := \
 	libulog \
-	libpomp
+	libpomp \
+	librs \
+	libutils
 
 LOCAL_SRC_FILES := \
 	$(call all-c-files-under,src)

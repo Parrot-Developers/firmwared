@@ -1,0 +1,54 @@
+/**
+ * @file folders.h
+ * @brief
+ *
+ * @date Apr 20, 2015
+ * @author nicolas.carrier@parrot.com
+ * @copyright Copyright (C) 2015 Parrot S.A.
+ */
+#ifndef FOLDERS_H_
+#define FOLDERS_H_
+
+#include <rs_dll.h>
+
+/*
+ * all the fields of the struct folder_entity are handled by the folders
+ * module
+ */
+struct folder_entity {
+	struct rs_node node;
+	char *sha1;
+	char *name;
+};
+
+struct folder;
+
+struct folder_entity_ops {
+	/* must allocate a string which will be freed before drop() is called */
+	char *(*sha1)(struct folder_entity *entity);
+	int (*drop)(struct folder_entity *entity);
+	int (*store)(struct folder_entity *entity);
+	char *(*get_info)(struct folder_entity *entity);
+};
+
+struct folder {
+	struct rs_dll entities;
+	char *name;
+	struct folder_entity_ops ops;
+};
+
+int folder_register(struct folder *folder);
+struct folder_entity *folder_next(const struct folder *folder,
+		struct folder_entity *entity);
+unsigned folder_get_count(const char *folder);
+int folder_drop(const char *folder, struct folder_entity *entity);
+int folder_store(const char *folder, struct folder_entity *entity);
+
+char *folder_get_info(const char *folder, const char *entity_identifier);
+struct folder_entity *folder_find_entity(const char *folder,
+		const char *entity_identifier);
+/* dumps the folders registered so far */
+int folder_list(void);
+int folder_unregister(const char *folder);
+
+#endif /* FOLDERS_H_ */
