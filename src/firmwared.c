@@ -66,7 +66,7 @@ static void event_cb(struct pomp_ctx *pomp, enum pomp_event event,
 		break;
 
 	case POMP_EVENT_MSG:
-		ret = command_invoke(ctx, msg);
+		ret = command_invoke(ctx, conn, msg);
 		if (ret < 0) {
 			ULOGE("command_invoke: %s", strerror(-ret));
 			return;

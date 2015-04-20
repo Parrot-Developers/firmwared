@@ -16,10 +16,12 @@
 struct command {
 	const char *name;
 	const char *help;
-	int (*handler)(struct firmwared *f, const struct pomp_msg *msg);
+	int (*handler)(struct firmwared *f, struct pomp_conn *conn,
+			const struct pomp_msg *msg);
 };
 
-int command_invoke(struct firmwared *f, const struct pomp_msg *msg);
+int command_invoke(struct firmwared *f, struct pomp_conn *conn,
+		const struct pomp_msg *msg);
 int command_register(const struct command *cmd);
 int command_unregister(const char *name);
 void command_list(void);

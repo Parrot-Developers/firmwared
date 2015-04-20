@@ -49,7 +49,8 @@ static void command_dump(const struct command *cmd)
 	ULOGD("\t%s[%p]:\n\"%s\"", cmd->name, cmd->handler, cmd->help);
 }
 
-int command_invoke(struct firmwared *f, const struct pomp_msg *msg)
+int command_invoke(struct firmwared *f, struct pomp_conn *conn,
+		const struct pomp_msg *msg)
 {
 	int ret;
 	char *name = NULL;
@@ -69,7 +70,7 @@ int command_invoke(struct firmwared *f, const struct pomp_msg *msg)
 		return -ENOSYS;
 	}
 
-	return cmd->handler(f, msg);
+	return cmd->handler(f, conn, msg);
 }
 
 int command_register(const struct command *cmd)

@@ -8,6 +8,7 @@
  */
 #include <errno.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include <libpomp.h>
 
@@ -19,11 +20,11 @@ ULOG_DECLARE_TAG(firmwared_command_ping);
 
 #define COMMAND_NAME "PING"
 
-static int ping_command_handler(struct firmwared *f, const struct pomp_msg *msg)
+static int ping_command_handler(struct firmwared *f, struct pomp_conn *conn,
+		const struct pomp_msg *msg)
 {
-	ULOGE("%s STUB !!!", __func__);
-
-	return -ENOSYS;
+	return pomp_conn_send(conn, firmwared_get_msg_id(f), "%s%"PRIu32,
+			"PONG", pomp_msg_get_id(msg));
 }
 
 static const struct command ping_command = {
