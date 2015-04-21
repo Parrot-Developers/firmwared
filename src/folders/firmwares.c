@@ -196,7 +196,7 @@ static int index_firmwares(void)
 	struct dirent **namelist;
 	struct firmware *f;
 
-	ULOGI("indexing firmwares");
+	ULOGI("indexing "FOLDER_NAME);
 
 	n = scandir(firmware_repository_path, &namelist, pattern_filter, NULL);
 	if (n == -1) {
@@ -222,13 +222,15 @@ static int index_firmwares(void)
 		}
 	}
 
-	ULOGI("done indexing firmwares");
+	ULOGI("done indexing "FOLDER_NAME);
 
 	return 0;
 }
 
 static __attribute__((destructor(102))) void firmwares_cleanup(void)
 {
+	ULOGD("%s", __func__);
+
 	/*
 	 * firmwares destruction is managed by firmware_drop, called on each
 	 * firmware by folder_unregister
@@ -239,6 +241,8 @@ static __attribute__((destructor(102))) void firmwares_cleanup(void)
 static __attribute__((constructor(102))) void firmwares_init(void)
 {
 	int ret;
+
+	ULOGD("%s", __func__);
 
 	firmware_repository_path = getenv(FIRMWARE_REPOSITORY_PATH_ENV);
 	if (firmware_repository_path == NULL)

@@ -128,6 +128,8 @@ static __attribute__((constructor(101))) void folders_init(void)
 	const char *list_name;
 	time_t seed;
 
+	ULOGD("%s", __func__);
+
 	seed = time(NULL);
 	srand(seed);
 	ULOGI("random seed is %jd", (intmax_t)seed);
@@ -158,6 +160,8 @@ static int destroy_word(struct rs_node *node)
 
 __attribute__((destructor(101))) static void folders_cleanup(void)
 {
+	ULOGD("%s", __func__);
+
 	rs_dll_remove_all_cb(&folders_names, destroy_word);
 	rs_dll_remove_all_cb(&folders_adjectives, destroy_word);
 }
