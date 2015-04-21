@@ -361,8 +361,8 @@ int folder_store(const char *folder_name, struct folder_entity *entity)
 	}
 
 	needle = find_entity(folder, entity->sha1);
-	if (needle == NULL)
-		return -errno;
+	if (needle != NULL)
+		return -EEXIST;
 
 	rs_dll_push(&folder->entities, &entity->node);
 
