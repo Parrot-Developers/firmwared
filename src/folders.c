@@ -167,13 +167,13 @@ static bool str_is_invalid(const char *str)
 	return str == NULL || *str == '\0';
 }
 
-static bool folder_entity_ops_are_invalid(struct folder_entity_ops *ops)
+static bool folder_entity_ops_are_invalid(const struct folder_entity_ops *ops)
 {
 	return ops->drop == NULL || ops->get_info == NULL ||
 			ops->sha1 == NULL || ops->store == NULL;
 }
 
-static bool folder_is_invalid(struct folder *folder)
+static bool folder_is_invalid(const struct folder *folder)
 {
 	return folder == NULL || str_is_invalid(folder->name) ||
 			folder_entity_ops_are_invalid(&folder->ops);
@@ -244,7 +244,7 @@ static char *folder_request_friendly_name(struct folder *folder)
 }
 
 
-int folder_register(struct folder *folder)
+int folder_register(const struct folder *folder)
 {
 	const struct folder *needle;
 	int i;
@@ -267,7 +267,7 @@ int folder_register(struct folder *folder)
 
 	folders[i] = *folder;
 
-	return rs_dll_init(&folder->entities, NULL);
+	return rs_dll_init(&(folders[i].entities), NULL);
 }
 
 struct folder_entity *folder_next(const struct folder *folder,

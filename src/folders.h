@@ -37,7 +37,7 @@ struct folder {
 	struct folder_entity_ops ops;
 };
 
-int folder_register(struct folder *folder);
+int folder_register(const struct folder *folder);
 struct folder *folder_find(const char *folder_name);
 struct folder_entity *folder_next(const struct folder *folder,
 		struct folder_entity *entity);
