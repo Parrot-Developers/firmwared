@@ -27,8 +27,8 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 #include <ut_file.h>
 
 #include "folders.h"
-
 #include "firmwares.h"
+#include "utils.h"
 
 #define FOLDER_NAME "firmwares"
 
@@ -52,23 +52,6 @@ struct firmware {
 #define to_firmware(p) ut_container_of(p, struct firmware, entity)
 
 static struct folder firmware_folder;
-
-/* TODO move to utils */
-static char *buffer_to_string(const unsigned char *src, size_t len, char *dst)
-{
-	static const char lut[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8',
-		'9', 'a', 'b', 'c', 'd', 'e', 'f'};
-
-	/* not necessary, but more explicit */
-	dst[2 * len] = '\0';
-
-	while (len--) {
-		dst[2 * len] = lut[(src[len] & 0xF0) >> 4];
-		dst[2 * len + 1] = lut[src[len] & 0x0F];
-	}
-
-	return dst;
-}
 
 static int sha1(const char *path, unsigned char hash[SHA_DIGEST_LENGTH])
 {
