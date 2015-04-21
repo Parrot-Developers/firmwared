@@ -67,35 +67,46 @@ static char *buffer_to_string(const unsigned char *src, size_t len, char *dst)
 	return dst;
 }
 
-static char *firmware_sha1(struct folder_entity *entity)
+static int sha1(const char *path, unsigned char hash[SHA_DIGEST_LENGTH])
 {
-	int old_errno;
+	int ret;
 	size_t count;
-	struct firmware *firmware = to_firmware(entity);
-	unsigned char hash[SHA_DIGEST_LENGTH];
 	SHA_CTX ctx;
 	FILE __attribute__((cleanup(ut_file_close))) *f = NULL;
-	char buf[BUF_SIZE];
-	char *res;
+	char buf[BUF_SIZE] = {0};
 
-	f = fopen(firmware->path, "rbe");
+	f = fopen(path, "rbe");
 	if (f == NULL) {
-		old_errno = errno;
+		ret = -errno;
 		ULOGE("%s: fopen : %m", __func__);
-		errno = old_errno;
-		return NULL;
+		return ret;
 	}
 
 	SHA1_Init(&ctx);
 	do {
-		count = fread(buf, BUF_SIZE, 1, f);
+		count = fread(buf, 1, BUF_SIZE, f);
 		if (count != 0)
 			SHA1_Update(&ctx, buf, count);
 	} while (count == BUF_SIZE);
 	SHA1_Final(hash, &ctx);
 	if (ferror(f)) {
-		ULOGE("error reading %s for sha1 computation", firmware->path);
-		errno = EIO;
+		ULOGE("error reading %s for sha1 computation", path);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+static char *firmware_sha1(struct folder_entity *entity)
+{
+	int ret;
+	struct firmware *firmware = to_firmware(entity);
+	unsigned char hash[SHA_DIGEST_LENGTH];
+	char *res;
+
+	ret = sha1(firmware->path, hash);
+	if (ret < 0) {
+		errno = -ret;
 		return NULL;
 	}
 
