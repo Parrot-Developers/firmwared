@@ -143,11 +143,9 @@ static int firmware_drop(struct folder_entity *entity)
 
 static int firmware_store(struct folder_entity *entity)
 {
-/*	struct firmware *firmware = to_firmware(entity);*/
-
 	ULOGC("%s: STUB !!!", __func__); // TODO
 
-	return -ENOSYS; // TODO
+	return 0; // TODO is this operation really needed ?
 }
 
 static char *firmware_get_info(struct folder_entity *entity)
