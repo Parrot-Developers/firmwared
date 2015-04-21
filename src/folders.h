@@ -38,6 +38,7 @@ struct folder {
 };
 
 int folder_register(struct folder *folder);
+struct folder *folder_find(const char *folder_name);
 struct folder_entity *folder_next(const struct folder *folder,
 		struct folder_entity *entity);
 unsigned folder_get_count(const char *folder);

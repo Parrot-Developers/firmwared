@@ -162,22 +162,6 @@ __attribute__((destructor(101))) static void folders_cleanup(void)
 	rs_dll_remove_all_cb(&folders_adjectives, destroy_word);
 }
 
-static struct folder *folder_find(const char *name)
-{
-	int i;
-
-	if (ut_string_is_invalid(name))
-		return NULL;
-
-	for (i = 0; i < FOLDERS_MAX; i++)
-		if (folders[i].name == NULL)
-			return NULL;
-		else if (strcmp(name, folders[i].name) == 0)
-			return folders + i;
-
-	return NULL;
-}
-
 static bool str_is_invalid(const char *str)
 {
 	return str == NULL || *str == '\0';
@@ -286,6 +270,35 @@ int folder_register(struct folder *folder)
 	return rs_dll_init(&folder->entities, NULL);
 }
 
+struct folder_entity *folder_next(const struct folder *folder,
+		struct folder_entity *entity)
+{
+	errno = 0;
+
+	if (folder == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	return to_entity(rs_dll_next_from(&folder->entities, &entity->node));
+}
+
+struct folder *folder_find(const char *name)
+{
+	int i;
+
+	if (ut_string_is_invalid(name))
+		return NULL;
+
+	for (i = 0; i < FOLDERS_MAX; i++)
+		if (folders[i].name == NULL)
+			return NULL;
+		else if (strcmp(name, folders[i].name) == 0)
+			return folders + i;
+
+	return NULL;
+}
+
 unsigned folder_get_count(const char *folder_name)
 {
 	struct folder *folder;
@@ -298,19 +311,6 @@ unsigned folder_get_count(const char *folder_name)
 		return -ENOENT;
 
 	return rs_dll_get_count(&folder->entities);
-}
-
-struct folder_entity *folder_next(const struct folder *folder,
-		struct folder_entity *entity)
-{
-	errno = 0;
-
-	if (folder == NULL) {
-		errno = EINVAL;
-		return NULL;
-	}
-
-	return to_entity(rs_dll_next_from(&folder->entities, &entity->node));
 }
 
 int folder_drop(const char *folder_name, struct folder_entity *entity)
