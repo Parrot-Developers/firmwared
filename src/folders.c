@@ -471,11 +471,11 @@ int folder_unregister(const char *folder_name)
 	if (folder == NULL)
 		return -ENOENT;
 
+	rs_dll_remove_all_cb(&folder->entities, destroy_entity);
+
 	for (; folder < max; folder++)
 		*folder = *(folder + 1);
 	memset(folder + 1, 0, sizeof(*folder)); /* NULL guard */
-
-	rs_dll_remove_all_cb(&folder->entities, destroy_entity);
 
 	return 0;
 }
