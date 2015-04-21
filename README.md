@@ -71,6 +71,8 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   notification in reaction to a *REAP* command
 * *HELP* CID COMMAND HELP_TEXT
   answer to a *REAP* command
+* *ERROR* CID ERRNO MESSAGE
+  answer to any command whose execution encountered a problem
 
 ### Instance states
 
