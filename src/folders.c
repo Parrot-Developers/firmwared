@@ -414,6 +414,43 @@ struct folder_entity *folder_find_entity(const char *folder_name,
 	return find_entity(folder, entity_identifier);
 }
 
+const char *folders_list(void)
+{
+	int ret;
+	int old_errno;
+	struct folder *folder = folders + FOLDERS_MAX;
+	static char *list = NULL;
+	char *tmp = NULL;
+
+	/* the result is cached */
+	if (list != NULL)
+		return list;
+	list = strdup("");
+
+	if (list == NULL) {
+		old_errno = errno;
+		ULOGC("strdup: %m");
+		errno = old_errno;
+		return NULL;
+	}
+
+	while (folder-- > folders) {
+		if (folder->name == NULL)
+			continue;
+		ret = asprintf(&tmp, "%s, %s", folder->name, list);
+		if (ret < 0) {
+			ULOGC("asprintf error");
+			return NULL;
+		}
+		free(list);
+		list = tmp;
+	}
+	if (list[0] != '\0')
+		list[strlen(list) - 2] = '\0';
+
+	return list;
+}
+
 int folder_unregister(const char *folder_name)
 {
 	struct folder *folder;

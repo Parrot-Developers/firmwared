@@ -47,8 +47,7 @@ int folder_store(const char *folder, struct folder_entity *entity);
 char *folder_get_info(const char *folder, const char *entity_identifier);
 struct folder_entity *folder_find_entity(const char *folder,
 		const char *entity_identifier);
-/* dumps the folders registered so far */
-int folder_list(void);
+const char *folders_list(void);
 int folder_unregister(const char *folder);
 
 #endif /* FOLDERS_H_ */
