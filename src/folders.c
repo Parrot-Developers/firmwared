@@ -305,7 +305,7 @@ struct folder_entity *folder_next(const struct folder *folder,
 {
 	errno = 0;
 
-	if (folder == NULL || entity == NULL) {
+	if (folder == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
