@@ -28,6 +28,8 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 
 #include "folders.h"
 
+#include "firmwares.h"
+
 #define FOLDER_NAME "firmwares"
 
 #define FIRMWARE_REPOSITORY_PATH "/usr/share/firmwared/firmwares/"
@@ -51,6 +53,7 @@ struct firmware {
 
 static struct folder firmware_folder;
 
+/* TODO move to utils */
 static char *buffer_to_string(const unsigned char *src, size_t len, char *dst)
 {
 	static const char lut[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8',
@@ -143,9 +146,9 @@ static int firmware_drop(struct folder_entity *entity)
 
 static int firmware_store(struct folder_entity *entity)
 {
-	ULOGC("%s: STUB !!!", __func__); // TODO
+	/* not used for this folder */
 
-	return 0; // TODO is this operation really needed ?
+	return 0;
 }
 
 static char *firmware_get_info(struct folder_entity *entity)
@@ -263,3 +266,11 @@ static __attribute__((constructor(102))) void firmwares_init(void)
 	}
 }
 
+const char *firmware_get_path(struct firmware *firmware)
+{
+	errno = EINVAL;
+	if (firmware == NULL)
+		return NULL;
+
+	return firmware->path;
+}
