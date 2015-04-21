@@ -104,9 +104,9 @@ The general rule of thumb is :
 Some base configuration parameters can be modified at startup via the following
 environment variables :
 
-* *FIRMWARED\_SOCKET\_PATH\_ENV*: where the control socket will be created,
+* *FIRMWARED\_SOCKET\_PATH*: where the control socket will be created,
   defaults to **/var/run/firmwared.sock**
-* *FOLDERS\_RESOURCES\_DIR\_ENV*: where the resource files for firmwared are
+* *FOLDERS\_RESOURCES\_DIR*: where the resource files for firmwared are
   stored, defaults to **/usr/share/firmwared/**
-* *FIRMWARE\_REPOSITORY\_PATH\_ENV*: where the installed firmwares are located,
+* *FIRMWARE\_REPOSITORY\_PATH*: where the installed firmwares are located,
   defaults to **/usr/share/firmwared/firmwares/**
