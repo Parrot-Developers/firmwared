@@ -24,6 +24,7 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 
 #include <ut_utils.h>
 #include <ut_string.h>
+#include <ut_file.h>
 
 #include "folders.h"
 
@@ -37,6 +38,8 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 #define FIRMWARE_MATCHING_PATTERN "*.firmware"
 #endif
 
+#define BUF_SIZE 0x200
+
 static char *firmware_repository_path;
 
 struct firmware {
@@ -48,13 +51,59 @@ struct firmware {
 
 static struct folder firmware_folder;
 
+static char *buffer_to_string(const unsigned char *src, size_t len, char *dst)
+{
+	static const char lut[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8',
+		'9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+	/* not necessary, but more explicit */
+	dst[2 * len] = '\0';
+
+	while (len--) {
+		dst[2 * len] = lut[(src[len] & 0xF0) >> 4];
+		dst[2 * len + 1] = lut[src[len] & 0x0F];
+	}
+
+	return dst;
+}
+
 static char *firmware_sha1(struct folder_entity *entity)
 {
-/*	struct firmware *firmware = to_firmware(entity);*/
+	int old_errno;
+	size_t count;
+	struct firmware *firmware = to_firmware(entity);
+	unsigned char hash[SHA_DIGEST_LENGTH];
+	SHA_CTX ctx;
+	FILE __attribute__((cleanup(ut_file_close))) *f = NULL;
+	char buf[BUF_SIZE];
+	char *res;
 
-	ULOGC("%s: STUB !!!", __func__); // TODO
+	f = fopen(firmware->path, "rbe");
+	if (f == NULL) {
+		old_errno = errno;
+		ULOGE("%s: fopen : %m", __func__);
+		errno = old_errno;
+		return NULL;
+	}
 
-	return NULL; // TODO
+	SHA1_Init(&ctx);
+	do {
+		count = fread(buf, BUF_SIZE, 1, f);
+		if (count != 0)
+			SHA1_Update(&ctx, buf, count);
+	} while (count == BUF_SIZE);
+	SHA1_Final(hash, &ctx);
+	if (ferror(f)) {
+		ULOGE("error reading %s for sha1 computation", firmware->path);
+		errno = EIO;
+		return NULL;
+	}
+
+	res = calloc(2 * SHA_DIGEST_LENGTH + 1, sizeof(*res));
+	if (res == NULL)
+		return NULL;
+
+	return buffer_to_string(hash, SHA_DIGEST_LENGTH, res);
 }
 
 static void firmware_delete(struct firmware **firmware)
@@ -92,11 +141,9 @@ static int firmware_store(struct folder_entity *entity)
 
 static char *firmware_get_info(struct folder_entity *entity)
 {
-/*	struct firmware *firmware = to_firmware(entity);*/
+	struct firmware *firmware = to_firmware(entity);
 
-	ULOGC("%s: STUB !!!", __func__); // TODO
-
-	return NULL; // TODO
+	return strdup(firmware->path);
 }
 
 struct folder_entity_ops firmware_ops = {
