@@ -15,16 +15,18 @@ server sends *notifications*, which can be in reaction to a client *command*.
 Each *notification*'s first argument after the *command* name, is the *pomp msg
 id* of the command it is related to, if relevant.  
 An *identifier* is either the sha1 of the entity or it's friendly random name.
-There is 3 types of entities, "instances", "firmwares" and "remote_firmwares",
-entities types are named *folders*.
+As the time of writing, there is 3 types of entities, "instances", "firmwares"
+and "remote_firmwares", entities types are named *folders*.
 
 ### Commands
 
-* *PING*
-  asks for the server to answer with a *PONG* notification  
+* *PING*  
+  asks for the server to answer with a *PONG* notification
+* *FOLDERS*  
+  asks the server to list the currently registered folders
 * *LIST* FOLDER  
   list all the items in the folder FOLDER  
-  FOLDER is one of "instances", "firmwares" or "remote_firmwares"
+  FOLDER is one of folders listed in an answer to a *FOLDERS* command
 * *SHOW* FOLDER IDENTIFIER  
   asks for all the information on a given entity of a folder
 * *PULL* FIRMWARE_IDENTIFIER  
@@ -54,6 +56,9 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
 
 * *PONG* CID  
   answer to a *PING*
+* *FOLDERS* CID FOLDERS\_LIST  
+  answer to a *FOLDERS* command, FOLDERS\_LIST is a comma-separated list of the
+  folders registered so far
 * *LIST* CID FOLDER [list of (ID, NAME) pairs]  
   answer to a *LIST* command
 * *SHOW* CID FOLDER ID NAME INFORMATION_STRING  
