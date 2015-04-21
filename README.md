@@ -31,19 +31,19 @@ and "remote_firmwares", entities types are named *folders*.
   asks for all the information on a given entity of a folder
 * *PULL* FIRMWARE_IDENTIFIER  
   installs locally a firmware present on the remote firmwares pool
-* *DROP* REMOTE_FIRMWARE_IDENTIFIER  
+* *DROP* REMOTE\_FIRMWARE_IDENTIFIER  
   removes an remote firmware installed locally
-* *PREPARE* FIRMWARE_IDENTIFIER  
+* *PREPARE* FIRMWARE\_IDENTIFIER  
   creates an instance of the given firmware, in the *READY* state
-* *START* INSTANCE_IDENTIFIER  
+* *START* INSTANCE\_IDENTIFIER  
   launches an instance, which switches to the *STARTED* state
-* *KILL* INSTANCE_IDENTIFIER  
+* *KILL* INSTANCE\_IDENTIFIER  
   kills an instance, all the processes are killed, the instance is still
   registered and it's rw aufs layer is still present  
   the instance must be in the *STARTED* state..
   the instance switches to the *STOPPING* state, before switching back to the
   *READY* state
-* *REAP* INSTANCE_IDENTIFIER  
+* *REAP* INSTANCE\_IDENTIFIER  
   unregister an instance and remove it's rw aufs layer  
   the instance must be in the *STOPPED* state
 * *HELP* COMMAND
