@@ -28,7 +28,7 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 
 #include "folders.h"
 
-#define FOLDER_NAME "firmware"
+#define FOLDER_NAME "firmwares"
 
 #define FIRMWARE_REPOSITORY_PATH "/usr/share/firmwared/firmwares/"
 
