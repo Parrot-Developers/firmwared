@@ -229,7 +229,7 @@ static int index_firmwares(void)
 	return 0;
 }
 
-static __attribute__((constructor(102))) void firmwares_cleanup(void)
+static __attribute__((destructor(102))) void firmwares_cleanup(void)
 {
 	/*
 	 * firmwares destruction is managed by firmware_drop, called on each
