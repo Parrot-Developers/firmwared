@@ -198,7 +198,7 @@ static int index_firmwares(void)
 	struct dirent **namelist;
 	struct firmware *f;
 
-	ULOGD("%s", __func__);
+	ULOGI("indexing firmwares");
 
 	n = scandir(firmware_repository_path, &namelist, pattern_filter, NULL);
 	if (n == -1) {
@@ -223,6 +223,8 @@ static int index_firmwares(void)
 			return ret;
 		}
 	}
+
+	ULOGI("done indexing firmwares");
 
 	return 0;
 }
