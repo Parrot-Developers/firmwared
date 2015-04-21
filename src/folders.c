@@ -287,9 +287,11 @@ struct folder *folder_find(const char *name)
 {
 	int i;
 
+	errno = EINVAL;
 	if (ut_string_is_invalid(name))
 		return NULL;
 
+	errno = ENOENT;
 	for (i = 0; i < FOLDERS_MAX; i++)
 		if (folders[i].name == NULL)
 			return NULL;
