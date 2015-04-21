@@ -75,7 +75,7 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
 * *REAPED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
   notification in reaction to a *REAP* command
 * *HELP* CID COMMAND HELP_TEXT
-  answer to a *REAP* command
+  answer to a *HELP* command
 * *ERROR* CID ERRNO MESSAGE
   answer to any command whose execution encountered a problem
 
