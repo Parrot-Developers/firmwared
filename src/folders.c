@@ -101,7 +101,7 @@ static int load_words(const char *resources_dir, const char *list_name,
 	if (resources_dir == NULL)
 		resources_dir = FOLDERS_RESOURCES_DIR;
 
-	ret = asprintf(&path, "%s%s", resources_dir, list_name);
+	ret = asprintf(&path, "%s/%s", resources_dir, list_name);
 	if (ret == -1) {
 		ULOGE("asprintf error");
 		exit(1);
