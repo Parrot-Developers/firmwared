@@ -2,7 +2,9 @@
 
 ## Overview
 
-Daemon responsible of spawning drone firmware instances in containers.
+Daemon responsible of spawning drone firmware instances in containers.  
+This document is in markdown format and is best read with a markdown viewer. In
+command line, one can use `pandoc README.md | lynx -stdin`.
 
 ## Protocol
 
