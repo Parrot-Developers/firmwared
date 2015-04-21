@@ -418,6 +418,17 @@ int folder_unregister(const char *folder_name)
 {
 	struct folder *folder;
 	struct folder *max = folders + FOLDERS_MAX - 1;
+	int destroy_entity(struct rs_node *node)
+	{
+		struct folder_entity *entity = to_entity(node);
+
+		ut_string_free(&entity->name);
+		ut_string_free(&entity->sha1);
+
+		folder->ops.drop(entity);
+
+		return 0;
+	}
 
 	folder = folder_find(folder_name);
 	if (folder == NULL)
@@ -426,6 +437,8 @@ int folder_unregister(const char *folder_name)
 	for (; folder < max; folder++)
 		*folder = *(folder + 1);
 	memset(folder + 1, 0, sizeof(*folder)); /* NULL guard */
+
+	rs_dll_remove_all_cb(&folder->entities, destroy_entity);
 
 	return 0;
 }
