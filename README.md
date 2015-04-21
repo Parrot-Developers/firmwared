@@ -59,7 +59,7 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
 * *FOLDERS* CID FOLDERS\_LIST  
   answer to a *FOLDERS* command, FOLDERS\_LIST is a comma-separated list of the
   folders registered so far
-* *LIST* CID FOLDER [list of (ID, NAME) pairs]  
+* *LIST* CID FOLDER COUNT [list of (ID, NAME) pairs]  
   answer to a *LIST* command
 * *SHOW* CID FOLDER ID NAME INFORMATION_STRING  
   answer to a *SHOW* command. The actual content of the INFORMATION_STRING is
