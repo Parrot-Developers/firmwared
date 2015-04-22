@@ -68,6 +68,8 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   notification in reaction to a *PULL* command
 * *DROPPED* CID FIRMWARE_ID FIRMWARE_NAME  
   notification in reaction to a *DROP* command
+* *PREPARED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
+  notification in reaction to a *PREPARE* command
 * *STARTED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
   notification in reaction to a *START* command
 * *STOPPED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
