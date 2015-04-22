@@ -165,7 +165,7 @@ static bool str_is_invalid(const char *str)
 static bool folder_entity_ops_are_invalid(const struct folder_entity_ops *ops)
 {
 	return ops->drop == NULL || ops->get_info == NULL ||
-			ops->sha1 == NULL;
+			ops->sha1 == NULL || ops->can_drop == NULL;
 }
 
 static bool folder_is_invalid(const struct folder *folder)
@@ -236,6 +236,11 @@ static char *folder_request_friendly_name(struct folder *folder)
 	} while (find_entity(folder, friendly_name) != NULL);
 
 	return friendly_name;
+}
+
+static bool folder_can_drop(struct folder *folder, struct folder_entity *entity)
+{
+	return folder->ops.can_drop(entity);
 }
 
 int folder_register(const struct folder *folder)
@@ -321,6 +326,9 @@ int folder_drop(const char *folder_name, struct folder_entity *entity)
 	folder = folder_find(folder_name);
 	if (folder == NULL)
 		return -ENOENT;
+
+	if (!folder_can_drop(folder, entity))
+		return -EBUSY;
 
 	node = rs_dll_remove_match(&folder->entities,
 			folder_entity_match_str_sha1, entity->sha1);

@@ -161,6 +161,13 @@ static void instance_delete(struct instance **instance)
 	*instance = NULL;
 }
 
+static bool instance_can_drop(struct folder_entity *entity)
+{
+	struct instance *instance = to_instance(entity);
+
+	return instance->state == INSTANCE_READY;
+}
+
 static int instance_drop(struct folder_entity *entity)
 {
 	struct instance *instance = to_instance(entity);
@@ -219,6 +226,7 @@ static char *instance_get_info(struct folder_entity *entity)
 
 struct folder_entity_ops instance_ops = {
 		.sha1 = instance_sha1,
+		.can_drop = instance_can_drop,
 		.drop = instance_drop,
 		.get_info = instance_get_info,
 };

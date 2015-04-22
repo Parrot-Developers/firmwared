@@ -109,6 +109,11 @@ static void firmware_delete(struct firmware **firmware)
 	*firmware = NULL;
 }
 
+static bool firmware_can_drop(struct folder_entity *entity)
+{
+	return true;
+}
+
 static int firmware_drop(struct folder_entity *entity)
 {
 	struct firmware *firmware = to_firmware(entity);
@@ -129,6 +134,7 @@ static char *firmware_get_info(struct folder_entity *entity)
 
 struct folder_entity_ops firmware_ops = {
 		.sha1 = firmware_sha1,
+		.can_drop = firmware_can_drop,
 		.drop = firmware_drop,
 		.get_info = firmware_get_info,
 };
