@@ -172,13 +172,6 @@ static int instance_drop(struct folder_entity *entity)
 	return 0;
 }
 
-static int instance_store(struct folder_entity *entity)
-{
-	ULOGC("%s: STUB !!!", __func__); // TODO I really should delete store()
-
-	return 0;
-}
-
 static char *instance_state_to_str(enum instance_state state)
 {
 	switch (state) {
@@ -227,7 +220,6 @@ static char *instance_get_info(struct folder_entity *entity)
 struct folder_entity_ops instance_ops = {
 		.sha1 = instance_sha1,
 		.drop = instance_drop,
-		.store = instance_store,
 		.get_info = instance_get_info,
 };
 

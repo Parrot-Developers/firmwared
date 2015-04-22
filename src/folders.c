@@ -165,7 +165,7 @@ static bool str_is_invalid(const char *str)
 static bool folder_entity_ops_are_invalid(const struct folder_entity_ops *ops)
 {
 	return ops->drop == NULL || ops->get_info == NULL ||
-			ops->sha1 == NULL || ops->store == NULL;
+			ops->sha1 == NULL;
 }
 
 static bool folder_is_invalid(const struct folder *folder)
@@ -360,7 +360,7 @@ int folder_store(const char *folder_name, struct folder_entity *entity)
 
 	rs_dll_push(&folder->entities, &entity->node);
 
-	return folder->ops.store(entity);
+	return 0;
 }
 
 char *folder_get_info(const char *folder_name,

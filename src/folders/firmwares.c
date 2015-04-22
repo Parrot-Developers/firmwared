@@ -120,13 +120,6 @@ static int firmware_drop(struct folder_entity *entity)
 	return 0;
 }
 
-static int firmware_store(struct folder_entity *entity)
-{
-	/* not used for this folder */
-
-	return 0;
-}
-
 static char *firmware_get_info(struct folder_entity *entity)
 {
 	struct firmware *firmware = to_firmware(entity);
@@ -137,7 +130,6 @@ static char *firmware_get_info(struct folder_entity *entity)
 struct folder_entity_ops firmware_ops = {
 		.sha1 = firmware_sha1,
 		.drop = firmware_drop,
-		.store = firmware_store,
 		.get_info = firmware_get_info,
 };
 
