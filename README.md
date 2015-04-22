@@ -29,10 +29,13 @@ and "remote_firmwares", entities types are named *folders*.
   FOLDER is one of folders listed in an answer to a *FOLDERS* command
 * *SHOW* FOLDER IDENTIFIER  
   asks for all the information on a given entity of a folder
-* *PULL* FIRMWARE_IDENTIFIER  
+* *PULL* REMOTE\_FIRMWARE_IDENTIFIER  
   installs locally a firmware present on the remote firmwares pool
-* *DROP* REMOTE\_FIRMWARE_IDENTIFIER  
-  removes an remote firmware installed locally
+* *DROP* FOLDER IDENTIFIER  
+  removes an entity from a folder  
+  if the entity is an instance, it must be in the *READY* state. It's pid 1 will
+  be killed and it's run artifacts will be removed if FIRMWARED_PREVENT_REMOVAL
+  isn't set to "y"
 * *PREPARE* FIRMWARE\_IDENTIFIER  
   creates an instance of the given firmware, in the *READY* state
 * *START* INSTANCE\_IDENTIFIER  
@@ -43,9 +46,6 @@ and "remote_firmwares", entities types are named *folders*.
   the instance must be in the *STARTED* state..
   the instance switches to the *STOPPING* state, before switching back to the
   *READY* state
-* *REAP* INSTANCE\_IDENTIFIER  
-  unregister an instance and remove it's rw aufs layer  
-  the instance must be in the *STOPPED* state
 * *HELP* COMMAND
   sends back a little help on a given command
 
@@ -72,8 +72,6 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   notification in reaction to a *START* command
 * *STOPPED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
   notification in reaction to a *STOP* command
-* *REAPED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
-  notification in reaction to a *REAP* command
 * *HELP* CID COMMAND HELP_TEXT
   answer to a *HELP* command
 * *ERROR* CID ERRNO MESSAGE
