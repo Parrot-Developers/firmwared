@@ -28,7 +28,7 @@ static struct command *command_find(const char *name)
 	for (i = 0; i < COMMANDS_MAX; i++)
 		if (commands[i].name == NULL)
 			return NULL;
-		else if (strcmp(name, commands[i].name) == 0)
+		else if (strcasecmp(name, commands[i].name) == 0)
 			return commands + i;
 
 	return NULL;
