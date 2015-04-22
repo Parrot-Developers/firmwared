@@ -107,11 +107,29 @@ The general rule of thumb is :
 ## Environment variables
 
 Some base configuration parameters can be modified at startup via the following
-environment variables :
+environment variables (see config.c for more information):
 
+* *FIRMWARED\_MOUNT\_HOOK*: path to the helper binary responsible of mounting
+  the union fs of an instance and of cleaning it, defaults to
+  **/usr/libexec/firmwared/mount.hook**
 * *FIRMWARED\_SOCKET\_PATH*: where the control socket will be created,
   defaults to **/var/run/firmwared.sock**
-* *FOLDERS\_RESOURCES\_DIR*: where the resource files for firmwared are
+* *FIRMWARED\_RESOURCES\_DIR*: where the resource files for firmwared are
   stored, defaults to **/usr/share/firmwared/**
-* *FIRMWARE\_REPOSITORY\_PATH*: where the installed firmwares are located,
+* *FIRMWARED\_REPOSITORY\_PATH*: where the installed firmwares are located,
   defaults to **/usr/share/firmwared/firmwares/**
+* *FIRMWARED\_MOUNT\_PATH*: where the firmwares mountings will take place,
+  under this directory the following subtree will be used :
+
+                  +- /instance_sha1/
+                                   |
+                                   +- ro (read-only mount point of the firmware)
+                                   +- rw (directory with the rw layer)
+                                   +- union (union fs mount of ./rw upon ./ro)
+  defaults to **/var/run/firmwared/mount_points**
+
+These environment variables are defined in hooks:
+
+* *FIRMWARED_PREVENT_REMOVAL*: if set to "y", after dropping an instance, it's
+  run artifacts will be preserved, that is, the
+  FIRMWARED\_MOUNT\_PATH/instance_sha1 directory will _not_ be destroyed
