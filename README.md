@@ -61,20 +61,20 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   folders registered so far
 * *LIST* CID FOLDER COUNT [list of (ID, NAME) pairs]  
   answer to a *LIST* command
-* *SHOW* CID FOLDER ID NAME INFORMATION_STRING  
+* *SHOW* CID FOLDER ID NAME INFORMATION\_STRING  
   answer to a *SHOW* command. The actual content of the INFORMATION_STRING is
   dependent on the FOLDER queried and is for display purpose
-* *PULLED* CID FIRMWARE_ID FIRMWARE_NAME  
+* *PULLED* CID FIRMWARE\_ID FIRMWARE_NAME  
   notification in reaction to a *PULL* command
-* *DROPPED* CID FIRMWARE_ID FIRMWARE_NAME  
+* *DROPPED* CID FOLDER ENTITY\_ID ENTITY\_NAME  
   notification in reaction to a *DROP* command
-* *PREPARED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
+* *PREPARED* CID FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *PREPARE* command
-* *STARTED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
+* *STARTED* CID FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *START* command
-* *KILLED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
+* *KILLED* CID FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *KILL* command
-* *HELP* CID COMMAND HELP_TEXT
+* *HELP* CID COMMAND HELP\_TEXT
   answer to a *HELP* command
 * *ERROR* CID ERRNO MESSAGE
   answer to any command whose execution encountered a problem
