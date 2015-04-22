@@ -11,6 +11,8 @@
 
 struct firmware *firmware;
 
+#define FIRMWARES_FOLDER_NAME "firmwares"
+
 const char *firmware_get_path(struct firmware *firmware);
 const char *firmware_get_sha1(const struct firmware *firmware);
 

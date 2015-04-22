@@ -31,8 +31,6 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 #include "utils.h"
 #include "config.h"
 
-#define FOLDER_NAME "firmwares"
-
 #ifndef FIRMWARE_MATCHING_PATTERN
 #define FIRMWARE_MATCHING_PATTERN "*.firmware"
 #endif
@@ -169,7 +167,7 @@ static int firmware_new(const char *repository_path, const char *path)
 		goto err;
 	}
 
-	ret = folder_store(FOLDER_NAME, &firmware->entity);
+	ret = folder_store(FIRMWARES_FOLDER_NAME, &firmware->entity);
 	if (ret < 0) {
 		ULOGE("folder_store: %s", strerror(-ret));
 		goto err;
@@ -189,7 +187,7 @@ static int index_firmwares(void)
 	struct dirent **namelist;
 	const char *repository = config_get(CONFIG_FIRMWARE_REPOSITORY);
 
-	ULOGI("indexing "FOLDER_NAME);
+	ULOGI("indexing "FIRMWARES_FOLDER_NAME);
 
 	n = scandir(repository, &namelist, pattern_filter, NULL);
 	if (n == -1) {
@@ -206,7 +204,7 @@ static int index_firmwares(void)
 		}
 	}
 
-	ULOGI("done indexing "FOLDER_NAME);
+	ULOGI("done indexing "FIRMWARES_FOLDER_NAME);
 
 	return 0;
 }
@@ -220,7 +218,7 @@ static void firmwares_cleanup(void)
 	 * firmwares destruction is managed by firmware_drop, called on each
 	 * firmware by folder_unregister
 	 */
-	folder_unregister(FOLDER_NAME);
+	folder_unregister(FIRMWARES_FOLDER_NAME);
 }
 
 __attribute__((constructor(FOLDERS_CONSTRUCTOR_PRIORITY + 1)))
@@ -230,7 +228,7 @@ static void firmwares_init(void)
 
 	ULOGD("%s", __func__);
 
-	firmware_folder.name = FOLDER_NAME;
+	firmware_folder.name = FIRMWARES_FOLDER_NAME;
 	memcpy(&firmware_folder.ops, &firmware_ops, sizeof(firmware_ops));
 	ret = folder_register(&firmware_folder);
 	if (ret < 0) {
