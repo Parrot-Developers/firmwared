@@ -243,6 +243,15 @@ static void firmwares_init(void)
 	}
 }
 
+struct firmware *firmware_from_entity(struct folder_entity *entity)
+{
+	errno = -EINVAL;
+	if (entity == NULL)
+		return NULL;
+
+	return to_firmware(entity);
+}
+
 const char *firmware_get_path(struct firmware *firmware)
 {
 	errno = EINVAL;

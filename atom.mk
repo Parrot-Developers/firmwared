@@ -19,7 +19,9 @@ LOCAL_LIBRARIES := \
 LOCAL_SRC_FILES := \
 	$(call all-c-files-under,src)
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/src
+LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH)/src \
+	$(LOCAL_PATH)/src/folders
 
 LOCAL_COPY_FILES := \
 	resources/adjectives:usr/share/$(LOCAL_MODULE)/ \

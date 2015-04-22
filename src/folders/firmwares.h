@@ -8,11 +8,13 @@
  */
 #ifndef FIRMWARES_H_
 #define FIRMWARES_H_
+#include "folders.h"
 
-struct firmware *firmware;
+struct firmware;
 
 #define FIRMWARES_FOLDER_NAME "firmwares"
 
+struct firmware *firmware_from_entity(struct folder_entity *entity);
 const char *firmware_get_path(struct firmware *firmware);
 const char *firmware_get_sha1(const struct firmware *firmware);
 const char *firmware_get_name(const struct firmware *firmware);
