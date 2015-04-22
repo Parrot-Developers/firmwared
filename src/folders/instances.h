@@ -19,7 +19,10 @@ enum instance_state {
 	INSTANCE_STOPPING,
 };
 
+/*
+ * a newly created instance is automatically stored in the instance folder and
+ * will be destroyed automatically on a drop operation
+ */
 struct instance *instance_new(struct firmware *firmware);
-void instance_delete(struct instance **instance);
 
 #endif /* INSTANCES_H_ */

@@ -109,6 +109,60 @@ static char *instance_sha1(struct folder_entity *entity)
 	return strdup(instance_get_sha1(instance));
 }
 
+static void clean_pts(struct instance *instance)
+{
+	ut_file_fd_close(&instance->master);
+	instance->pts[0] = '\0';
+}
+
+static void clean_paths(struct instance *instance)
+{
+	ut_string_free(&instance->base_workspace);
+	ut_string_free(&instance->ro_mount_point);
+	ut_string_free(&instance->rw_dir);
+	ut_string_free(&instance->union_mount_point);
+}
+
+static int invoke_mount_helper(struct instance *instance, const char *action)
+{
+	return ut_process_vsystem("%s %s %s %s %s %s %s %s",
+			config_get(CONFIG_MOUNT_HOOK),
+			action,
+			instance->base_workspace,
+			instance->ro_mount_point,
+			instance->rw_dir,
+			instance->union_mount_point,
+			instance->firmware_path,
+			instance->firmware_sha1);
+}
+
+static void clean_mount_points(struct instance *instance)
+{
+	int ret;
+
+	ret = invoke_mount_helper(instance, "clean");
+	if (ret != 0)
+		ULOGE("invoke_mount_helper clean returned %d", ret);
+	clean_paths(instance);
+}
+
+static void instance_delete(struct instance **instance)
+{
+	struct instance *i;
+
+	if (instance == NULL || *instance == NULL)
+		return;
+	i = *instance;
+
+	clean_pts(i);
+	clean_mount_points(i);
+
+	ut_string_free(&i->firmware_sha1);
+	ut_string_free(&i->firmware_path);
+	free(i);
+	*instance = NULL;
+}
+
 static int instance_drop(struct folder_entity *entity)
 {
 	struct instance *instance = to_instance(entity);
@@ -207,14 +261,6 @@ static void instances_init(void)
 	}
 }
 
-static void clean_paths(struct instance *instance)
-{
-	ut_string_free(&instance->base_workspace);
-	ut_string_free(&instance->ro_mount_point);
-	ut_string_free(&instance->rw_dir);
-	ut_string_free(&instance->union_mount_point);
-}
-
 static int init_paths(struct instance *instance)
 {
 	int ret;
@@ -259,29 +305,6 @@ err:
 	return ret;
 }
 
-static int invoke_mount_helper(struct instance *instance, const char *action)
-{
-	return ut_process_vsystem("%s %s %s %s %s %s %s %s",
-			config_get(CONFIG_MOUNT_HOOK),
-			action,
-			instance->base_workspace,
-			instance->ro_mount_point,
-			instance->rw_dir,
-			instance->union_mount_point,
-			instance->firmware_path,
-			instance->firmware_sha1);
-}
-
-static void clean_mount_points(struct instance *instance)
-{
-	int ret;
-
-	ret = invoke_mount_helper(instance, "clean");
-	if (ret != 0)
-		ULOGE("invoke_mount_helper clean returned %d", ret);
-	clean_paths(instance);
-}
-
 static int init_mount_points(struct instance *instance)
 {
 	int ret;
@@ -303,12 +326,6 @@ err:
 	clean_mount_points(instance);
 
 	return ret;
-}
-
-static void clean_pts(struct instance *instance)
-{
-	ut_file_fd_close(&instance->master);
-	instance->pts[0] = '\0';
 }
 
 static int init_pts(struct instance *instance)
@@ -385,21 +402,3 @@ err:
 
 	return NULL;
 }
-
-void instance_delete(struct instance **instance)
-{
-	struct instance *i;
-
-	if (instance == NULL || *instance == NULL)
-		return;
-	i = *instance;
-
-	clean_pts(i);
-	clean_mount_points(i);
-
-	ut_string_free(&i->firmware_sha1);
-	ut_string_free(&i->firmware_path);
-	free(i);
-	*instance = NULL;
-}
-
