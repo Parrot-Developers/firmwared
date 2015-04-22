@@ -455,6 +455,24 @@ const char *folders_list(void)
 	return list;
 }
 
+const char *folder_entity_get_sha1(const struct folder_entity *entity)
+{
+	errno = EINVAL;
+	if (entity == NULL)
+		return NULL;
+
+	return entity->sha1;
+}
+
+const char *folder_entity_get_name(const struct folder_entity *entity)
+{
+	errno = EINVAL;
+	if (entity == NULL)
+		return NULL;
+
+	return entity->name;
+}
+
 int folder_unregister(const char *folder_name)
 {
 	struct folder *folder;

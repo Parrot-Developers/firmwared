@@ -54,6 +54,8 @@ char *folder_get_info(const char *folder, const char *entity_identifier);
 struct folder_entity *folder_find_entity(const char *folder,
 		const char *entity_identifier);
 const char *folders_list(void);
+const char *folder_entity_get_sha1(const struct folder_entity *entity);
+const char *folder_entity_get_name(const struct folder_entity *entity);
 int folder_unregister(const char *folder);
 
 #endif /* FOLDERS_H_ */
