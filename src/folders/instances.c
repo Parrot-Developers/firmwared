@@ -48,6 +48,8 @@ struct instance {
 	pid_t pid;
 	enum instance_state state;
 	char *firmware_path;
+	/* caching of sha1 computation */
+	char sha1[2 * SHA_DIGEST_LENGTH + 1];
 
 	char *base_workspace;
 	/* all 3 dirs must be subdirs of base_workspace dir */
@@ -66,57 +68,45 @@ struct instance {
 
 #define to_instance(p) ut_container_of(p, struct instance, entity)
 
-static struct folder instance_folder;
+static struct folder instances_folder;
 
 static int sha1(struct instance *instance,
-	unsigned char hash[SHA_DIGEST_LENGTH])
+		unsigned char hash[SHA_DIGEST_LENGTH])
 {
-/*	int ret;*/
-/*	size_t count;*/
-/*	SHA_CTX ctx;*/
-/*	FILE __attribute__((cleanup(ut_file_close))) *f = NULL;*/
-/*	char buf[BUF_SIZE] = {0};*/
+	SHA_CTX ctx;
 
-/*	f = fopen(path, "rbe");*/
-/*	if (f == NULL) {*/
-/*		ret = -errno;*/
-/*		ULOGE("%s: fopen : %m", __func__);*/
-/*		return ret;*/
-/*	}*/
-
-/*	SHA1_Init(&ctx);*/
-/*	do {*/
-/*		count = fread(buf, 1, BUF_SIZE, f);*/
-/*		if (count != 0)*/
-/*			SHA1_Update(&ctx, buf, count);*/
-/*	} while (count == BUF_SIZE);*/
-/*	SHA1_Final(hash, &ctx);*/
-/*	if (ferror(f)) {*/
-/*		ULOGE("error reading %s for sha1 computation", path);*/
-/*		return -EIO;*/
-/*	}*/
+	SHA1_Init(&ctx);
+	SHA1_Update(&ctx, instance->firmware_sha1,
+			strlen(instance->firmware_sha1));
+	SHA1_Update(&ctx, &instance->time, sizeof(instance->time));
+	SHA1_Final(hash, &ctx);
 
 	return 0;
 }
 
-static char *instance_sha1(struct folder_entity *entity)
+static const char *instance_get_sha1(struct instance *instance)
 {
 	int ret;
-	struct instance *instance = to_instance(entity);
 	unsigned char hash[SHA_DIGEST_LENGTH];
-	char *res;
 
-	ret = sha1(instance, hash);
-	if (ret < 0) {
-		errno = -ret;
-		return NULL;
+	if (instance->sha1[0] == '\0') {
+		ret = sha1(instance, hash);
+		if (ret < 0) {
+			errno = -ret;
+			return NULL;
+		}
+
+		buffer_to_string(hash, SHA_DIGEST_LENGTH, instance->sha1);
 	}
 
-	res = calloc(2 * SHA_DIGEST_LENGTH + 1, sizeof(*res));
-	if (res == NULL)
-		return NULL;
+	return instance->sha1;
+}
 
-	return buffer_to_string(hash, SHA_DIGEST_LENGTH, res);
+static char *instance_sha1(struct folder_entity *entity)
+{
+	struct instance *instance = to_instance(entity);
+
+	return strdup(instance_get_sha1(instance));
 }
 
 static int instance_drop(struct folder_entity *entity)
@@ -132,22 +122,54 @@ static int instance_drop(struct folder_entity *entity)
 
 static int instance_store(struct folder_entity *entity)
 {
-	ULOGC("%s: STUB !!!", __func__); // TODO
-
-	/*
-	 * here, use the friendly name for creating the aufs mount points, i.e.
-	 * the RO directory, the RW directory, the union mount directory and
-	 * mount all these folks
-	 */
+	ULOGC("%s: STUB !!!", __func__); // TODO I really should delete store()
 
 	return 0;
 }
 
+static char *instance_state_to_str(enum instance_state state)
+{
+	switch (state) {
+	case INSTANCE_READY:
+		return "ready";
+	case INSTANCE_STARTED:
+		return "started";
+	case INSTANCE_STOPPING:
+		return "stopping";
+	default:
+		return "(unknown)";
+	}
+}
+
 static char *instance_get_info(struct folder_entity *entity)
 {
+	int ret;
+	char *res;
 	struct instance *instance = to_instance(entity);
 
-	return NULL; // TODO
+	ret = asprintf(&res, "pid: %jd\n"
+			"state: %s\n"
+			"firmware_path: %s\n"
+			"sha1: %s\n"
+			"base_workspace: %s\n"
+			"pts: %s\n"
+			"firmware_sha1: %s\n"
+			"time: %s\n",
+			(intmax_t)instance->pid,
+			instance_state_to_str(instance->state),
+			instance->firmware_path,
+			instance->sha1,
+			instance->base_workspace,
+			instance->pts,
+			instance->firmware_sha1,
+			ctime(&instance->time));
+	if (ret < 0) {
+		ULOGE("asprintf error");
+		errno = ENOMEM;
+		return NULL;
+	}
+
+	return res;
 }
 
 struct folder_entity_ops instance_ops = {
@@ -197,10 +219,9 @@ static int init_paths(struct instance *instance)
 {
 	int ret;
 
-	/* sha1 should be computed early and cached TODO */
 	ret = asprintf(&instance->base_workspace, "%s/%s",
 			config_get(CONFIG_BASE_MOUNT_PATH),
-			instance_sha1(&instance->entity));
+			instance_get_sha1(instance));
 	if (ret < 0) {
 		instance->base_workspace = NULL;
 		ULOGE("asprintf base_workspace error");
