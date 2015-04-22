@@ -23,7 +23,8 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/src
 
 LOCAL_COPY_FILES := \
 	resources/adjectives:usr/share/$(LOCAL_MODULE)/ \
-	resources/names:usr/share/$(LOCAL_MODULE)/
+	resources/names:usr/share/$(LOCAL_MODULE)/ \
+	hooks/mount.hook:usr/libexec/$(LOCAL_MODULE)/mount.hook
 
 LOCAL_CFLAGS := -DPOMP_ENABLE_ADVANCED_API
 
