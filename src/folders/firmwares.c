@@ -254,11 +254,18 @@ const char *firmware_get_path(struct firmware *firmware)
 
 const char *firmware_get_sha1(const struct firmware *firmware)
 {
-	if (firmware == NULL) {
-		errno = EINVAL;
+	errno = EINVAL;
+	if (firmware == NULL)
 		return NULL;
-	}
 
 	return firmware->entity.sha1;
 }
 
+const char *firmware_get_name(const struct firmware *firmware)
+{
+	errno = EINVAL;
+	if (firmware == NULL)
+		return NULL;
+
+	return firmware->entity.name;
+}
