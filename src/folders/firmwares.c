@@ -9,6 +9,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif /* _GNU_SOURCE */
+#include <unistd.h>
 #include <dirent.h>
 #include <fnmatch.h>
 
@@ -120,6 +121,7 @@ static int firmware_drop(struct folder_entity *entity)
 
 	ULOGD("%s", __func__);
 
+	unlink(firmware->path);
 	firmware_delete(&firmware);
 
 	return 0;
