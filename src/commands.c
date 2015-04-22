@@ -47,7 +47,7 @@ static bool command_is_invalid(const struct command *cmd)
 
 static void command_dump(const struct command *cmd)
 {
-	ULOGD("\t%s[%p]:\n\"%s\"", cmd->name, cmd->handler, cmd->help);
+	ULOGD("\t%s: \"%s\"", cmd->name, cmd->help);
 }
 
 int command_invoke(struct firmwared *f, struct pomp_conn *conn,
