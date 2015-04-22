@@ -148,28 +148,38 @@ static int pattern_filter(const struct dirent *d)
 	return fnmatch(FIRMWARE_MATCHING_PATTERN, d->d_name, 0) == 0;
 }
 
-static struct firmware *firmware_new(const char *repository_path,
-		const char *path)
+static int firmware_new(const char *repository_path, const char *path)
 {
 	int ret;
 	struct firmware *firmware;
 	const char *firmware_repository_path =
 			config_get(CONFIG_FIRMWARE_REPOSITORY);
 
+	ULOGD("indexing firmware %s", path);
+
 	firmware = calloc(1, sizeof(*firmware));
 	if (firmware == NULL)
-		return NULL;
+		return -errno;
 
 	ret = asprintf(&firmware->path, "%s/%s", firmware_repository_path,
 			path);
 	if (ret == -1) {
 		ULOGE("asprintf error");
-		free(firmware);
-		errno = ENOMEM;
-		return NULL;
+		ret = -ENOMEM;
+		goto err;
 	}
 
-	return firmware;
+	ret = folder_store(FOLDER_NAME, &firmware->entity);
+	if (ret < 0) {
+		ULOGE("folder_store: %s", strerror(-ret));
+		goto err;
+	}
+
+	return 0;
+err:
+	firmware_delete(&firmware);
+
+	return ret;
 }
 
 static int index_firmwares(void)
@@ -177,13 +187,11 @@ static int index_firmwares(void)
 	int ret;
 	int n;
 	struct dirent **namelist;
-	struct firmware *f;
-	const char *firmware_repository_path =
-			config_get(CONFIG_FIRMWARE_REPOSITORY);
+	const char *repository = config_get(CONFIG_FIRMWARE_REPOSITORY);
 
 	ULOGI("indexing "FOLDER_NAME);
 
-	n = scandir(firmware_repository_path, &namelist, pattern_filter, NULL);
+	n = scandir(repository, &namelist, pattern_filter, NULL);
 	if (n == -1) {
 		ret = -errno;
 		ULOGE("%s scandir: %m", __func__);
@@ -191,18 +199,9 @@ static int index_firmwares(void)
 	}
 
 	while (n--) {
-		ULOGD("indexing firmware %s", namelist[n]->d_name);
-		f = firmware_new(firmware_repository_path, namelist[n]->d_name);
-		if (f == NULL) {
-			ret = -errno;
-			ULOGE("firmware_new: %m");
-			return ret;
-		}
-
-		ret = folder_store(FOLDER_NAME, &f->entity);
+		ret = firmware_new(repository, namelist[n]->d_name);
 		if (ret < 0) {
-			firmware_delete(&f);
-			ULOGE("folder_store: %s", strerror(-ret));
+			ULOGE("firmware_new: %s", strerror(-ret));
 			return ret;
 		}
 	}
