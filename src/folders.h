@@ -11,6 +11,10 @@
 
 #include <rs_dll.h>
 
+#include "config.h"
+
+#define FOLDERS_CONSTRUCTOR_PRIORITY (CONFIG_CONSTRUCTOR_PRIORITY + 1)
+
 /*
  * all the fields of the struct folder_entity are handled by the folders
  * module

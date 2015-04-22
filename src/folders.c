@@ -21,14 +21,11 @@
 #include <ut_file.h>
 
 #include "folders.h"
+#include "config.h"
 
 #define ULOG_TAG firmwared_folders
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_folders);
-
-#define FOLDERS_RESOURCES_DIR_ENV "FIRMWARED_RESOURCES_DIR"
-
-#define FOLDERS_RESOURCES_DIR "/usr/share/firmwared/"
 
 #define FOLDERS_MAX 3
 
@@ -97,10 +94,6 @@ static int load_words(const char *resources_dir, const char *list_name,
 	char __attribute__((cleanup(ut_string_free))) *path = NULL;
 	FILE __attribute__((cleanup(ut_file_close))) *f = NULL;
 
-	resources_dir = getenv(FOLDERS_RESOURCES_DIR_ENV);
-	if (resources_dir == NULL)
-		resources_dir = FOLDERS_RESOURCES_DIR;
-
 	ret = asprintf(&path, "%s/%s", resources_dir, list_name);
 	if (ret == -1) {
 		ULOGE("asprintf error");
@@ -121,10 +114,11 @@ static int load_words(const char *resources_dir, const char *list_name,
  * priority is needed so that folder implementations can make use of the folders
  * API
  */
-static __attribute__((constructor(101))) void folders_init(void)
+__attribute__((constructor(FOLDERS_CONSTRUCTOR_PRIORITY)))
+static void folders_init(void)
 {
 	int ret;
-	const char *resources_dir;
+	const char *resources_dir = config_get(CONFIG_RESOURCES_DIR);
 	const char *list_name;
 	time_t seed;
 
@@ -133,10 +127,6 @@ static __attribute__((constructor(101))) void folders_init(void)
 	seed = time(NULL);
 	srand(seed);
 	ULOGI("random seed is %jd", (intmax_t)seed);
-
-	resources_dir = getenv(FOLDERS_RESOURCES_DIR_ENV);
-	if (resources_dir == NULL)
-		resources_dir = FOLDERS_RESOURCES_DIR;
 
 	list_name = "names";
 	ret = load_words(resources_dir, list_name, &folders_names);
@@ -158,7 +148,8 @@ static int destroy_word(struct rs_node *node)
 	return 0;
 }
 
-__attribute__((destructor(101))) static void folders_cleanup(void)
+__attribute__((destructor(FOLDERS_CONSTRUCTOR_PRIORITY)))
+static void folders_cleanup(void)
 {
 	ULOGD("%s", __func__);
 
@@ -246,7 +237,6 @@ static char *folder_request_friendly_name(struct folder *folder)
 
 	return friendly_name;
 }
-
 
 int folder_register(const struct folder *folder)
 {

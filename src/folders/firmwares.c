@@ -29,20 +29,15 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 #include "folders.h"
 #include "firmwares.h"
 #include "utils.h"
+#include "config.h"
 
 #define FOLDER_NAME "firmwares"
-
-#define FIRMWARE_REPOSITORY_PATH "/usr/share/firmwared/firmwares/"
-
-#define FIRMWARE_REPOSITORY_PATH_ENV "FIRMWARE_REPOSITORY_PATH"
 
 #ifndef FIRMWARE_MATCHING_PATTERN
 #define FIRMWARE_MATCHING_PATTERN "*.firmware"
 #endif
 
 #define BUF_SIZE 0x200
-
-static char *firmware_repository_path;
 
 struct firmware {
 	struct folder_entity entity;
@@ -158,6 +153,8 @@ static struct firmware *firmware_new(const char *repository_path,
 {
 	int ret;
 	struct firmware *firmware;
+	const char *firmware_repository_path =
+			config_get(CONFIG_FIRMWARE_REPOSITORY);
 
 	firmware = calloc(1, sizeof(*firmware));
 	if (firmware == NULL)
@@ -181,6 +178,8 @@ static int index_firmwares(void)
 	int n;
 	struct dirent **namelist;
 	struct firmware *f;
+	const char *firmware_repository_path =
+			config_get(CONFIG_FIRMWARE_REPOSITORY);
 
 	ULOGI("indexing "FOLDER_NAME);
 
@@ -213,7 +212,8 @@ static int index_firmwares(void)
 	return 0;
 }
 
-static __attribute__((destructor(102))) void firmwares_cleanup(void)
+__attribute__((destructor(FOLDERS_CONSTRUCTOR_PRIORITY + 1)))
+static void firmwares_cleanup(void)
 {
 	ULOGD("%s", __func__);
 
@@ -224,15 +224,12 @@ static __attribute__((destructor(102))) void firmwares_cleanup(void)
 	folder_unregister(FOLDER_NAME);
 }
 
-static __attribute__((constructor(102))) void firmwares_init(void)
+__attribute__((constructor(FOLDERS_CONSTRUCTOR_PRIORITY + 1)))
+static void firmwares_init(void)
 {
 	int ret;
 
 	ULOGD("%s", __func__);
-
-	firmware_repository_path = getenv(FIRMWARE_REPOSITORY_PATH_ENV);
-	if (firmware_repository_path == NULL)
-		firmware_repository_path = FIRMWARE_REPOSITORY_PATH;
 
 	firmware_folder.name = FOLDER_NAME;
 	memcpy(&firmware_folder.ops, &firmware_ops, sizeof(firmware_ops));

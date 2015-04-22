@@ -27,12 +27,9 @@ ULOG_DECLARE_TAG(firmwared);
 #include <libpomp.h>
 
 #include "commands.h"
+#include "config.h"
 
 #define SOCK_GROUP "firmwared"
-#define DEFAULT_SOCKET_PATH "/var/run/firmwared.sock"
-#define FIRMWARED_SOCKET_PATH_ENV "FIRMWARED_SOCKET_PATH"
-
-static char *socket_path;
 
 static size_t setup_address(struct sockaddr_storage *addr_storage)
 {
@@ -40,7 +37,8 @@ static size_t setup_address(struct sockaddr_storage *addr_storage)
 	struct sockaddr_un *addr_un = (struct sockaddr_un *)addr;
 	memset(&addr_storage, 0, sizeof(addr_storage));
 	addr_un->sun_family = AF_UNIX;
-	strncpy(addr_un->sun_path, socket_path, sizeof(addr_un->sun_path));
+	strncpy(addr_un->sun_path, config_get(CONFIG_SOCKET_PATH),
+			sizeof(addr_un->sun_path));
 
 	return sizeof(*addr_un);
 }
@@ -85,6 +83,7 @@ static void change_sock_group_mode()
 {
 	int ret;
 	struct group *g;
+	const char *socket_path = config_get(CONFIG_SOCKET_PATH);
 
 	g = getgrnam(SOCK_GROUP);
 	if (g == NULL) {
@@ -118,9 +117,6 @@ int firmwared_init(struct firmwared *ctx)
 		return -ENOMEM;
 	}
 
-	socket_path = getenv(FIRMWARED_SOCKET_PATH_ENV);
-	if (socket_path == NULL)
-		socket_path = DEFAULT_SOCKET_PATH;
 	s = setup_address(&addr_storage);
 	ret = pomp_ctx_listen(ctx->pomp, (struct sockaddr *)&addr_storage, s);
 	if (ret < 0) {
@@ -171,8 +167,7 @@ void firmwared_clean(struct firmwared *ctx)
 	}
 	memset(ctx, 0, sizeof(*ctx));
 
-	unlink(socket_path);
-
+	unlink(config_get(CONFIG_SOCKET_PATH));
 }
 
 uint32_t firmwared_get_msg_id(struct firmwared *ctx)
