@@ -72,8 +72,8 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   notification in reaction to a *PREPARE* command
 * *STARTED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
   notification in reaction to a *START* command
-* *STOPPED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
-  notification in reaction to a *STOP* command
+* *KILLED* CID FIRMWARE_ID FIRMWARE_NAME INSTANCE_ID INSTANCE_NAME  
+  notification in reaction to a *KILL* command
 * *HELP* CID COMMAND HELP_TEXT
   answer to a *HELP* command
 * *ERROR* CID ERRNO MESSAGE
