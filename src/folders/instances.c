@@ -41,8 +41,6 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include "utils.h"
 #include "config.h"
 
-#define FOLDER_NAME "instances"
-
 struct instance {
 	struct folder_entity entity;
 	pid_t pid;
@@ -242,7 +240,7 @@ static void instances_cleanup(void)
 	 * instances destruction is managed by instance_drop, called on each
 	 * instance by folder_unregister
 	 */
-	folder_unregister(FOLDER_NAME);
+	folder_unregister(INSTANCES_FOLDER_NAME);
 }
 
 __attribute__((constructor(FOLDERS_CONSTRUCTOR_PRIORITY + 1)))
@@ -252,7 +250,7 @@ static void instances_init(void)
 
 	ULOGD("%s", __func__);
 
-	instances_folder.name = FOLDER_NAME;
+	instances_folder.name = INSTANCES_FOLDER_NAME;
 	memcpy(&instances_folder.ops, &instance_ops, sizeof(instance_ops));
 	ret = folder_register(&instances_folder);
 	if (ret < 0) {
@@ -396,7 +394,7 @@ struct instance *instance_new(struct firmware *firmware)
 		goto err;
 	}
 
-	ret = folder_store(FOLDER_NAME, &instance->entity);
+	ret = folder_store(INSTANCES_FOLDER_NAME, &instance->entity);
 	if (ret < 0) {
 		ULOGE("folder_store: %s", strerror(-ret));
 		goto err;

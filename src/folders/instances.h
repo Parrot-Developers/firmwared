@@ -13,6 +13,8 @@
 
 struct instance;
 
+#define INSTANCES_FOLDER_NAME "instances"
+
 enum instance_state {
 	INSTANCE_READY,
 	INSTANCE_STARTED,
