@@ -396,6 +396,12 @@ struct instance *instance_new(struct firmware *firmware)
 		goto err;
 	}
 
+	ret = folder_store(FOLDER_NAME, &instance->entity);
+	if (ret < 0) {
+		ULOGE("folder_store: %s", strerror(-ret));
+		goto err;
+	}
+
 	return instance;
 err:
 	instance_delete(&instance);
