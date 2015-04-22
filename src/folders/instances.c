@@ -84,7 +84,7 @@ static int sha1(struct instance *instance,
 	return 0;
 }
 
-static const char *instance_get_sha1(struct instance *instance)
+static const char *compute_sha1(struct instance *instance)
 {
 	int ret;
 	unsigned char hash[SHA_DIGEST_LENGTH];
@@ -106,7 +106,7 @@ static char *instance_sha1(struct folder_entity *entity)
 {
 	struct instance *instance = to_instance(entity);
 
-	return strdup(instance_get_sha1(instance));
+	return strdup(compute_sha1(instance));
 }
 
 static void clean_pts(struct instance *instance)
@@ -267,7 +267,7 @@ static int init_paths(struct instance *instance)
 
 	ret = asprintf(&instance->base_workspace, "%s/%s",
 			config_get(CONFIG_BASE_MOUNT_PATH),
-			instance_get_sha1(instance));
+			compute_sha1(instance));
 	if (ret < 0) {
 		instance->base_workspace = NULL;
 		ULOGE("asprintf base_workspace error");
@@ -407,4 +407,22 @@ err:
 	instance_delete(&instance);
 
 	return NULL;
+}
+
+const char *instance_get_sha1(const struct instance *instance)
+{
+	errno = EINVAL;
+	if (instance == NULL)
+		return NULL;
+
+	return instance->entity.sha1;
+}
+
+const char *instance_get_name(const struct instance *instance)
+{
+	errno = EINVAL;
+	if (instance == NULL)
+		return NULL;
+
+	return instance->entity.name;
 }

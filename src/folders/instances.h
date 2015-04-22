@@ -24,5 +24,7 @@ enum instance_state {
  * will be destroyed automatically on a drop operation
  */
 struct instance *instance_new(struct firmware *firmware);
+const char *instance_get_sha1(const struct instance *instance);
+const char *instance_get_name(const struct instance *instance);
 
 #endif /* INSTANCES_H_ */
