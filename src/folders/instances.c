@@ -176,7 +176,9 @@ static void instances_init(void)
 
 	ULOGD("%s", __func__);
 
-	ret = folder_register(&instance_folder);
+	instances_folder.name = FOLDER_NAME;
+	memcpy(&instances_folder.ops, &instance_ops, sizeof(instance_ops));
+	ret = folder_register(&instances_folder);
 	if (ret < 0) {
 		ULOGE("folder_register: %s", strerror(-ret));
 		return;
