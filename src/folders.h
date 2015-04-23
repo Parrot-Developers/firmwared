@@ -33,7 +33,7 @@ struct folder_entity_ops {
 	const char *(*sha1)(struct folder_entity *entity);
 	bool (*can_drop)(struct folder_entity *entity);
 	int (*drop)(struct folder_entity *entity, bool only_unregister);
-	char *(*get_info)(struct folder_entity *entity);
+	const char *(*get_info)(struct folder_entity *entity);
 };
 
 struct folder {
@@ -50,7 +50,7 @@ unsigned folder_get_count(const char *folder);
 int folder_drop(const char *folder, struct folder_entity *entity);
 int folder_store(const char *folder, struct folder_entity *entity);
 
-char *folder_get_info(const char *folder, const char *entity_identifier);
+const char *folder_get_info(const char *folder, const char *entity_identifier);
 struct folder_entity *folder_find_entity(const char *folder,
 		const char *entity_identifier);
 const char *folders_list(void);
