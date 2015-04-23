@@ -121,7 +121,11 @@ static int firmware_drop(struct folder_entity *entity)
 
 	ULOGD("%s", __func__);
 
-	unlink(firmware->path);
+	/*
+	 * TODO this is dangerous, what if we decide to drop the firmwares on
+	 * shutdown ?
+	 */
+//	unlink(firmware->path);
 	firmware_delete(&firmware);
 
 	return 0;
