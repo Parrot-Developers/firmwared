@@ -70,7 +70,7 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   notification in reaction to a *DROP* command
 * *PREPARED* CID FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *PREPARE* command
-* *STARTED* CID FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
+* *STARTED* CID INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *START* command
 * *KILLED* CID FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *KILL* command
