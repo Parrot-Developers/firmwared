@@ -9,6 +9,7 @@
 #ifndef INSTANCES_H_
 #define INSTANCES_H_
 
+#include "firmwared.h"
 #include "firmwares.h"
 
 struct instance;
@@ -27,6 +28,7 @@ enum instance_state {
  */
 struct instance *instance_new(struct firmware *firmware);
 struct instance *instance_from_entity(struct folder_entity *entity);
+int instance_start(struct firmwared *f, struct instance *instance);
 const char *instance_get_sha1(struct instance *instance);
 const char *instance_get_name(const struct instance *instance);
 

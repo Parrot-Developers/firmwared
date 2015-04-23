@@ -14,6 +14,10 @@
 #endif /* _GNU_SOURCE */
 #include <linux/limits.h>
 
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#include <unistd.h>
 #include <dirent.h>
 #include <fnmatch.h>
 #include <fcntl.h>
@@ -26,9 +30,13 @@
 
 #include <openssl/sha.h>
 
+#include <uv.h>
+
 #define ULOG_TAG firmwared_instances
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_instances);
+
+#include <pidwatch.h>
 
 #include <ut_utils.h>
 #include <ut_string.h>
@@ -40,10 +48,13 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include "firmwares.h"
 #include "utils.h"
 #include "config.h"
+#include "firmwared.h"
 
 struct instance {
 	struct folder_entity entity;
 	pid_t pid;
+	int pidfd;
+	uv_poll_t pidfd_handle;
 	enum instance_state state;
 	char *firmware_path;
 	/* caching of sha1 computation */
@@ -154,6 +165,7 @@ static void instance_delete(struct instance **instance, bool only_unregister)
 		return;
 	i = *instance;
 
+	ut_file_fd_close(&i->pidfd);
 	clean_pts(i);
 	clean_mount_points(i, only_unregister);
 
@@ -362,6 +374,50 @@ err:
 	return ret;
 }
 
+static void pidfd_uv_poll_cb(uv_poll_t* handle, int status, int events)
+{
+	int ret;
+	int program_status;
+	struct instance *instance = handle->data;
+
+	ret = pidwatch_wait(instance->pidfd, &program_status);
+	if (ret < 0) {
+		ULOGE("pidwatch_wait : err=%d(%s)", ret, strerror(-ret));
+		return;
+	}
+
+	pidwatch_set_pid(instance->pidfd, instance->pid);
+	ULOGD("process %jd exited with status %d", (intmax_t)instance->pid,
+			program_status);
+
+	ret = waitpid(instance->pid, &program_status, WNOHANG);
+	if (ret < 0) {
+		ULOGE("waitpid : err=%d(%s)", ret, strerror(-ret));
+		return;
+	}
+	ULOGD("waitpid said %d", program_status);
+
+	instance->state = INSTANCE_READY;
+}
+
+static void launch_instance(struct instance *instance)
+{
+	int ret;
+	char *const args[] = {
+			"sleep",
+			"10",
+			NULL,
+	};
+
+	ULOGC("%s: STUB !!!", __func__); // TODO
+
+	ret = execvp(args[0], args);
+	if (ret < 0)
+		ULOGC("execvp: %m");
+
+	exit(1);
+}
+
 struct instance *instance_new(struct firmware *firmware)
 {
 	int ret;
@@ -399,6 +455,26 @@ struct instance *instance_new(struct firmware *firmware)
 		ULOGE("folder_store: %s", strerror(-ret));
 		goto err;
 	}
+	instance->pidfd = pidwatch_create(SOCK_CLOEXEC | SOCK_NONBLOCK);
+	if (instance->pidfd == -1) {
+		ret = -errno;
+		ULOGE("pidwatch_create: %m");
+		goto err;
+	}
+	ret = uv_poll_init(uv_default_loop(), &instance->pidfd_handle,
+			instance->pidfd);
+	if (ret < 0) {
+		ULOGE("uv_poll_init: %s", strerror(-ret));
+		goto err;
+	}
+	ret = uv_poll_start(&instance->pidfd_handle, UV_READABLE,
+			pidfd_uv_poll_cb);
+	if (ret < 0) {
+		ULOGE("uv_poll_start: %s", strerror(-ret));
+		goto err;
+	}
+	// TODO check this is the right data to pass the process callback
+	instance->pidfd_handle.data = instance;
 
 	return instance;
 err:
@@ -414,6 +490,41 @@ struct instance *instance_from_entity(struct folder_entity *entity)
 		return NULL;
 
 	return to_instance(entity);
+}
+
+int instance_start(struct firmwared *f, struct instance *instance)
+{
+	int ret;
+
+	if (f == NULL || instance == NULL)
+		return -EINVAL;
+
+	if (instance->state != INSTANCE_READY) {
+		ULOGW("wrong state %s for instance %s",
+				instance_state_to_str(instance->state),
+				instance_get_sha1(instance));
+		return -EBUSY;
+	}
+
+	instance->state = INSTANCE_STARTED;
+	instance->pid = fork();
+	if (instance->pid == -1) {
+		ret = -errno;
+		ULOGE("fork: %m");
+		return ret;
+	}
+	if (instance->pid == 0)
+		launch_instance(instance); /* in child */
+	/* in parent */
+
+	ret = pidwatch_set_pid(instance->pidfd, instance->pid);
+	if (instance->pid == -1) {
+		ret = -errno;
+		ULOGE("fork: %m");
+		return ret;
+	}
+
+	return 0;
 }
 
 const char *instance_get_sha1(struct instance *instance)
