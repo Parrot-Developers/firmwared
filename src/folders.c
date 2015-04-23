@@ -364,7 +364,7 @@ int folder_store(const char *folder_name, struct folder_entity *entity)
 	return 0;
 }
 
-const char *folder_get_info(const char *folder_name,
+char *folder_get_info(const char *folder_name,
 		const char *entity_identifier)
 {
 	const struct folder *folder;

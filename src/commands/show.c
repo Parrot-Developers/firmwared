@@ -33,6 +33,7 @@ static int show_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *folder_name = NULL;
 	char __attribute__((cleanup(ut_string_free))) *identifier = NULL;
+	char __attribute__((cleanup(ut_string_free))) *info = NULL;
 
 	ret = pomp_msg_read(msg, "%ms%ms%ms", &cmd, &folder_name, &identifier);
 	if (ret < 0) {
@@ -46,13 +47,20 @@ static int show_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		return ret;
 	}
 
+	info = folder_get_info(folder_name, identifier);
+	if (info == NULL) {
+		ret = -errno;
+		ULOGE("folder_find_entity: %m");
+		return ret;
+	}
+
 	return pomp_conn_send(conn, firmwared_get_msg_id(f), "%s%"PRIu32
 				"%s%s%s%s",
 			"SHOW", pomp_msg_get_id(msg),
 			folder_name,
 			folder_entity_get_sha1(entity),
 			entity->name,
-			folder_get_info(folder_name, identifier));
+			info);
 }
 
 static const struct command show_command = {

@@ -195,34 +195,33 @@ static char *instance_state_to_str(enum instance_state state)
 	}
 }
 
-static const char *instance_get_info(struct folder_entity *entity)
+static char *instance_get_info(const struct folder_entity *entity)
 {
 	int ret;
 	struct instance *instance = to_instance(entity);
+	char *info;
 
-	if (instance->info == NULL) {
-		ret = asprintf(&instance->info, "pid: %jd\n"
-				"state: %s\n"
-				"firmware_path: %s\n"
-				"base_workspace: %s\n"
-				"pts: %s\n"
-				"firmware_sha1: %s\n"
-				"time: %s\n",
-				(intmax_t)instance->pid,
-				instance_state_to_str(instance->state),
-				instance->firmware_path,
-				instance->base_workspace,
-				instance->pts,
-				instance->firmware_sha1,
-				ctime(&instance->time));
-		if (ret < 0) {
-			ULOGE("asprintf error");
-			errno = ENOMEM;
-			return NULL;
-		}
+	ret = asprintf(&info, "pid: %jd\n"
+			"state: %s\n"
+			"firmware_path: %s\n"
+			"base_workspace: %s\n"
+			"pts: %s\n"
+			"firmware_sha1: %s\n"
+			"time: %s\n",
+			(intmax_t)instance->pid,
+			instance_state_to_str(instance->state),
+			instance->firmware_path,
+			instance->base_workspace,
+			instance->pts,
+			instance->firmware_sha1,
+			ctime(&instance->time));
+	if (ret < 0) {
+		ULOGE("asprintf error");
+		errno = ENOMEM;
+		return NULL;
 	}
 
-	return instance->info;
+	return info;
 }
 
 struct folder_entity_ops instance_ops = {

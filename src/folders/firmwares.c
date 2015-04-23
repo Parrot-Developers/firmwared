@@ -135,11 +135,11 @@ static int firmware_drop(struct folder_entity *entity, bool only_unregister)
 	return 0;
 }
 
-static const char *firmware_get_info(struct folder_entity *entity)
+static char *firmware_get_info(const struct folder_entity *entity)
 {
 	struct firmware *firmware = to_firmware(entity);
 
-	return firmware->path;
+	return strdup(firmware->path);
 }
 
 struct folder_entity_ops firmware_ops = {
