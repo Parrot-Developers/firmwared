@@ -27,7 +27,7 @@ enum instance_state {
  */
 struct instance *instance_new(struct firmware *firmware);
 struct instance *instance_from_entity(struct folder_entity *entity);
-const char *instance_get_sha1(const struct instance *instance);
+const char *instance_get_sha1(struct instance *instance);
 const char *instance_get_name(const struct instance *instance);
 
 #endif /* INSTANCES_H_ */
