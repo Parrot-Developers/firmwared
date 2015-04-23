@@ -130,6 +130,15 @@ environment variables (see config.c for more information):
 
 These environment variables are defined in hooks:
 
-* *FIRMWARED_PREVENT_REMOVAL*: if set to "y", after dropping an instance, it's
+* *FIRMWARED\_PREVENT\_REMOVAL*: if set to "y", after dropping an instance, it's
   run artifacts will be preserved, that is, the
   FIRMWARED\_MOUNT\_PATH/instance_sha1 directory will _not_ be destroyed
+
+The firmwares initial indexing performs sha1 computation which can take a
+significant amount of time. Openmp is used to automatically make them in
+parallel. It will try to choose the best number of threads automatically.
+Limiting their number can be done with:
+
+* *OMP\_NUM\_THREADS*: a number which sets the maximum number of threads, openmp
+  will use to compute the firmwares sha1 in parallel. This number doens't take
+  the main thread into account.
