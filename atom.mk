@@ -14,7 +14,8 @@ LOCAL_LIBRARIES := \
 	libpomp \
 	librs \
 	libutils \
-	libcrypto
+	libcrypto \
+	libuv
 
 LOCAL_SRC_FILES := \
 	$(call all-c-files-under,src)

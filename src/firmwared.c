@@ -105,6 +105,19 @@ static void change_sock_group_mode()
 	}
 }
 
+static void pomp_uv_poll_cb(uv_poll_t* handle, int status, int events)
+{
+	struct pomp_ctx *pomp = handle->data;
+	int ret;
+
+	ret = pomp_ctx_process_fd(pomp);
+	if (ret < 0) {
+		ULOGE("pomp_ctx_wait_and_process : err=%d(%s)", ret,
+				strerror(-ret));
+		return;
+	}
+}
+
 int firmwared_init(struct firmwared *ctx)
 {
 	int ret;
@@ -126,13 +139,24 @@ int firmwared_init(struct firmwared *ctx)
 	}
 	change_sock_group_mode();
 
+	ret = uv_poll_init(uv_default_loop(), &ctx->pomp_handle,
+			pomp_ctx_get_fd(ctx->pomp));
+	if (ret < 0) {
+		ULOGE("uv_poll_init: %s", strerror(-ret));
+		goto err;
+	}
+	ret = uv_poll_start(&ctx->pomp_handle, UV_READABLE, pomp_uv_poll_cb);
+	if (ret < 0) {
+		ULOGE("uv_poll_start: %s", strerror(-ret));
+		goto err;
+	}
+	ctx->pomp_handle.data = ctx->pomp;
+
 	ctx->decoder = pomp_decoder_new();
 	if (ctx->decoder == NULL) {
 		ULOGE("pomp_decoder_new failed");
 		goto err;
 	}
-
-	ctx->loop = true;
 
 	return 0;
 err:
@@ -143,21 +167,13 @@ err:
 
 void firmwared_run(struct firmwared *ctx)
 {
-	int ret;
-
-	while (ctx->loop) {
-		ret = pomp_ctx_wait_and_process(ctx->pomp, -1);
-		if (ret < 0) {
-			ULOGE("pomp_ctx_wait_and_process : err=%d(%s)", ret,
-					strerror(-ret));
-			return;
-		}
-	}
+	uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 }
 
 void firmwared_clean(struct firmwared *ctx)
 {
 	if (ctx->pomp != NULL) {
+		uv_poll_stop(&ctx->pomp_handle);
 		pomp_ctx_stop(ctx->pomp);
 		pomp_ctx_destroy(ctx->pomp);
 		ctx->pomp = NULL;
