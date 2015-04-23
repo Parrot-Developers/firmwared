@@ -202,7 +202,6 @@ static char *instance_get_info(struct folder_entity *entity)
 	ret = asprintf(&res, "pid: %jd\n"
 			"state: %s\n"
 			"firmware_path: %s\n"
-			"sha1: %s\n"
 			"base_workspace: %s\n"
 			"pts: %s\n"
 			"firmware_sha1: %s\n"
@@ -210,7 +209,6 @@ static char *instance_get_info(struct folder_entity *entity)
 			(intmax_t)instance->pid,
 			instance_state_to_str(instance->state),
 			instance->firmware_path,
-			instance->sha1,
 			instance->base_workspace,
 			instance->pts,
 			instance->firmware_sha1,
