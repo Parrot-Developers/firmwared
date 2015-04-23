@@ -161,6 +161,7 @@ static struct firmware *firmware_new(const char *repository_path,
 		const char *path)
 {
 	int ret;
+	const char *sha1;
 	struct firmware *firmware;
 	const char *firmware_repository_path =
 			config_get(CONFIG_FIRMWARE_REPOSITORY);
@@ -178,6 +179,11 @@ static struct firmware *firmware_new(const char *repository_path,
 		errno = -ENOMEM;
 		goto err;
 	}
+
+	/* force sha1 computation while in parallel section */
+	sha1 = compute_sha1(firmware);
+	if (sha1 == NULL)
+		goto err;
 
 	ULOGD("indexing firmware %s done", path);
 
