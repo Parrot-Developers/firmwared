@@ -124,8 +124,8 @@ static void clean_paths(struct instance *instance)
 static int invoke_mount_helper(struct instance *instance, const char *action,
 		bool only_unregister)
 {
-	// TODO quote the arguments in case a path contains a whitespace
-	return ut_process_vsystem("%s %s %s %s %s %s %s %s %s",
+	return ut_process_vsystem("\"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" "
+				"\"%s\" \"%s\" \"%s\"",
 			config_get(CONFIG_MOUNT_HOOK),
 			action,
 			instance->base_workspace,
