@@ -232,8 +232,12 @@ static int index_firmwares(void)
 	if (firmwares == NULL)
 		return -errno;
 
-	for (i = 0; i < n; i++)
-		firmwares[i] = firmware_new(repository, namelist[i]->d_name);
+	{
+#pragma omp parallel for
+		for (i = 0; i < n; i++)
+			firmwares[i] = firmware_new(repository,
+					namelist[i]->d_name);
+	}
 
 	while (n--) {
 		if (firmwares[n] == NULL) {
