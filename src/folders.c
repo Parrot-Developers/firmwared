@@ -337,7 +337,7 @@ int folder_drop(const char *folder_name, struct folder_entity *entity)
 	entity = to_entity(node);
 	ut_string_free(&entity->name);
 
-	return folder->ops.drop(entity);
+	return folder->ops.drop(entity, false);
 }
 
 int folder_store(const char *folder_name, struct folder_entity *entity)
@@ -476,7 +476,7 @@ int folder_unregister(const char *folder_name)
 
 		ut_string_free(&entity->name);
 
-		folder->ops.drop(entity);
+		folder->ops.drop(entity, true);
 
 		return 0;
 	}

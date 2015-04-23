@@ -122,17 +122,14 @@ static bool firmware_can_drop(struct folder_entity *entity)
 	return true;
 }
 
-static int firmware_drop(struct folder_entity *entity)
+static int firmware_drop(struct folder_entity *entity, bool only_unregister)
 {
 	struct firmware *firmware = to_firmware(entity);
 
 	ULOGD("%s", __func__);
 
-	/*
-	 * TODO this is dangerous, what if we decide to drop the firmwares on
-	 * shutdown ?
-	 */
-//	unlink(firmware->path);
+	if (!only_unregister)
+		unlink(firmware->path);
 	firmware_delete(&firmware);
 
 	return 0;

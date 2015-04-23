@@ -121,9 +121,11 @@ static void clean_paths(struct instance *instance)
 	ut_string_free(&instance->union_mount_point);
 }
 
-static int invoke_mount_helper(struct instance *instance, const char *action)
+static int invoke_mount_helper(struct instance *instance, const char *action,
+		bool only_unregister)
 {
-	return ut_process_vsystem("%s %s %s %s %s %s %s %s",
+	// TODO quote the arguments in case a path contains a whitespace
+	return ut_process_vsystem("%s %s %s %s %s %s %s %s %s",
 			config_get(CONFIG_MOUNT_HOOK),
 			action,
 			instance->base_workspace,
@@ -131,20 +133,21 @@ static int invoke_mount_helper(struct instance *instance, const char *action)
 			instance->rw_dir,
 			instance->union_mount_point,
 			instance->firmware_path,
-			instance->firmware_sha1);
+			instance->firmware_sha1,
+			only_unregister ? "true" : "false");
 }
 
-static void clean_mount_points(struct instance *instance)
+static void clean_mount_points(struct instance *instance, bool only_unregister)
 {
 	int ret;
 
-	ret = invoke_mount_helper(instance, "clean");
+	ret = invoke_mount_helper(instance, "clean", only_unregister);
 	if (ret != 0)
 		ULOGE("invoke_mount_helper clean returned %d", ret);
 	clean_paths(instance);
 }
 
-static void instance_delete(struct instance **instance)
+static void instance_delete(struct instance **instance, bool only_unregister)
 {
 	struct instance *i;
 
@@ -153,7 +156,7 @@ static void instance_delete(struct instance **instance)
 	i = *instance;
 
 	clean_pts(i);
-	clean_mount_points(i);
+	clean_mount_points(i, only_unregister);
 
 	ut_string_free(&i->firmware_sha1);
 	ut_string_free(&i->firmware_path);
@@ -168,13 +171,13 @@ static bool instance_can_drop(struct folder_entity *entity)
 	return instance->state == INSTANCE_READY;
 }
 
-static int instance_drop(struct folder_entity *entity)
+static int instance_drop(struct folder_entity *entity, bool only_unregister)
 {
 	struct instance *instance = to_instance(entity);
 
 	ULOGD("%s", __func__);
 
-	instance_delete(&instance);
+	instance_delete(&instance, only_unregister);
 
 	return 0;
 }
@@ -310,7 +313,7 @@ static int init_mount_points(struct instance *instance)
 		ULOGE("init_paths: %s", strerror(-ret));
 		goto err;
 	}
-	ret = invoke_mount_helper(instance, "init");
+	ret = invoke_mount_helper(instance, "init", false);
 	if (ret != 0) {
 		ULOGE("invoke_mount_helper init returned %d", ret);
 		ret = -ENOTRECOVERABLE;
@@ -319,7 +322,7 @@ static int init_mount_points(struct instance *instance)
 
 	return 0;
 err:
-	clean_mount_points(instance);
+	clean_mount_points(instance, false);
 
 	return ret;
 }
@@ -400,7 +403,7 @@ struct instance *instance_new(struct firmware *firmware)
 
 	return instance;
 err:
-	instance_delete(&instance);
+	instance_delete(&instance, false);
 
 	return NULL;
 }

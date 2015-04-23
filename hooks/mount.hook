@@ -10,6 +10,7 @@ rw_dir=$4
 union_mount_point=$5
 firmware=$6
 sha1=$7
+only_unregister=$8
 
 if [ "${action}" = "init" ];
 then
@@ -27,6 +28,9 @@ then
 	# optionally remove the artifacts
 	if [ ! "${FIRMWARED_PREVENT_REMOVAL}" = "y" ];
 	then
-		rm -rf ${base_workspace}
+		if [ "${only_unregister}" = "false" ];
+		then
+			rm -rf ${base_workspace}
+		fi
 	fi
 fi
