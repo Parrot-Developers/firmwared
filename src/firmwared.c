@@ -111,6 +111,7 @@ int firmwared_init(struct firmwared *ctx)
 	struct sockaddr_storage addr_storage;
 	size_t s;
 
+	memset(ctx, 0, sizeof(*ctx));
 	ctx->pomp = pomp_ctx_new(&event_cb, ctx);
 	if (ctx->pomp == NULL) {
 		ULOGE("pomp_ctx_new failed");
