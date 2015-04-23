@@ -394,8 +394,9 @@ struct folder_entity *folder_find_entity(const char *folder_name,
 		const char *entity_identifier)
 {
 	struct folder *folder;
+	struct folder_entity *entity;
 
-	errno = 0;
+	errno = ENOENT;
 	if (ut_string_is_invalid(folder_name) ||
 			ut_string_is_invalid(entity_identifier)) {
 		errno = EINVAL;
@@ -403,12 +404,14 @@ struct folder_entity *folder_find_entity(const char *folder_name,
 	}
 
 	folder = folder_find(folder_name);
-	if (folder == NULL) {
-		errno = ENOENT;
+	if (folder == NULL)
 		return NULL;
-	}
 
-	return find_entity(folder, entity_identifier);
+	entity = find_entity(folder, entity_identifier);
+	if (entity == NULL)
+		errno = ENOENT;
+
+	return entity;
 }
 
 const char *folders_list(void)
