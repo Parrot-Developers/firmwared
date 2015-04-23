@@ -410,6 +410,15 @@ err:
 	return NULL;
 }
 
+struct instance *instance_from_entity(struct folder_entity *entity)
+{
+	errno = -EINVAL;
+	if (entity == NULL)
+		return NULL;
+
+	return to_instance(entity);
+}
+
 const char *instance_get_sha1(const struct instance *instance)
 {
 	errno = EINVAL;
