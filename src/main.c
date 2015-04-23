@@ -6,7 +6,7 @@
  * @author nicolas.carrier@parrot.com
  * @copyright Copyright (C) 2015 Parrot S.A.
  */
-#define _GNU_SOURCE         /* See feature_test_macros(7) */
+#define _GNU_SOURCE
 #include <string.h>
 #include <stdlib.h>
 #include <libgen.h>

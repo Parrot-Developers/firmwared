@@ -29,7 +29,6 @@ struct folder_entity {
 struct folder;
 
 struct folder_entity_ops {
-	/* must allocate a string which will be freed before drop() is called */
 	const char *(*sha1)(struct folder_entity *entity);
 	bool (*can_drop)(struct folder_entity *entity);
 	int (*drop)(struct folder_entity *entity, bool only_unregister);
