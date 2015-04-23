@@ -196,7 +196,7 @@ static const char *pick_random_word(struct rs_dll *word_list)
 	struct word *word = NULL;
 	struct rs_node *word_node = NULL;
 
-	word_index = rand() % rs_dll_get_count(word_list);
+	word_index = (rand() % (rs_dll_get_count(word_list) - 1)) + 1;
 	while (word_index--)
 		word_node = rs_dll_next_from(word_list, word_node);
 
