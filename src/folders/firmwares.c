@@ -150,7 +150,8 @@ static int pattern_filter(const struct dirent *d)
 	return fnmatch(FIRMWARE_MATCHING_PATTERN, d->d_name, 0) == 0;
 }
 
-static int firmware_new(const char *repository_path, const char *path)
+static struct firmware *firmware_new(const char *repository_path,
+		const char *path)
 {
 	int ret;
 	struct firmware *firmware;
@@ -161,35 +162,50 @@ static int firmware_new(const char *repository_path, const char *path)
 
 	firmware = calloc(1, sizeof(*firmware));
 	if (firmware == NULL)
-		return -errno;
+		return NULL;
 
 	ret = asprintf(&firmware->path, "%s/%s", firmware_repository_path,
 			path);
 	if (ret == -1) {
 		ULOGE("asprintf error");
-		ret = -ENOMEM;
+		errno = -ENOMEM;
 		goto err;
 	}
 
-	ret = folder_store(FIRMWARES_FOLDER_NAME, &firmware->entity);
-	if (ret < 0) {
-		ULOGE("folder_store: %s", strerror(-ret));
-		goto err;
-	}
+	ULOGD("indexing firmware %s done", path);
 
-	return 0;
+	return firmware;
 err:
 	firmware_delete(&firmware);
 
-	return ret;
+	return NULL;
+}
+
+static void free_namelist(struct dirent ***namelist)
+{
+	if (namelist == NULL || *namelist == NULL)
+		return;
+	free(*namelist);
+	*namelist = NULL;
+}
+
+static void free_firmwares(struct firmware ***firmwares)
+{
+	if (firmwares == NULL || *firmwares == NULL)
+		return;
+	free(*firmwares);
+	*firmwares = NULL;
 }
 
 static int index_firmwares(void)
 {
+	int i;
 	int ret;
+	int res;
 	int n;
-	struct dirent **namelist;
+	struct dirent __attribute__((cleanup(free_namelist))) **namelist = NULL;
 	const char *repository = config_get(CONFIG_FIRMWARE_REPOSITORY);
+	struct firmware __attribute__((cleanup(free_firmwares))) **firmwares;
 
 	ULOGI("indexing "FIRMWARES_FOLDER_NAME);
 
@@ -199,18 +215,34 @@ static int index_firmwares(void)
 		ULOGE("%s scandir: %m", __func__);
 		return ret;
 	}
+	firmwares = calloc(n, sizeof(*firmwares));
+	if (firmwares == NULL)
+		return -errno;
+
+	for (i = 0; i < n; i++)
+		firmwares[i] = firmware_new(repository, namelist[i]->d_name);
 
 	while (n--) {
-		ret = firmware_new(repository, namelist[n]->d_name);
+		if (firmwares[n] == NULL) {
+			res = -ENOMEM;
+			continue;
+		}
+
+		ret = folder_store(FIRMWARES_FOLDER_NAME,
+				&(firmwares[n]->entity));
 		if (ret < 0) {
-			ULOGE("firmware_new: %s", strerror(-ret));
-			return ret;
+			ULOGE("folder_store: %s", strerror(-ret));
+			res = ret;
+			/*
+			 * we mustn't go out, we have to unstore and destroy
+			 * every firmware in case of error
+			 */
 		}
 	}
 
 	ULOGI("done indexing "FIRMWARES_FOLDER_NAME);
 
-	return 0;
+	return res;
 }
 
 __attribute__((destructor(FOLDERS_CONSTRUCTOR_PRIORITY + 1)))
