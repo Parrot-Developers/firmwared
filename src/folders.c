@@ -180,15 +180,15 @@ static struct folder_entity *find_entity(const struct folder *folder,
 	struct folder_entity *entity = NULL;
 
 	while ((entity = folder_next(folder, entity)))
-		if (ut_string_match(identifier, entity->sha1) ||
-				ut_string_match(identifier, entity->name))
+		if (ut_string_match(identifier, folder_entity_get_sha1(entity))
+				|| ut_string_match(identifier, entity->name))
 			return entity;
 
 	return NULL;
 }
 
-/* folder_entity_match_str_sha1 */
-static RS_NODE_MATCH_STR_MEMBER(folder_entity, sha1, node)
+/* folder_entity_match_str_name */
+static RS_NODE_MATCH_STR_MEMBER(folder_entity, name, node)
 
 static const char *pick_random_word(struct rs_dll *word_list)
 {
@@ -331,12 +331,11 @@ int folder_drop(const char *folder_name, struct folder_entity *entity)
 		return -EBUSY;
 
 	node = rs_dll_remove_match(&folder->entities,
-			folder_entity_match_str_sha1, entity->sha1);
+			folder_entity_match_str_name, entity->name);
 	if (node == NULL)
 		return -EINVAL;
 	entity = to_entity(node);
 	ut_string_free(&entity->name);
-	ut_string_free(&entity->sha1);
 
 	return folder->ops.drop(entity);
 }
@@ -349,20 +348,14 @@ int folder_store(const char *folder_name, struct folder_entity *entity)
 	folder = folder_find(folder_name);
 	if (folder == NULL)
 		return -ENOENT;
+	entity->folder = folder;
 
 	ut_string_free(&entity->name);
-	ut_string_free(&entity->sha1);
-
 	entity->name = folder_request_friendly_name(folder);
 	if (entity->name == NULL)
 		return -errno;
-	entity->sha1 = folder->ops.sha1(entity);
-	if (entity->sha1 == NULL) {
-		ut_string_free(&entity->name);
-		return -errno;
-	}
 
-	needle = find_entity(folder, entity->sha1);
+	needle = find_entity(folder, folder_entity_get_sha1(entity));
 	if (needle != NULL)
 		return -EEXIST;
 
@@ -455,13 +448,13 @@ const char *folders_list(void)
 	return list;
 }
 
-const char *folder_entity_get_sha1(const struct folder_entity *entity)
+const char *folder_entity_get_sha1(struct folder_entity *entity)
 {
 	errno = EINVAL;
 	if (entity == NULL)
 		return NULL;
 
-	return entity->sha1;
+	return entity->folder->ops.sha1(entity);
 }
 
 const char *folder_entity_get_name(const struct folder_entity *entity)
@@ -482,7 +475,6 @@ int folder_unregister(const char *folder_name)
 		struct folder_entity *entity = to_entity(node);
 
 		ut_string_free(&entity->name);
-		ut_string_free(&entity->sha1);
 
 		folder->ops.drop(entity);
 

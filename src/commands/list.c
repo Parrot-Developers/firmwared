@@ -43,9 +43,8 @@ static int build_list(char **list, const struct folder *folder, unsigned *count)
 
 	*count = 0;
 	while ((e = folder_next(folder, e)) != NULL) {
-		if (e->name == NULL || e->sha1 == NULL)
-			return -EINVAL;
-		ret = asprintf(&tmp, "(%s, %s), %s", e->name, e->sha1, *list);
+		ret = asprintf(&tmp, "(%s, %s), %s", e->name,
+				folder_entity_get_sha1(e), *list);
 		if (ret < 0) {
 			ULOGC("asprintf error");
 			return -ENOMEM;

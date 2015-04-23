@@ -41,13 +41,15 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 struct firmware {
 	struct folder_entity entity;
 	char *path;
+	char sha1[2 * SHA_DIGEST_LENGTH + 1];
 };
 
 #define to_firmware(p) ut_container_of(p, struct firmware, entity)
 
 static struct folder firmware_folder;
 
-static int sha1(const char *path, unsigned char hash[SHA_DIGEST_LENGTH])
+static int sha1(struct firmware *firmware,
+		unsigned char hash[SHA_DIGEST_LENGTH])
 {
 	int ret;
 	size_t count;
@@ -55,7 +57,7 @@ static int sha1(const char *path, unsigned char hash[SHA_DIGEST_LENGTH])
 	FILE __attribute__((cleanup(ut_file_close))) *f = NULL;
 	char buf[BUF_SIZE] = {0};
 
-	f = fopen(path, "rbe");
+	f = fopen(firmware->path, "rbe");
 	if (f == NULL) {
 		ret = -errno;
 		ULOGE("%s: fopen : %m", __func__);
@@ -70,31 +72,36 @@ static int sha1(const char *path, unsigned char hash[SHA_DIGEST_LENGTH])
 	} while (count == BUF_SIZE);
 	SHA1_Final(hash, &ctx);
 	if (ferror(f)) {
-		ULOGE("error reading %s for sha1 computation", path);
+		ULOGE("error reading %s for sha1 computation", firmware->path);
 		return -EIO;
 	}
 
 	return 0;
 }
 
-static char *firmware_sha1(struct folder_entity *entity)
+static const char *compute_sha1(struct firmware *firmware)
 {
 	int ret;
-	struct firmware *firmware = to_firmware(entity);
 	unsigned char hash[SHA_DIGEST_LENGTH];
-	char *res;
 
-	ret = sha1(firmware->path, hash);
-	if (ret < 0) {
-		errno = -ret;
-		return NULL;
+	if (firmware->sha1[0] == '\0') {
+		ret = sha1(firmware, hash);
+		if (ret < 0) {
+			errno = -ret;
+			return NULL;
+		}
+
+		buffer_to_string(hash, SHA_DIGEST_LENGTH, firmware->sha1);
 	}
 
-	res = calloc(2 * SHA_DIGEST_LENGTH + 1, sizeof(*res));
-	if (res == NULL)
-		return NULL;
+	return firmware->sha1;
+}
 
-	return buffer_to_string(hash, SHA_DIGEST_LENGTH, res);
+static const char *firmware_sha1(struct folder_entity *entity)
+{
+	struct firmware *firmware = to_firmware(entity);
+
+	return compute_sha1(firmware);
 }
 
 static void firmware_delete(struct firmware **firmware)
@@ -303,7 +310,7 @@ const char *firmware_get_sha1(const struct firmware *firmware)
 	if (firmware == NULL)
 		return NULL;
 
-	return firmware->entity.sha1;
+	return firmware->sha1;
 }
 
 const char *firmware_get_name(const struct firmware *firmware)

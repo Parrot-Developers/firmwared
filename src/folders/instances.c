@@ -100,11 +100,11 @@ static const char *compute_sha1(struct instance *instance)
 	return instance->sha1;
 }
 
-static char *instance_sha1(struct folder_entity *entity)
+static const char *instance_sha1(struct folder_entity *entity)
 {
 	struct instance *instance = to_instance(entity);
 
-	return strdup(compute_sha1(instance));
+	return compute_sha1(instance);
 }
 
 static void clean_pts(struct instance *instance)
@@ -411,7 +411,7 @@ const char *instance_get_sha1(const struct instance *instance)
 	if (instance == NULL)
 		return NULL;
 
-	return instance->entity.sha1;
+	return instance->sha1;
 }
 
 const char *instance_get_name(const struct instance *instance)

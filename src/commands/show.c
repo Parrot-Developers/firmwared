@@ -48,8 +48,11 @@ static int show_command_handler(struct firmwared *f, struct pomp_conn *conn,
 
 	return pomp_conn_send(conn, firmwared_get_msg_id(f), "%s%"PRIu32
 				"%s%s%s%s",
-			"SHOW", pomp_msg_get_id(msg), folder_name, entity->sha1,
-			entity->name, folder_get_info(folder_name, identifier));
+			"SHOW", pomp_msg_get_id(msg),
+			folder_name,
+			folder_entity_get_sha1(entity),
+			entity->name,
+			folder_get_info(folder_name, identifier));
 }
 
 static const struct command show_command = {
