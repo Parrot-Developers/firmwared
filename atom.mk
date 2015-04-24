@@ -7,7 +7,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := firmwared
 LOCAL_DESCRIPTION := Firmware instance manager daemon
-LOCAL_CATEGORY_PATH := simulator/
+LOCAL_CATEGORY_PATH := simulator/firmwared
 
 LOCAL_LIBRARIES := \
 	libulog \
@@ -37,3 +37,20 @@ LOCAL_CFLAGS := \
 LOCAL_LDFLAGS := -fopenmp
 
 include $(BUILD_EXECUTABLE)
+
+################################################################################
+# fd-cli
+################################################################################
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := fd-cli
+LOCAL_DESCRIPTION := Command line interface for firmwared
+LOCAL_CATEGORY_PATH := simulator/firmwared
+
+LOCAL_REQUIRED_MODULES := firmwared \
+	pomp-cli
+
+LOCAL_COPY_FILES := \
+	utils/fd-cli:usr/bin/fd-cli
+
+include $(BUILD_CUSTOM)

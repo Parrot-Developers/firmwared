@@ -1,0 +1,41 @@
+#!/bin/sh
+
+set -e
+set -u
+#set -x
+
+timeout=1
+
+# the following trick checks if the variable is set. we can't test if it is
+# empty, because the set -u will trigger an error
+if [ -z "${FIRMWARED_SOCKET_PATH+x}" ]
+then
+	socket="/var/run/firmwared.sock"
+else
+	socket=${FIRMWARED_SOCKET_PATH}
+fi
+
+seq_num=$$
+
+pomp_cmd="pomp-cli --dump --wait ${seq_num} unix:${socket}"
+
+command=$(echo $1 | tr '[a-z]' '[A-Z]')
+
+case "${command}" in
+	PING)
+		format="%s"
+		args=""
+		;;
+	*)
+		echo "command ${command} not found"
+		exit 1
+		;;
+esac
+
+${pomp_cmd} ${seq_num} ${format} ${command} ${args} 2>&1 | while read line; do
+	if [ -n "$(echo ${line} | grep MSG)" ] &&
+		[ -n "$(echo ${line} | grep ID:${seq_num})" ]
+		then
+			echo ${line}
+		fi
+done
