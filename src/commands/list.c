@@ -98,6 +98,7 @@ static int list_command_handler(struct firmwared *f, struct pomp_conn *conn,
 static const struct command list_command = {
 		.name = COMMAND_NAME,
 		.help = "List the content of a given folder.",
+		.synopsis = "FOLDER",
 		.handler = list_command_handler,
 };
 

@@ -44,7 +44,7 @@ static bool str_is_invalid(const char *str)
 static bool command_is_invalid(const struct command *cmd)
 {
 	return cmd == NULL || cmd->help == NULL || str_is_invalid(cmd->name) ||
-				cmd->handler == NULL;
+				cmd->handler == NULL || cmd->synopsis == NULL;
 }
 
 static void command_dump(const struct command *cmd)

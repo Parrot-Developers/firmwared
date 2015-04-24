@@ -67,6 +67,7 @@ static int drop_command_handler(struct firmwared *f, struct pomp_conn *conn,
 static const struct command drop_command = {
 		.name = COMMAND_NAME,
 		.help = "Drop an entity.",
+		.synopsis = "FOLDER IDENTIFIER",
 		.handler = drop_command_handler,
 };
 

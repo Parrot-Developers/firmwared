@@ -66,6 +66,7 @@ static int show_command_handler(struct firmwared *f, struct pomp_conn *conn,
 static const struct command show_command = {
 		.name = COMMAND_NAME,
 		.help = "Show detailed information on an entity.",
+		.synopsis = "FOLDER IDENTIFIER",
 		.handler = show_command_handler,
 };
 

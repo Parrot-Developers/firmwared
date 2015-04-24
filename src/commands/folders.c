@@ -39,6 +39,7 @@ static int folders_command_handler(struct firmwared *f, struct pomp_conn *conn,
 static const struct command folders_command = {
 		.name = COMMAND_NAME,
 		.help = "List the different registered folders so far.",
+		.synopsis = "",
 		.handler = folders_command_handler,
 };
 

@@ -51,6 +51,7 @@ static int kill_command_handler(struct firmwared *f, struct pomp_conn *conn,
 static const struct command kill_command = {
 		.name = COMMAND_NAME,
 		.help = "Kills a running instance.",
+		.synopsis = "INSTANCE_IDENTIFIER",
 		.handler = kill_command_handler,
 };
 

@@ -64,6 +64,7 @@ static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
 static const struct command prepare_command = {
 		.name = COMMAND_NAME,
 		.help = "Create a firmware instance, ready to be launched.",
+		.synopsis = "FIRMWARE_IDENTIFIER",
 		.handler = prepare_command_handler,
 };
 

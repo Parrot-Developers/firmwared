@@ -58,6 +58,7 @@ static int start_command_handler(struct firmwared *f, struct pomp_conn *conn,
 static const struct command start_command = {
 		.name = COMMAND_NAME,
 		.help = "Starts an previously prepared or stopped instance.",
+		.synopsis = "INSTANCE_IDENTIFIER",
 		.handler = start_command_handler,
 };
 
