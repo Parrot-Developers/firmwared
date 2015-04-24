@@ -382,7 +382,7 @@ struct pid_cb_data {
 	struct instance *instance;
 };
 
-static void pidfd_uv_poll_cb(uv_poll_t* handle, int status, int events)
+static void pidfd_uv_poll_cb(uv_poll_t *handle, int status, int events)
 {
 	int ret;
 	int program_status;

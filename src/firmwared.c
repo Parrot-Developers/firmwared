@@ -107,7 +107,7 @@ static void change_sock_group_mode()
 	}
 }
 
-static void pomp_uv_poll_cb(uv_poll_t* handle, int status, int events)
+static void pomp_uv_poll_cb(uv_poll_t *handle, int status, int events)
 {
 	struct pomp_ctx *pomp = handle->data;
 	int ret;

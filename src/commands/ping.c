@@ -43,7 +43,7 @@ static __attribute__((constructor)) void ping_init(void)
 		ULOGE("command_register: %s", strerror(-ret));
 }
 
-__attribute__((destructor)) static void ping_cleanup(void)
+static __attribute__((destructor)) void ping_cleanup(void)
 {
 	int ret;
 

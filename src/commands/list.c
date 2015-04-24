@@ -80,7 +80,7 @@ static int list_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		ULOGE("folder_find: %s", strerror(-ret));
 		return ret;
 	}
-	
+
 	ret = build_list(&list, folder, &count);
 	if (ret < 0) {
 		ULOGE("build_list: %s", strerror(-ret));
@@ -111,7 +111,7 @@ static __attribute__((constructor)) void list_init(void)
 		ULOGE("command_register: %s", strerror(-ret));
 }
 
-__attribute__((destructor)) static void list_cleanup(void)
+static __attribute__((destructor)) void list_cleanup(void)
 {
 	int ret;
 

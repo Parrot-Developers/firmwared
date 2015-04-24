@@ -139,7 +139,7 @@ void command_list(void)
 	const struct command *cmd;
 
 	ULOGD("Registered commands so far, are :");
-	for (i = 0; i < COMMANDS_MAX ; i++) {
+	for (i = 0; i < COMMANDS_MAX; i++) {
 		cmd = commands + i;
 		if (cmd->name == NULL)
 			return;

@@ -419,7 +419,7 @@ const char *folders_list(void)
 	int ret;
 	int old_errno;
 	struct folder *folder = folders + FOLDERS_MAX;
-	static char *list = NULL;
+	static char *list;
 	char *tmp = NULL;
 
 	/* the result is cached */

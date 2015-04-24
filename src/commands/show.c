@@ -79,7 +79,7 @@ static __attribute__((constructor)) void show_init(void)
 		ULOGE("command_register: %s", strerror(-ret));
 }
 
-__attribute__((destructor)) static void show_cleanup(void)
+static __attribute__((destructor)) void show_cleanup(void)
 {
 	int ret;
 

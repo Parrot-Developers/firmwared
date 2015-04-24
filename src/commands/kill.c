@@ -64,7 +64,7 @@ static __attribute__((constructor)) void kill_init(void)
 		ULOGE("command_register: %s", strerror(-ret));
 }
 
-__attribute__((destructor)) static void kill_cleanup(void)
+static __attribute__((destructor)) void kill_cleanup(void)
 {
 	int ret;
 
