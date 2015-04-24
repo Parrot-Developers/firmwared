@@ -7,7 +7,7 @@ then
 	set -x
 fi
 
-timeout=1
+timeout=${FD_CLI_TIMEOUT:-1}
 
 # the following trick checks if the variable is set. we can't test if it is
 # empty, because the set -u will trigger an error
@@ -20,7 +20,7 @@ fi
 
 seq_num=$$
 
-pomp_cmd="pomp-cli --dump --wait ${seq_num} unix:${socket}"
+pomp_cmd="pomp-cli --timeout ${timeout} --dump --wait ${seq_num} unix:${socket}"
 
 command=$(echo $1 | tr '[a-z]' '[A-Z]')
 
