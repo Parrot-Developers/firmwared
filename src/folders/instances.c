@@ -219,7 +219,7 @@ static char *instance_get_info(const struct folder_entity *entity)
 			"base_workspace: %s\n"
 			"pts: %s\n"
 			"firmware_sha1: %s\n"
-			"time: %s\n",
+			"time: %s",
 			(intmax_t)instance->pid,
 			instance_state_to_str(instance->state),
 			instance->firmware_path,
