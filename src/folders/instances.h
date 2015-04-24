@@ -26,7 +26,8 @@ enum instance_state {
  * a newly created instance is automatically stored in the instance folder and
  * will be destroyed automatically on a drop operation
  */
-struct instance *instance_new(struct firmware *firmware);
+struct instance *instance_new(struct firmware *firmware,
+		struct firmwared *firmwared);
 struct instance *instance_from_entity(struct folder_entity *entity);
 int instance_start(struct firmwared *f, struct instance *instance);
 const char *instance_get_sha1(struct instance *instance);

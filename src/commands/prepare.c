@@ -45,7 +45,7 @@ static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	if (entity == NULL)
 		return -errno;
 	firmware = firmware_from_entity(entity);
-	instance = instance_new(firmware);
+	instance = instance_new(firmware, f);
 	if (instance == NULL) {
 		ret = -errno;
 		ULOGE("instance_new: %m");

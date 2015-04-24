@@ -70,8 +70,9 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   notification in reaction to a *PREPARE* command
 * *STARTED* INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *START* command
-* *KILLED* FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
-  notification in reaction to a *KILL* command
+* *DEAD* INSTANCE\_ID INSTANCE\_NAME  
+  notification in reaction to the end of an instance's main process, be it
+  caused by a *KILL* command or by "natural death"
 * *HELP* COMMAND HELP\_TEXT
   answer to a *HELP* command
 * *ERROR* ERRNO MESSAGE

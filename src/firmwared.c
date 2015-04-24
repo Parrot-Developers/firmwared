@@ -26,6 +26,8 @@ ULOG_DECLARE_TAG(firmwared);
 
 #include <libpomp.h>
 
+#include <ut_string.h>
+
 #include "commands.h"
 #include "config.h"
 
@@ -162,6 +164,21 @@ err:
 void firmwared_run(struct firmwared *ctx)
 {
 	uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+}
+
+int firmwared_notify(struct firmwared *ctx, const char *fmt, ...)
+{
+	int ret;
+	va_list args;
+
+	if (ctx == NULL || ut_string_is_invalid(fmt))
+		return -EINVAL;
+
+	va_start(args, fmt);
+	ret = pomp_ctx_sendv(ctx->pomp, (uint32_t)-1, fmt, args);
+	va_end(args);
+
+	return ret;
 }
 
 void firmwared_clean(struct firmwared *ctx)

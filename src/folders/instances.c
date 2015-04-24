@@ -165,12 +165,14 @@ static void instance_delete(struct instance **instance, bool only_unregister)
 		return;
 	i = *instance;
 
+	free(i->pidfd_handle.data);
 	ut_file_fd_close(&i->pidfd);
 	clean_pts(i);
 	clean_mount_points(i, only_unregister);
 
 	ut_string_free(&i->firmware_sha1);
 	ut_string_free(&i->firmware_path);
+	memset(i, 0, sizeof(*i));
 	free(i);
 	*instance = NULL;
 }
@@ -374,11 +376,18 @@ err:
 	return ret;
 }
 
+struct pid_cb_data {
+	struct firmwared *firmwared;
+	struct instance *instance;
+};
+
 static void pidfd_uv_poll_cb(uv_poll_t* handle, int status, int events)
 {
 	int ret;
 	int program_status;
-	struct instance *instance = handle->data;
+	struct pid_cb_data *data = handle->data;
+	struct instance *instance = data->instance;
+	struct firmwared *firmwared = data->firmwared;
 
 	ret = pidwatch_wait(instance->pidfd, &program_status);
 	if (ret < 0) {
@@ -399,6 +408,14 @@ static void pidfd_uv_poll_cb(uv_poll_t* handle, int status, int events)
 
 	instance->state = INSTANCE_READY;
 	instance->pid = 0;
+
+	ret = firmwared_notify(firmwared, "%s"
+				"%s%s",
+			"DEAD",
+			instance_get_sha1(instance),
+			instance_get_name(instance));
+	if (ret < 0)
+		ULOGE("firmwared_notify : err=%d(%s)", ret, strerror(-ret));
 }
 
 static void launch_instance(struct instance *instance)
@@ -419,10 +436,12 @@ static void launch_instance(struct instance *instance)
 	exit(1);
 }
 
-struct instance *instance_new(struct firmware *firmware)
+struct instance *instance_new(struct firmware *firmware,
+		struct firmwared *firmwared)
 {
 	int ret;
 	struct instance *instance;
+	struct pid_cb_data *data;
 
 	instance = calloc(1, sizeof(*instance));
 	if (instance == NULL)
@@ -447,7 +466,6 @@ struct instance *instance_new(struct firmware *firmware)
 	ret = init_pts(instance);
 	if (ret < 0) {
 		ULOGE("install_mount_points");
-		errno = -ret;
 		goto err;
 	}
 
@@ -474,12 +492,22 @@ struct instance *instance_new(struct firmware *firmware)
 		ULOGE("uv_poll_start: %s", strerror(-ret));
 		goto err;
 	}
-	// TODO check this is the right data to pass the process callback
-	instance->pidfd_handle.data = instance;
+
+	data = calloc(1, sizeof(*data));
+	if (data == NULL) {
+		ret = -errno;
+		ULOGE("calloc: %m");
+		goto err;
+	}
+	data->instance = instance;
+	data->firmwared = firmwared;
+	instance->pidfd_handle.data = data;
 
 	return instance;
 err:
 	instance_delete(&instance, false);
+
+	errno = -ret;
 
 	return NULL;
 }
