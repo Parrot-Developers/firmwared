@@ -521,11 +521,11 @@ struct instance *instance_from_entity(struct folder_entity *entity)
 	return to_instance(entity);
 }
 
-int instance_start(struct firmwared *f, struct instance *instance)
+int instance_start(struct instance *instance)
 {
 	int ret;
 
-	if (f == NULL || instance == NULL)
+	if (instance == NULL)
 		return -EINVAL;
 
 	if (instance->state != INSTANCE_READY) {

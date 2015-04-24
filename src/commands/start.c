@@ -44,7 +44,7 @@ static int start_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	if (entity == NULL)
 		return -errno;
 	instance = instance_from_entity(entity);
-	ret = instance_start(f, instance);
+	ret = instance_start(instance);
 	if (ret < 0)
 		return ret;
 
