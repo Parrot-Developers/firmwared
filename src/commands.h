@@ -19,8 +19,10 @@ struct command {
 	const char *synopsis;
 	int (*handler)(struct firmwared *f, struct pomp_conn *conn,
 			const struct pomp_msg *msg);
+	char *help_msg;
 };
 
+const char *command_get_help(const char *name);
 int command_invoke(struct firmwared *f, struct pomp_conn *conn,
 		const struct pomp_msg *msg);
 int command_register(const struct command *cmd);
