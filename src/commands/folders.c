@@ -30,8 +30,10 @@ static int folders_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	if (list == NULL)
 		return -errno;
 
-	return pomp_conn_send(conn, firmwared_get_msg_id(f), "%s%"PRIu32"%s",
-			"FOLDERS", pomp_msg_get_id(msg), list);
+	return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s"
+			"%s",
+			"FOLDERS",
+			list);
 }
 
 static const struct command folders_command = {

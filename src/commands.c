@@ -73,8 +73,10 @@ int command_invoke(struct firmwared *f, struct pomp_conn *conn,
 
 	ret = cmd->handler(f, conn, msg);
 	if (ret < 0)
-		pomp_conn_send(conn, firmwared_get_msg_id(f), "%s%"PRIu32"%d%s",
-			"ERROR", pomp_msg_get_id(msg), -ret, strerror(-ret));
+		pomp_conn_send(conn, pomp_msg_get_id(msg), "%s%d%s",
+			"ERROR",
+			-ret,
+			strerror(-ret));
 
 	return 0;
 }

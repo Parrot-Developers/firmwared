@@ -12,8 +12,6 @@ command line, one can use `pandoc README.md | lynx -stdin`.
 
 *Commands* are sent by clients. No acknowledgement is sent by the server. The
 server sends *notifications*, which can be in reaction to a client *command*.  
-Each *notification*'s first argument after the *command* name, is the *pomp msg
-id* of the command it is related to, if relevant.  
 An *identifier* is either the sha1 of the entity or it's friendly random name.
 As the time of writing, there is 3 types of entities, "instances", "firmwares"
 and "remote_firmwares", entities types are named *folders*.
@@ -54,29 +52,29 @@ and "remote_firmwares", entities types are named *folders*.
 There are two types of notifications, unicast (marked as "answer to an XXX
 command) and broadcast (marked as "notification in reaction to an XXX command).
 
-* *PONG* CID  
+* *PONG*  
   answer to a *PING*
-* *FOLDERS* CID FOLDERS\_LIST  
+* *FOLDERS* FOLDERS\_LIST  
   answer to a *FOLDERS* command, FOLDERS\_LIST is a comma-separated list of the
   folders registered so far
-* *LIST* CID FOLDER COUNT [list of (ID, NAME) pairs]  
+* *LIST* FOLDER COUNT [list of (ID, NAME) pairs]  
   answer to a *LIST* command
-* *SHOW* CID FOLDER ID NAME INFORMATION\_STRING  
+* *SHOW* FOLDER ID NAME INFORMATION\_STRING  
   answer to a *SHOW* command. The actual content of the INFORMATION_STRING is
   dependent on the FOLDER queried and is for display purpose
-* *PULLED* CID FIRMWARE\_ID FIRMWARE_NAME  
+* *PULLED* FIRMWARE\_ID FIRMWARE_NAME  
   notification in reaction to a *PULL* command
-* *DROPPED* CID FOLDER ENTITY\_ID ENTITY\_NAME  
+* *DROPPED* FOLDER ENTITY\_ID ENTITY\_NAME  
   notification in reaction to a *DROP* command
-* *PREPARED* CID FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
+* *PREPARED* FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *PREPARE* command
-* *STARTED* CID INSTANCE\_ID INSTANCE\_NAME  
+* *STARTED* INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *START* command
-* *KILLED* CID FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
+* *KILLED* FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *KILL* command
-* *HELP* CID COMMAND HELP\_TEXT
+* *HELP* COMMAND HELP\_TEXT
   answer to a *HELP* command
-* *ERROR* CID ERRNO MESSAGE
+* *ERROR* ERRNO MESSAGE
   answer to any command whose execution encountered a problem
 
 ### Instance states

@@ -87,9 +87,12 @@ static int list_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		return ret;
 	}
 
-	return pomp_conn_send(conn, firmwared_get_msg_id(f), "%s%"PRIu32
+	return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s"
 				"%s%u%s",
-			"LIST", pomp_msg_get_id(msg), folder_name, count, list);
+			"LIST",
+			folder_name,
+			count,
+			list);
 }
 
 static const struct command list_command = {

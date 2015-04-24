@@ -56,9 +56,9 @@ static int drop_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		return ret;
 	}
 
-	return pomp_conn_send(conn, firmwared_get_msg_id(f), "%s%"PRIu32
+	return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s"
 			"%s%s%s",
-			"DROPPED", pomp_msg_get_id(msg),
+			"DROPPED",
 			folder,
 			sha1,
 			name);
