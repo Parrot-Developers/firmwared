@@ -87,12 +87,8 @@ static int list_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		return ret;
 	}
 
-	return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s"
-				"%s%u%s",
-			"LIST",
-			folder_name,
-			count,
-			list);
+	return firmwared_answer(conn, msg, "%s%s%u%s", "LIST", folder_name,
+			count, list);
 }
 
 static const struct command list_command = {

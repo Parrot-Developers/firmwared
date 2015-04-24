@@ -54,13 +54,8 @@ static int show_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		return ret;
 	}
 
-	return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s"
-				"%s%s%s%s",
-			"SHOW",
-			folder_name,
-			folder_entity_get_sha1(entity),
-			entity->name,
-			info);
+	return firmwared_answer(conn, msg, "%s%s%s%s%s", "SHOW", folder_name,
+			folder_entity_get_sha1(entity), entity->name, info);
 }
 
 static const struct command show_command = {

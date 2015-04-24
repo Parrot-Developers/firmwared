@@ -23,8 +23,7 @@ ULOG_DECLARE_TAG(firmwared_command_ping);
 static int ping_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
-	return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s",
-			"PONG");
+	return firmwared_answer(conn, msg, "%s", "PONG");
 }
 
 static const struct command ping_command = {

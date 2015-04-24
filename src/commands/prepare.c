@@ -52,10 +52,8 @@ static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		return ret;
 	}
 
-	return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s"
-			"%s%s%s%s",
-			"PREPARED",
-			firmware_get_sha1(firmware),
+	return firmwared_notify(f, pomp_msg_get_id(msg), "%s%s%s%s%s",
+			"PREPARED", firmware_get_sha1(firmware),
 			firmware_get_name(firmware),
 			instance_get_sha1(instance),
 			instance_get_name(instance));

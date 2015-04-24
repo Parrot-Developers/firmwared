@@ -48,9 +48,7 @@ static int start_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	if (ret < 0)
 		return ret;
 
-	return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s"
-			"%s%s",
-			"STARTED",
+	return firmwared_notify(f, pomp_msg_get_id(msg), "%s%s%s", "STARTED",
 			instance_get_sha1(instance),
 			instance_get_name(instance));
 }

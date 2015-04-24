@@ -82,10 +82,8 @@ int command_invoke(struct firmwared *f, struct pomp_conn *conn,
 	ret = command_process(f, conn, msg);
 	if (ret < 0) {
 		ULOGE("command_process: %s", strerror(-ret));
-		return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s%d%s",
-			"ERROR",
-			-ret,
-			strerror(-ret));
+		return firmwared_answer(conn, msg, "%s%d%s", "ERROR", -ret,
+				strerror(-ret));
 	}
 
 	return 0;

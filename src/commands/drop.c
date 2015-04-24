@@ -56,12 +56,8 @@ static int drop_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		return ret;
 	}
 
-	return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s"
-			"%s%s%s",
-			"DROPPED",
-			folder,
-			sha1,
-			name);
+	return firmwared_notify(f, pomp_msg_get_id(msg), "%s%s%s%s", "DROPPED",
+			folder, sha1, name);
 }
 
 static const struct command drop_command = {

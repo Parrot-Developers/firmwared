@@ -410,12 +410,10 @@ static void pidfd_uv_poll_cb(uv_poll_t *handle, int status, int events)
 	instance->state = INSTANCE_READY;
 	instance->pid = 0;
 
-	ret = firmwared_notify(firmwared, instance->killer_msgid, "%s"
-				"%s%s",
-			"DEAD",
-			instance_get_sha1(instance),
+	ret = firmwared_notify(firmwared, instance->killer_msgid, "%s%s%s",
+			"DEAD", instance_get_sha1(instance),
 			instance_get_name(instance));
-	instance->killer_msgid = (uint32_t)-1;
+	instance->killer_msgid = (uint32_t) -1;
 	if (ret < 0)
 		ULOGE("firmwared_notify : err=%d(%s)", ret, strerror(-ret));
 }
@@ -452,7 +450,7 @@ struct instance *instance_new(struct firmware *firmware,
 	instance->pid = 0;
 	instance->state = INSTANCE_READY;
 	instance->master = -1;
-	instance->killer_msgid = (uint32_t)-1;
+	instance->killer_msgid = (uint32_t) -1;
 
 	instance->firmware_sha1 = strdup(firmware_get_sha1(firmware));
 	instance->firmware_path = strdup(firmware_get_path(firmware));

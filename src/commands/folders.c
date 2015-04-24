@@ -30,10 +30,7 @@ static int folders_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	if (list == NULL)
 		return -errno;
 
-	return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s"
-			"%s",
-			"FOLDERS",
-			list);
+	return firmwared_answer(conn, msg, "%s%s", "FOLDERS", list);
 }
 
 static const struct command folders_command = {
