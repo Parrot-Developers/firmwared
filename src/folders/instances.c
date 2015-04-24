@@ -398,6 +398,7 @@ static void pidfd_uv_poll_cb(uv_poll_t* handle, int status, int events)
 	ULOGD("waitpid said %d", program_status);
 
 	instance->state = INSTANCE_READY;
+	instance->pid = 0;
 }
 
 static void launch_instance(struct instance *instance)
