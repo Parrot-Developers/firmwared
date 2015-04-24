@@ -26,6 +26,37 @@ case "${command}" in
 		format="%s"
 		args=""
 		;;
+	FOLDERS)
+		format="%s"
+		args=""
+		;;
+	LIST)
+		format="%s%s"
+		folder=$2
+		args="${folder}"
+		;;
+	SHOW)
+		format="%s%s%s"
+		folder=$2
+		identifier=$3
+		args="${folder} ${identifier}"
+		;;
+	DROP)
+		format="%s%s%s"
+		folder=$2
+		identifier=$3
+		args="${folder} ${identifier}"
+		;;
+	PREPARE)
+		format="%s%s"
+		identifier=$2
+		args="${identifier}"
+		;;
+	START)
+		format="%s%s"
+		identifier=$2
+		args="${identifier}"
+		;;
 	*)
 		echo "command ${command} not found"
 		exit 1
