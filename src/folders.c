@@ -294,7 +294,7 @@ struct folder *folder_find(const char *name)
 	for (i = 0; i < FOLDERS_MAX; i++)
 		if (folders[i].name == NULL)
 			return NULL;
-		else if (strcmp(name, folders[i].name) == 0)
+		else if (ut_string_match(name, folders[i].name))
 			return folders + i;
 
 	return NULL;
