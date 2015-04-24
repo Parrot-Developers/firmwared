@@ -18,7 +18,6 @@
 struct firmwared {
 	uv_poll_t pomp_handle;
 	struct pomp_ctx *pomp;
-	struct pomp_decoder *decoder;
 };
 
 int firmwared_init(struct firmwared *ctx);

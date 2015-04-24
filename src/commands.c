@@ -11,6 +11,8 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include <ut_string.h>
+
 #include "commands.h"
 
 #define ULOG_TAG firmwared_commands
@@ -50,18 +52,16 @@ static void command_dump(const struct command *cmd)
 	ULOGD("\t%s: \"%s\"", cmd->name, cmd->help);
 }
 
-int command_invoke(struct firmwared *f, struct pomp_conn *conn,
+static int command_process(struct firmwared *f, struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;
-	char *name = NULL;
+	char __attribute__((cleanup(ut_string_free)))*name = NULL;
 	const struct command *cmd;
 
-	pomp_decoder_init(f->decoder, msg);
-	ret = pomp_decoder_read_str(f->decoder, &name);
-	pomp_decoder_clear(f->decoder);
+	ret = pomp_msg_read(msg, "%ms", &name);
 	if (ret < 0) {
-		ULOGE("pomp_decoder_read_str: %s", strerror(-ret));
+		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}
 
@@ -71,12 +71,22 @@ int command_invoke(struct firmwared *f, struct pomp_conn *conn,
 		return -ENOSYS;
 	}
 
-	ret = cmd->handler(f, conn, msg);
-	if (ret < 0)
-		pomp_conn_send(conn, pomp_msg_get_id(msg), "%s%d%s",
+	return cmd->handler(f, conn, msg);
+}
+
+int command_invoke(struct firmwared *f, struct pomp_conn *conn,
+		const struct pomp_msg *msg)
+{
+	int ret;
+
+	ret = command_process(f, conn, msg);
+	if (ret < 0) {
+		ULOGE("command_process: %s", strerror(-ret));
+		return pomp_conn_send(conn, pomp_msg_get_id(msg), "%s%d%s",
 			"ERROR",
 			-ret,
 			strerror(-ret));
+	}
 
 	return 0;
 }

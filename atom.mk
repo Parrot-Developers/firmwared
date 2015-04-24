@@ -31,7 +31,6 @@ LOCAL_COPY_FILES := \
 	hooks/mount.hook:usr/libexec/$(LOCAL_MODULE)/mount.hook
 
 LOCAL_CFLAGS := \
-	-DPOMP_ENABLE_ADVANCED_API \
 	-fopenmp
 
 LOCAL_LDFLAGS := -fopenmp

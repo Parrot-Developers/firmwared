@@ -152,12 +152,6 @@ int firmwared_init(struct firmwared *ctx)
 	}
 	ctx->pomp_handle.data = ctx->pomp;
 
-	ctx->decoder = pomp_decoder_new();
-	if (ctx->decoder == NULL) {
-		ULOGE("pomp_decoder_new failed");
-		goto err;
-	}
-
 	return 0;
 err:
 	firmwared_clean(ctx);
@@ -177,10 +171,6 @@ void firmwared_clean(struct firmwared *ctx)
 		pomp_ctx_stop(ctx->pomp);
 		pomp_ctx_destroy(ctx->pomp);
 		ctx->pomp = NULL;
-		if (ctx->decoder != NULL) {
-			pomp_decoder_destroy(ctx->decoder);
-			ctx->decoder = NULL;
-		}
 	}
 	memset(ctx, 0, sizeof(*ctx));
 
