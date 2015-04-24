@@ -28,37 +28,44 @@ case "${command}" in
 	PING)
 		format="%s"
 		args=""
+		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
 		;;
 	FOLDERS)
 		format="%s"
 		args=""
+		sed_command="s/.*STR:'FOLDERS', STR:'\([^']*\)'.*/\1/g"
 		;;
 	LIST)
 		format="%s%s"
 		folder=$2
 		args="${folder}"
+		sed_command="s/.*STR:'${folder}', U32:\([0-9]*\), STR:'\([^']*\)'.*/\1 ${folder} :\n\2/g"
 		;;
 	SHOW)
 		format="%s%s%s"
 		folder=$2
 		identifier=$3
 		args="${folder} ${identifier}"
+		sed_command="s/.*STR:'//g"
 		;;
 	DROP)
 		format="%s%s%s"
 		folder=$2
 		identifier=$3
 		args="${folder} ${identifier}"
+		sed_command="s/.*/${identifier} dropped/g"
 		;;
 	PREPARE)
 		format="%s%s"
 		identifier=$2
 		args="${identifier}"
+		sed_command="s/.*STR:'${identifier}', STR:'\([^']*\)', STR:'\([^']*\)'.*/new instance created\nsha1: \1\nname: \2/g"
 		;;
 	START)
 		format="%s%s"
 		identifier=$2
 		args="${identifier}"
+		sed_command="s/.*/${identifier} started/g"
 		;;
 	*)
 		echo "command ${command} not found"
@@ -66,10 +73,15 @@ case "${command}" in
 		;;
 esac
 
-${pomp_cmd} ${seq_num} ${format} ${command} ${args} 2>&1 | while read line; do
-	if [ -n "$(echo ${line} | grep MSG)" ] &&
-		[ -n "$(echo ${line} | grep ID:${seq_num})" ]
-		then
-			echo ${line}
-		fi
+${pomp_cmd} ${seq_num} ${format} ${command} ${args} 2>&1 | while read line
+do
+	if [ -n "$(echo ${line} | grep 'POMPCLI: event_cb :')" ];
+	then
+		continue
+	fi
+	if [ -n "$(echo ${line} | grep 'STR:.ERROR.')" ];
+	then
+		sed_command="s/.*STR:'\([^']*\)'}/firmwared error: \1/g"
+	fi
+	echo ${line} | sed "${sed_command}" | grep -v "'}" | egrep -v '^[[:space:]]*$'
 done
