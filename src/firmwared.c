@@ -166,7 +166,8 @@ void firmwared_run(struct firmwared *ctx)
 	uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 }
 
-int firmwared_notify(struct firmwared *ctx, const char *fmt, ...)
+int firmwared_notify(struct firmwared *ctx, uint32_t msgid, const char *fmt,
+		...)
 {
 	int ret;
 	va_list args;
@@ -175,7 +176,7 @@ int firmwared_notify(struct firmwared *ctx, const char *fmt, ...)
 		return -EINVAL;
 
 	va_start(args, fmt);
-	ret = pomp_ctx_sendv(ctx->pomp, (uint32_t)-1, fmt, args);
+	ret = pomp_ctx_sendv(ctx->pomp, msgid, fmt, args);
 	va_end(args);
 
 	return ret;

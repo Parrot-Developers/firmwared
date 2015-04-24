@@ -60,6 +60,7 @@ struct instance {
 	/* caching of sha1 computation */
 	char sha1[2 * SHA_DIGEST_LENGTH + 1];
 	char *info;
+	uint32_t killer_msgid;
 
 	char *base_workspace;
 	/* all 3 dirs must be subdirs of base_workspace dir */
@@ -409,11 +410,12 @@ static void pidfd_uv_poll_cb(uv_poll_t* handle, int status, int events)
 	instance->state = INSTANCE_READY;
 	instance->pid = 0;
 
-	ret = firmwared_notify(firmwared, "%s"
+	ret = firmwared_notify(firmwared, instance->killer_msgid, "%s"
 				"%s%s",
 			"DEAD",
 			instance_get_sha1(instance),
 			instance_get_name(instance));
+	instance->killer_msgid = (uint32_t)-1;
 	if (ret < 0)
 		ULOGE("firmwared_notify : err=%d(%s)", ret, strerror(-ret));
 }
@@ -450,6 +452,7 @@ struct instance *instance_new(struct firmware *firmware,
 	instance->pid = 0;
 	instance->state = INSTANCE_READY;
 	instance->master = -1;
+	instance->killer_msgid = (uint32_t)-1;
 
 	instance->firmware_sha1 = strdup(firmware_get_sha1(firmware));
 	instance->firmware_path = strdup(firmware_get_path(firmware));
@@ -555,6 +558,28 @@ int instance_start(struct instance *instance)
 
 	return 0;
 }
+
+int instance_kill(struct instance *instance, uint32_t killer_msgid)
+{
+	int ret;
+
+	if (instance == 0)
+		return -EINVAL;
+
+	if (instance->state != INSTANCE_STARTED)
+		return -ECHILD;
+
+	instance->state = INSTANCE_STOPPING;
+	instance->killer_msgid = killer_msgid;
+	ret = kill(instance->pid, SIGKILL);
+	if (ret < 0) {
+		ret = -errno;
+		ULOGE("kill:%m");
+	}
+
+	return ret;
+}
+
 
 const char *instance_get_sha1(struct instance *instance)
 {

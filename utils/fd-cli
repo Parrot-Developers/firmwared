@@ -67,6 +67,12 @@ case "${command}" in
 		args="${identifier}"
 		sed_command="s/.*/${identifier} started/g"
 		;;
+	KILL)
+		format="%s%s"
+		identifier=$2
+		args="${identifier}"
+		sed_command="s/.*/${identifier} killed/g"
+		;;
 	*)
 		echo "command ${command} not found"
 		exit 1

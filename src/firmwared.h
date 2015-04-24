@@ -22,7 +22,8 @@ struct firmwared {
 
 int firmwared_init(struct firmwared *ctx);
 void firmwared_run(struct firmwared *ctx);
-int firmwared_notify(struct firmwared *ctx, const char *fmt, ...);
+int firmwared_notify(struct firmwared *ctx, uint32_t msgid, const char *fmt,
+		...);
 void firmwared_clean(struct firmwared *ctx);
 
 #endif /* FIRMWARED_H_ */
