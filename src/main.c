@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
 	int status = EXIT_FAILURE;
 	int ret;
 	struct firmwared ctx;
+	sighandler_t sret;
 
 	ULOGI("%s[%jd] starting", basename(argv[0]), (intmax_t)getpid());
 
@@ -35,6 +36,10 @@ int main(int argc, char *argv[])
 	}
 
 	command_list();
+
+	sret = signal(SIGPIPE, SIG_IGN);
+	if (sret == SIG_ERR)
+		ULOGW("signal: %m");
 
 	firmwared_run(&ctx);
 
