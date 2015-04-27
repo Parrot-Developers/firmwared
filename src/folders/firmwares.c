@@ -231,9 +231,11 @@ static int index_firmwares(void)
 
 	{
 #pragma omp parallel for
-		for (i = 0; i < n; i++)
+		for (i = 0; i < n; i++) {
 			firmwares[i] = firmware_new(repository,
 					namelist[i]->d_name);
+			free(namelist[i]);
+		}
 	}
 
 	while (n--) {
