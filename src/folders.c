@@ -33,6 +33,8 @@ ULOG_DECLARE_TAG(firmwared_folders);
 
 static struct folder folders[FOLDERS_MAX];
 
+static char *list;
+
 static struct rs_dll folders_names;
 static struct rs_dll folders_adjectives;
 
@@ -153,6 +155,7 @@ static void folders_cleanup(void)
 {
 	ULOGD("%s", __func__);
 
+	ut_string_free(&list);
 	rs_dll_remove_all_cb(&folders_names, destroy_word);
 	rs_dll_remove_all_cb(&folders_adjectives, destroy_word);
 }
@@ -414,7 +417,6 @@ const char *folders_list(void)
 	int ret;
 	int old_errno;
 	struct folder *folder = folders + FOLDERS_MAX;
-	static char *list;
 	char *tmp = NULL;
 
 	/* the result is cached */
