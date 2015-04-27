@@ -154,5 +154,5 @@ do
 	then
 		sed_command="s/.*STR:'\([^']*\)'}/firmwared error: \1/g"
 	fi
-	echo ${line} | sed "${sed_command}" | sed "s/'}$//g" | egrep -v '^[[:space:]]*$'
+	echo ${line} | sed "${sed_command}" | sed "s/'}$//g" | egrep -v '^[[:space:]]*$' || true
 done
