@@ -190,6 +190,7 @@ int firmwared_notify(struct firmwared *ctx, uint32_t msgid, const char *fmt,
 void firmwared_clean(struct firmwared *ctx)
 {
 	if (ctx->pomp != NULL) {
+		uv_loop_close(uv_default_loop());
 		uv_poll_stop(&ctx->pomp_handle);
 		pomp_ctx_stop(ctx->pomp);
 		pomp_ctx_destroy(ctx->pomp);
