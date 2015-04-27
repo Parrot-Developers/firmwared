@@ -70,6 +70,8 @@ static __attribute__((constructor)) void prepare_init(void)
 {
 	int ret;
 
+	ULOGD("%s", __func__);
+
 	ret = command_register(&prepare_command);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
@@ -78,6 +80,8 @@ static __attribute__((constructor)) void prepare_init(void)
 static __attribute__((destructor)) void prepare_cleanup(void)
 {
 	int ret;
+
+	ULOGD("%s", __func__);
 
 	ret = command_unregister(COMMAND_NAME);
 	if (ret < 0)

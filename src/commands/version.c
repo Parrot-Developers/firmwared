@@ -55,6 +55,8 @@ static __attribute__((constructor)) void version_init(void)
 {
 	int ret;
 
+	ULOGD("%s", __func__);
+
 	ret = command_register(&version_command);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
@@ -63,6 +65,8 @@ static __attribute__((constructor)) void version_init(void)
 static __attribute__((destructor)) void version_cleanup(void)
 {
 	int ret;
+
+	ULOGD("%s", __func__);
 
 	ret = command_unregister(COMMAND_NAME);
 	if (ret < 0)
