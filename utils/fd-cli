@@ -79,6 +79,11 @@ case "${command}" in
 		args="${identifier}"
 		sed_command="s/.*STR:'//g"
 		;;
+	VERSION)
+		format="%s"
+		args=""
+		sed_command="s/.*STR:'//g"
+		;;
 	*)
 		echo "command ${command} not found"
 		exit 1

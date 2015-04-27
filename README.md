@@ -14,7 +14,7 @@ command line, one can use `pandoc README.md | lynx -stdin`.
 server sends *notifications*, which can be in reaction to a client *command*.  
 An *identifier* is either the sha1 of the entity or it's friendly random name.
 As the time of writing, there is 3 types of entities, "instances", "firmwares"
-and "remote_firmwares", entities types are named *folders*.
+and "remote\_firmwares", entities types are named *folders*.
 
 ### Commands
 
@@ -32,8 +32,8 @@ and "remote_firmwares", entities types are named *folders*.
 * *DROP* FOLDER IDENTIFIER  
   removes an entity from a folder  
   if the entity is an instance, it must be in the *READY* state. It's pid 1 will
-  be killed and it's run artifacts will be removed if FIRMWARED_PREVENT_REMOVAL
-  isn't set to "y"
+  be killed and it's run artifacts will be removed if
+  FIRMWARED\_PREVENT\_REMOVAL isn't set to "y"
 * *PREPARE* FIRMWARE\_IDENTIFIER  
   creates an instance of the given firmware, in the *READY* state
 * *START* INSTANCE\_IDENTIFIER  
@@ -46,6 +46,8 @@ and "remote_firmwares", entities types are named *folders*.
   *READY* state
 * *HELP* COMMAND
   sends back a little help on a given command
+* *VERSION*
+  sends back informations concerning this firmwared program's version
 
 ### Notifications
 
@@ -60,9 +62,9 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
 * *LIST* FOLDER COUNT [list of (ID, NAME) pairs]  
   answer to a *LIST* command
 * *SHOW* FOLDER ID NAME INFORMATION\_STRING  
-  answer to a *SHOW* command. The actual content of the INFORMATION_STRING is
+  answer to a *SHOW* command. The actual content of the INFORMATION\_STRING is
   dependent on the FOLDER queried and is for display purpose
-* *PULLED* FIRMWARE\_ID FIRMWARE_NAME  
+* *PULLED* FIRMWARE\_ID FIRMWARE\_NAME  
   notification in reaction to a *PULL* command
 * *DROPPED* FOLDER ENTITY\_ID ENTITY\_NAME  
   notification in reaction to a *DROP* command
@@ -73,9 +75,11 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
 * *DEAD* INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to the end of an instance's main process, be it
   caused by a *KILL* command or by "natural death"
-* *HELP* COMMAND HELP\_TEXT
+* *HELP* COMMAND HELP\_TEXT  
   answer to a *HELP* command
-* *ERROR* ERRNO MESSAGE
+* *VERSION* VERSION\_DESCRIPTION  
+  answer to a *VERSION* command.
+* *ERROR* ERRNO MESSAGE  
   answer to any command whose execution encountered a problem
 
 ### Instance states
@@ -125,13 +129,13 @@ environment variables (see config.c for more information):
                                    +- ro (read-only mount point of the firmware)
                                    +- rw (directory with the rw layer)
                                    +- union (union fs mount of ./rw upon ./ro)
-  defaults to **/var/run/firmwared/mount_points**
+  defaults to **/var/run/firmwared/mount\_points**
 
 These environment variables are defined in hooks:
 
 * *FIRMWARED\_PREVENT\_REMOVAL*: if set to "y", after dropping an instance, it's
   run artifacts will be preserved, that is, the
-  FIRMWARED\_MOUNT\_PATH/instance_sha1 directory will _not_ be destroyed
+  FIRMWARED\_MOUNT\_PATH/instance\_sha1 directory will _not_ be destroyed
 
 The firmwares initial indexing performs sha1 computation which can take a
 significant amount of time. Openmp is used to automatically make them in
