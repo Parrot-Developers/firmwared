@@ -166,7 +166,7 @@ int command_unregister(const char *name)
 
 	for (; needle < max; needle++)
 		*needle = *(needle + 1);
-	memset(needle + 1, 0, sizeof(*needle)); /* NULL guard */
+	memset(max - 1, 0, sizeof(*needle)); /* NULL guard */
 
 	return 0;
 }
