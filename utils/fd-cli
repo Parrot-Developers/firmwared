@@ -84,6 +84,11 @@ case "${command}" in
 		args=""
 		sed_command="s/.*STR:'//g"
 		;;
+	QUIT)
+		format="%s"
+		args=""
+		sed_command="s/.*STR:'\([^']*\)'.*/firmwared said: \1/g"
+		;;
 	*)
 		echo "command ${command} not found"
 		exit 1

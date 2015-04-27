@@ -41,12 +41,14 @@ and "remote\_firmwares", entities types are named *folders*.
 * *KILL* INSTANCE\_IDENTIFIER  
   kills an instance, all the processes are killed, the instance is still
   registered and it's rw aufs layer is still present  
-  the instance must be in the *STARTED* state..
+  the instance must be in the *STARTED* state..  
   the instance switches to the *STOPPING* state, before switching back to the
   *READY* state
-* *HELP* COMMAND
+* *HELP* COMMAND  
   sends back a little help on a given command
-* *VERSION*
+* *QUIT*  
+  asks firmwared to exit
+* *VERSION*  
   sends back informations concerning this firmwared program's version
 
 ### Notifications
@@ -79,6 +81,8 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   answer to a *HELP* command
 * *VERSION* VERSION\_DESCRIPTION  
   answer to a *VERSION* command.
+* *BYEBYE*  
+  acknowledge reception of a *QUIT* command
 * *ERROR* ERRNO MESSAGE  
   answer to any command whose execution encountered a problem
 
