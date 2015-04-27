@@ -166,6 +166,11 @@ void firmwared_run(struct firmwared *ctx)
 	uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 }
 
+void firmwared_stop(struct firmwared *f)
+{
+	uv_stop(uv_default_loop());
+}
+
 int firmwared_notify(struct firmwared *ctx, uint32_t msgid, const char *fmt,
 		...)
 {
