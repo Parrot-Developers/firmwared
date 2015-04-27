@@ -1,4 +1,9 @@
-#!/bin/sh
+#!/bin/bash
+
+ERROR_TIMEOUT=3
+ERROR_INVALID_COMMAND=2
+ERROR_OTHER=1
+ERROR_SUCCESS=0
 
 set -e
 set -u
@@ -6,6 +11,42 @@ if [ -n "${V+x}" ]
 then
 	set -x
 fi
+
+usage() {
+	cat <<usage_here_document
+Usage : fd-cli COMMAND [arguments_list]
+	Command names are case-insensitive.
+	The arguments_list depend on the commands used.
+	Use 'fd-cli commands' to obtain the list of available commands.
+	Use 'fd-cli help COMMAND' to get some help on a command COMMAND.
+usage_here_document
+}
+
+on_exit() {
+	status=$?
+	case "${status}" in
+		${ERROR_TIMEOUT})
+			echo "Connection with firmwared timed out"
+			;;
+		${ERROR_INVALID_COMMAND})
+			echo "Command \"${command}\" not found"
+			usage
+			;;
+		${ERROR_OTHER})
+			echo "Command-line error"
+			usage
+			;;
+		${ERROR_SUCCESS})
+			# nothing to be done
+			;;
+		*)
+			echo "Failed with error "${status}
+			usage
+			;;
+	esac
+}
+
+trap on_exit EXIT
 
 timeout=${FD_CLI_TIMEOUT:-1}
 
@@ -95,8 +136,7 @@ case "${command}" in
 		sed_command="s/.*STR:'COMMANDS', STR:'\([^']*\)'.*/\1/g"
 		;;
 	*)
-		echo "command ${command} not found"
-		exit 1
+		exit ${ERROR_INVALID_COMMAND}
 		;;
 esac
 
@@ -106,7 +146,11 @@ do
 	then
 		continue
 	fi
-	if [ -n "$(echo ${line} | grep 'STR:.ERROR.')" ];
+	if [ -n "$(echo ${line} | grep 'POMPCLI: Timeout !')" ];
+	then
+		exit ${ERROR_TIMEOUT}
+	fi
+		if [ -n "$(echo ${line} | grep 'STR:.ERROR.')" ];
 	then
 		sed_command="s/.*STR:'\([^']*\)'}/firmwared error: \1/g"
 	fi
