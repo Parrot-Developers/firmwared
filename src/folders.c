@@ -415,32 +415,21 @@ struct folder_entity *folder_find_entity(const char *folder_name,
 const char *folders_list(void)
 {
 	int ret;
-	int old_errno;
 	struct folder *folder = folders + FOLDERS_MAX;
-	char *tmp = NULL;
 
 	/* the result is cached */
 	if (list != NULL)
 		return list;
-	list = strdup("");
-
-	if (list == NULL) {
-		old_errno = errno;
-		ULOGC("strdup: %m");
-		errno = old_errno;
-		return NULL;
-	}
 
 	while (folder-- > folders) {
 		if (folder->name == NULL)
 			continue;
-		ret = asprintf(&tmp, "%s, %s", folder->name, list);
+		ret = ut_string_append(&list, "%s, ", folder->name);
 		if (ret < 0) {
-			ULOGC("asprintf error");
+			ULOGC("ut_string_append");
+			errno = -ret;
 			return NULL;
 		}
-		free(list);
-		list = tmp;
 	}
 	if (list[0] != '\0')
 		list[strlen(list) - 2] = '\0';
