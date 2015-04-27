@@ -487,7 +487,7 @@ int folder_unregister(const char *folder_name)
 
 	for (; folder < max; folder++)
 		*folder = *(folder + 1);
-	memset(folder + 1, 0, sizeof(*folder)); /* NULL guard */
+	memset(max - 1, 0, sizeof(*folder)); /* NULL guard */
 
 	return 0;
 }
