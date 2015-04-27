@@ -120,6 +120,15 @@ static void pomp_uv_poll_cb(uv_poll_t *handle, int status, int events)
 	}
 }
 
+static void sigint_handler(uv_signal_t* handle, int signum)
+{
+	struct firmwared *f = handle->data;
+
+	ULOGI("Caught signal %d, exiting", signum);
+
+	firmwared_stop(f);
+}
+
 int firmwared_init(struct firmwared *ctx)
 {
 	int ret;
@@ -159,6 +168,17 @@ int firmwared_init(struct firmwared *ctx)
 		goto err;
 	}
 	ctx->pomp_handle.data = ctx->pomp;
+	ret = uv_signal_init(&ctx->loop, &ctx->sigint);
+	if (ret < 0) {
+		ULOGE("uv_signal_init: %s", strerror(-ret));
+		goto err;
+	}
+	ret = uv_signal_start(&ctx->sigint, sigint_handler, SIGINT);
+	if (ret < 0) {
+		ULOGE("uv_signal_init: %s", strerror(-ret));
+		goto err;
+	}
+	ctx->sigint.data = ctx;
 
 	return 0;
 err:
@@ -202,6 +222,7 @@ void firmwared_clean(struct firmwared *ctx)
 	}
 
 	if (ctx->pomp != NULL) {
+		uv_signal_stop(&ctx->sigint);
 		uv_poll_stop(&ctx->pomp_handle);
 		/*
 		 * we need to ask libuv to close explicitly all the handles

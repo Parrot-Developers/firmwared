@@ -19,6 +19,7 @@ struct firmwared {
 	uv_loop_t loop;
 	uv_poll_t pomp_handle;
 	struct pomp_ctx *pomp;
+	uv_signal_t sigint;
 };
 
 int firmwared_init(struct firmwared *f);
