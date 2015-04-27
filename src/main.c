@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
 	int ret;
 	struct firmwared ctx;
 	sighandler_t sret;
+	const char *commands_list;
 
 	ULOGI("%s[%jd] starting", basename(argv[0]), (intmax_t)getpid());
 
@@ -35,7 +36,8 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
-	command_list();
+	commands_list = command_list();
+	ULOGD("Commands registered are: %s", commands_list);
 
 	sret = signal(SIGPIPE, SIG_IGN);
 	if (sret == SIG_ERR)

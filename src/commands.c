@@ -27,6 +27,8 @@ ULOG_DECLARE_TAG(firmwared_commands);
 
 static struct command commands[COMMANDS_MAX];
 
+static char *list;
+
 static struct command *command_find(const char *name)
 {
 	int i;
@@ -169,16 +171,32 @@ int command_unregister(const char *name)
 	return 0;
 }
 
-void command_list(void)
+const char *command_list(void)
 {
-	int i;
-	const struct command *cmd;
+	int ret;
+	struct command *command = commands + COMMANDS_MAX;
 
-	ULOGD("Registered commands so far, are :");
-	for (i = 0; i < COMMANDS_MAX; i++) {
-		cmd = commands + i;
-		if (cmd->name == NULL)
-			return;
-		command_dump(cmd);
+	/* the result is cached */
+	if (list != NULL)
+		return list;
+
+	while (command-- > commands) {
+		if (command->name == NULL)
+			continue;
+		ret = ut_string_append(&list, "%s, ", command->name);
+		if (ret < 0) {
+			ULOGC("ut_string_append");
+			errno = -ret;
+			return NULL;
+		}
 	}
+	if (list[0] != '\0')
+		list[strlen(list) - 2] = '\0';
+
+	return list;
+}
+
+static __attribute((destructor)) void commands_cleanup(void)
+{
+	ut_string_free(&list);
 }

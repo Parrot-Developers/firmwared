@@ -27,6 +27,6 @@ int command_invoke(struct firmwared *f, struct pomp_conn *conn,
 		const struct pomp_msg *msg);
 int command_register(const struct command *cmd);
 int command_unregister(const char *name);
-void command_list(void);
+const char *command_list(void);
 
 #endif /* COMMANDS_H_ */
