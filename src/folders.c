@@ -157,11 +157,6 @@ static void folders_cleanup(void)
 	rs_dll_remove_all_cb(&folders_adjectives, destroy_word);
 }
 
-static bool str_is_invalid(const char *str)
-{
-	return str == NULL || *str == '\0';
-}
-
 static bool folder_entity_ops_are_invalid(const struct folder_entity_ops *ops)
 {
 	return ops->drop == NULL || ops->get_info == NULL ||
@@ -170,7 +165,7 @@ static bool folder_entity_ops_are_invalid(const struct folder_entity_ops *ops)
 
 static bool folder_is_invalid(const struct folder *folder)
 {
-	return folder == NULL || str_is_invalid(folder->name) ||
+	return folder == NULL || ut_string_is_invalid(folder->name) ||
 			folder_entity_ops_are_invalid(&folder->ops);
 }
 

@@ -40,15 +40,11 @@ static struct command *command_find(const char *name)
 	return NULL;
 }
 
-static bool str_is_invalid(const char *str)
-{
-	return str == NULL || *str == '\0';
-}
-
 static bool command_is_invalid(const struct command *cmd)
 {
-	return cmd == NULL || cmd->help == NULL || str_is_invalid(cmd->name) ||
-				cmd->handler == NULL || cmd->synopsis == NULL;
+	return cmd == NULL || cmd->help == NULL ||
+			ut_string_is_invalid(cmd->name) ||
+			cmd->handler == NULL || cmd->synopsis == NULL;
 }
 
 static void command_dump(const struct command *cmd)
