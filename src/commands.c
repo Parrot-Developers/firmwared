@@ -162,8 +162,8 @@ int command_unregister(const char *name)
 	struct command *max = commands + COMMANDS_MAX - 1;
 
 	needle = command_find(name);
-	if (needle != NULL)
-		return -EEXIST;
+	if (needle == NULL)
+		return -ESRCH;
 	ut_string_free(&needle->help_msg);
 
 	for (; needle < max; needle++)
