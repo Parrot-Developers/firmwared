@@ -211,7 +211,7 @@ static int index_firmwares(void)
 {
 	int i;
 	int ret;
-	int res;
+	int res = 0;
 	int n;
 	struct dirent __attribute__((cleanup(free_namelist))) **namelist = NULL;
 	const char *repository = config_get(CONFIG_FIRMWARE_REPOSITORY);
