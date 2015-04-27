@@ -27,6 +27,7 @@ void firmwared_stop(struct firmwared *f);
 int firmwared_notify(struct firmwared *f, uint32_t msgid, const char *fmt, ...);
 #define firmwared_answer(c, m, f, ...) pomp_conn_send(c, pomp_msg_get_id(m), \
 		f, __VA_ARGS__)
+#define firmwared_get_uv_loop(f) ((f) == NULL ? NULL : &((f)->loop))
 
 void firmwared_clean(struct firmwared *f);
 

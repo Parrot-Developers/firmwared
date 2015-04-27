@@ -481,8 +481,8 @@ struct instance *instance_new(struct firmware *firmware,
 		ULOGE("pidwatch_create: %m");
 		goto err;
 	}
-	ret = uv_poll_init(uv_default_loop(), &instance->pidfd_handle,
-			instance->pidfd);
+	ret = uv_poll_init(firmwared_get_uv_loop(firmwared),
+			&instance->pidfd_handle, instance->pidfd);
 	if (ret < 0) {
 		ULOGE("uv_poll_init: %s", strerror(-ret));
 		goto err;
