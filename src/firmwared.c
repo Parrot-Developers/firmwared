@@ -141,7 +141,13 @@ int firmwared_init(struct firmwared *ctx)
 	}
 	change_sock_group_mode();
 
-	ret = uv_poll_init(uv_default_loop(), &ctx->pomp_handle,
+	ret = uv_loop_init(&ctx->loop);
+	if (ret < 0) {
+		ULOGE("uv_loop_init: %s", strerror(-ret));
+		goto err;
+	}
+
+	ret = uv_poll_init(&ctx->loop, &ctx->pomp_handle,
 			pomp_ctx_get_fd(ctx->pomp));
 	if (ret < 0) {
 		ULOGE("uv_poll_init: %s", strerror(-ret));
@@ -163,12 +169,12 @@ err:
 
 void firmwared_run(struct firmwared *ctx)
 {
-	uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+	uv_run(&ctx->loop, UV_RUN_DEFAULT);
 }
 
 void firmwared_stop(struct firmwared *f)
 {
-	uv_stop(uv_default_loop());
+	uv_stop(&f->loop);
 }
 
 int firmwared_notify(struct firmwared *ctx, uint32_t msgid, const char *fmt,
@@ -189,9 +195,28 @@ int firmwared_notify(struct firmwared *ctx, uint32_t msgid, const char *fmt,
 
 void firmwared_clean(struct firmwared *ctx)
 {
+	int ret;
+	void uv_close_cb(uv_handle_t* handle, void* arg)
+	{
+		uv_close(handle, NULL);
+	}
+
 	if (ctx->pomp != NULL) {
-		uv_loop_close(uv_default_loop());
 		uv_poll_stop(&ctx->pomp_handle);
+		/*
+		 * we need to ask libuv to close explicitly all the handles
+		 * registered, otherwise, the signal handle, implicitly
+		 * registered won't be closed
+		 */
+		uv_walk(&ctx->loop, uv_close_cb, NULL);
+		/*
+		 * after requiring the handles, we need the loop to run once
+		 * more to fullfil the close requests
+		 */
+		uv_run(&ctx->loop, UV_RUN_DEFAULT);
+		ret = uv_loop_close(&ctx->loop);
+		if (ret == -EBUSY)
+			ULOGE("ret == %d\n", ret);
 		pomp_ctx_stop(ctx->pomp);
 		pomp_ctx_destroy(ctx->pomp);
 		ctx->pomp = NULL;

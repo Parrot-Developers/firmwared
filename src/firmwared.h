@@ -16,6 +16,7 @@
 #include <libpomp.h>
 
 struct firmwared {
+	uv_loop_t loop;
 	uv_poll_t pomp_handle;
 	struct pomp_ctx *pomp;
 };
