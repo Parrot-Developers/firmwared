@@ -50,6 +50,8 @@ and "remote\_firmwares", entities types are named *folders*.
   asks firmwared to exit
 * *VERSION*  
   sends back informations concerning this firmwared program's version
+* *COMMANDS*  
+  asks the server to list the currently registered commands
 
 ### Notifications
 
