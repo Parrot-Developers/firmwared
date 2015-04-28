@@ -16,6 +16,9 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
+#include <sys/mount.h>
+#include <sys/prctl.h>
 
 #include <unistd.h>
 #include <dirent.h>
@@ -427,19 +430,101 @@ static void pidfd_uv_poll_cb(uv_poll_t *handle, int status, int events)
 static void launch_instance(struct instance *instance)
 {
 	int ret;
+	int fd;
+	int i;
+	int flags;
+	pid_t pid;
+	// TODO load this from the firmware's config file
 	char *const args[] = {
-			"sleep",
-			"10",
+			"/sbin/boxinit",
+			"ro.boot.console=stdin",
+			"ro.hardware=mk3_sim_pc",
+			"ro.debuggable=1",
 			NULL,
 	};
 
-	ULOGC("%s: STUB !!!", __func__); // TODO
+	ULOGI("%s \"%s\"", __func__, instance->firmware_path);
 
-	ret = execvp(args[0], args);
-	if (ret < 0)
-		ULOGC("execvp: %m");
+	/*
+	 * use our own namespace for IPC, networking, mount points, pid tree
+	 * and uts (hostname and domain name)
+	 */
+	flags = CLONE_FILES | CLONE_NEWIPC | //CLONE_NEWNET | TODO
+			CLONE_NEWNS | CLONE_NEWPID |
+			CLONE_NEWUTS | CLONE_SYSVSEM;
+	ret = unshare(flags);
+	if (ret < 0) {
+		ULOGE("unshare: %m");
+		exit(EXIT_FAILURE);
+	}
 
-	exit(1);
+	/*
+	 * although we have a new mount points namespace, it is still necessary
+	 * to make them private, recursively, so that changes aren't propagated
+	 * to the parent namespace
+	 */
+	ret = mount(NULL, "/", NULL, MS_REC|MS_PRIVATE, NULL);
+	if (ret < 0) {
+		ULOGE("cannot make \"/\" private: %m");
+		exit(EXIT_FAILURE);
+	}
+
+	ret = chroot(instance->union_mount_point);
+	if (ret < 0) {
+		ULOGE("chroot(%s): %m", instance->union_mount_point);
+		exit(EXIT_FAILURE);
+	}
+	ret = chdir("/");
+	if (ret < 0) {
+		ULOGE("chdir(/): %m");
+		exit(EXIT_FAILURE);
+	}
+
+	pid = fork();
+	if (pid < 0) {
+		ULOGE("fork(): %m");
+		exit(EXIT_FAILURE);
+	}
+	if (pid == 0) {
+		/* be sure we die if our parent does */
+		ret = prctl(PR_SET_PDEATHSIG, SIGKILL);
+		if (ret < 0)
+			ULOGE("prctl(PR_SET_PDEATHSIG, SIGKILL): %m");
+		ret = setsid();
+		if (ret < 0)
+			ULOGE("setsid: %m");
+
+		/* TODO the tty passing to the child process doesn't work */
+		fd = instance->master;
+		ret = ioctl(fd, TIOCSCTTY, 1);
+		if (ret < 0)
+			ULOGE("ioctl: %m");
+		ret = dup2(fd, STDIN_FILENO);
+		if (ret < 0)
+			ULOGE("dup2(fd, STDIN_FILENO): %m");
+		ret = dup2(fd, STDOUT_FILENO);
+		if (ret < 0)
+			ULOGE("dup2(fd, STDOUT_FILENO): %m");
+		ret = dup2(fd, STDERR_FILENO);
+		if (ret < 0)
+			ULOGE("dup2(fd, STDERR_FILENO): %m");
+		for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
+			close(i);
+
+		ret = execvp(args[0], args);
+		if (ret < 0)
+			ULOGC("execvp: %m");
+
+		exit(EXIT_FAILURE);
+	}
+
+	ret = waitpid(pid, NULL, 0);
+	if (ret < 0) {
+		exit(EXIT_SUCCESS);
+		ULOGE("waitpid: %m");
+	}
+
+	exit(EXIT_SUCCESS);
 }
 
 struct instance *instance_new(struct firmware *firmware,
