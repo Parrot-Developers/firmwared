@@ -79,6 +79,11 @@ struct instance {
 
 #define to_instance(p) ut_container_of(p, struct instance, entity)
 
+struct pid_cb_data {
+	struct firmwared *firmwared;
+	struct instance *instance;
+};
+
 static struct folder instances_folder;
 
 static int sha1(struct instance *instance,
@@ -161,11 +166,17 @@ static void clean_mount_points(struct instance *instance, bool only_unregister)
 static void instance_delete(struct instance **instance, bool only_unregister)
 {
 	struct instance *i;
+	struct pid_cb_data *data;
 
 	if (instance == NULL || *instance == NULL)
 		return;
 	i = *instance;
+	data = i->pidfd_handle.data;
 
+	uv_poll_stop(&i->pidfd_handle);
+	uv_close((uv_handle_t *)&i->pidfd_handle, NULL);
+	/* uv_close is asynchronous and forces us to run the loop once */
+	uv_run(&data->firmwared->loop, UV_RUN_NOWAIT);
 	free(i->pidfd_handle.data);
 	ut_file_fd_close(&i->pidfd);
 	clean_pts(i);
@@ -377,11 +388,6 @@ err:
 	return ret;
 }
 
-struct pid_cb_data {
-	struct firmwared *firmwared;
-	struct instance *instance;
-};
-
 static void pidfd_uv_poll_cb(uv_poll_t *handle, int status, int events)
 {
 	int ret;
@@ -481,6 +487,17 @@ struct instance *instance_new(struct firmware *firmware,
 		ULOGE("pidwatch_create: %m");
 		goto err;
 	}
+
+	data = calloc(1, sizeof(*data));
+	if (data == NULL) {
+		ret = -errno;
+		ULOGE("calloc: %m");
+		goto err;
+	}
+	data->instance = instance;
+	data->firmwared = firmwared;
+	instance->pidfd_handle.data = data;
+
 	ret = uv_poll_init(firmwared_get_uv_loop(firmwared),
 			&instance->pidfd_handle, instance->pidfd);
 	if (ret < 0) {
@@ -494,15 +511,6 @@ struct instance *instance_new(struct firmware *firmware,
 		goto err;
 	}
 
-	data = calloc(1, sizeof(*data));
-	if (data == NULL) {
-		ret = -errno;
-		ULOGE("calloc: %m");
-		goto err;
-	}
-	data->instance = instance;
-	data->firmwared = firmwared;
-	instance->pidfd_handle.data = data;
 
 	return instance;
 err:
