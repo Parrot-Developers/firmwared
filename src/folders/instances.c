@@ -427,23 +427,10 @@ static void pidfd_uv_poll_cb(uv_poll_t *handle, int status, int events)
 		ULOGE("firmwared_notify : err=%d(%s)", ret, strerror(-ret));
 }
 
-static void launch_instance(struct instance *instance)
+static int setup_container(struct instance *instance)
 {
 	int ret;
-	int fd;
-	int i;
 	int flags;
-	pid_t pid;
-	// TODO load this from the firmware's config file
-	char *const args[] = {
-			"/sbin/boxinit",
-			"ro.boot.console=stdin",
-			"ro.hardware=mk3_sim_pc",
-			"ro.debuggable=1",
-			NULL,
-	};
-
-	ULOGI("%s \"%s\"", __func__, instance->firmware_path);
 
 	/*
 	 * use our own namespace for IPC, networking, mount points, pid tree
@@ -454,8 +441,9 @@ static void launch_instance(struct instance *instance)
 			CLONE_NEWUTS | CLONE_SYSVSEM;
 	ret = unshare(flags);
 	if (ret < 0) {
+		ret = -errno;
 		ULOGE("unshare: %m");
-		exit(EXIT_FAILURE);
+		return ret;
 	}
 
 	/*
@@ -465,18 +453,94 @@ static void launch_instance(struct instance *instance)
 	 */
 	ret = mount(NULL, "/", NULL, MS_REC|MS_PRIVATE, NULL);
 	if (ret < 0) {
+		ret = -errno;
 		ULOGE("cannot make \"/\" private: %m");
-		exit(EXIT_FAILURE);
+		return ret;
 	}
 
 	ret = chroot(instance->union_mount_point);
 	if (ret < 0) {
+		ret = -errno;
 		ULOGE("chroot(%s): %m", instance->union_mount_point);
-		exit(EXIT_FAILURE);
+		return ret;
 	}
 	ret = chdir("/");
 	if (ret < 0) {
+		ret = -errno;
 		ULOGE("chdir(/): %m");
+		return ret;
+	}
+
+	return 0;
+}
+
+static void launch_pid_1(struct instance *instance)
+{
+	int ret;
+	int fd;
+	int i;
+	const char *hostname;
+	// TODO load this from the firmware's config file
+	char *args[] = {
+			"/sbin/boxinit",
+			"ro.boot.console=stdin",
+			"ro.hardware=mk3_sim_pc",
+			"ro.debuggable=1",
+			NULL, /* for ro.instance */
+			NULL,
+	};
+
+	/* we need to be able to differenciate instances by hostnames */
+	hostname = instance_get_name(instance);
+	ret = sethostname(hostname, strlen(hostname));
+	if (ret < 0)
+		ULOGE("sethostname(%s): %m", hostname);
+
+	/* be sure we die if our parent does */
+	ret = prctl(PR_SET_PDEATHSIG, SIGKILL);
+	if (ret < 0)
+		ULOGE("prctl(PR_SET_PDEATHSIG, SIGKILL): %m");
+	ret = setsid();
+	if (ret < 0)
+		ULOGE("setsid: %m");
+
+	/* TODO the tty passing to the child process doesn't work */
+	fd = instance->master;
+	ret = ioctl(fd, TIOCSCTTY, 1);
+	if (ret < 0)
+		ULOGE("ioctl: %m");
+	ret = dup2(fd, STDIN_FILENO);
+	if (ret < 0)
+		ULOGE("dup2(fd, STDIN_FILENO): %m");
+	ret = dup2(fd, STDOUT_FILENO);
+	if (ret < 0)
+		ULOGE("dup2(fd, STDOUT_FILENO): %m");
+	ret = dup2(fd, STDERR_FILENO);
+	if (ret < 0)
+		ULOGE("dup2(fd, STDERR_FILENO): %m");
+	for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
+		close(i);
+
+	ret = asprintf(&args[4], "ro.instance=%s", hostname);
+	if (ret < 0)
+		ULOGE("asprintf error");
+	ret = execvp(args[0], args);
+	if (ret < 0)
+		ULOGC("execvp: %m");
+
+	exit(EXIT_FAILURE);
+}
+
+static void launch_instance(struct instance *instance)
+{
+	int ret;
+	pid_t pid;
+
+	ULOGI("%s \"%s\"", __func__, instance->firmware_path);
+
+	ret = setup_container(instance);
+	if (ret < 0) {
+		ULOGE("fork(): %m");
 		exit(EXIT_FAILURE);
 	}
 
@@ -485,38 +549,8 @@ static void launch_instance(struct instance *instance)
 		ULOGE("fork(): %m");
 		exit(EXIT_FAILURE);
 	}
-	if (pid == 0) {
-		/* be sure we die if our parent does */
-		ret = prctl(PR_SET_PDEATHSIG, SIGKILL);
-		if (ret < 0)
-			ULOGE("prctl(PR_SET_PDEATHSIG, SIGKILL): %m");
-		ret = setsid();
-		if (ret < 0)
-			ULOGE("setsid: %m");
-
-		/* TODO the tty passing to the child process doesn't work */
-		fd = instance->master;
-		ret = ioctl(fd, TIOCSCTTY, 1);
-		if (ret < 0)
-			ULOGE("ioctl: %m");
-		ret = dup2(fd, STDIN_FILENO);
-		if (ret < 0)
-			ULOGE("dup2(fd, STDIN_FILENO): %m");
-		ret = dup2(fd, STDOUT_FILENO);
-		if (ret < 0)
-			ULOGE("dup2(fd, STDOUT_FILENO): %m");
-		ret = dup2(fd, STDERR_FILENO);
-		if (ret < 0)
-			ULOGE("dup2(fd, STDERR_FILENO): %m");
-		for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
-			close(i);
-
-		ret = execvp(args[0], args);
-		if (ret < 0)
-			ULOGC("execvp: %m");
-
-		exit(EXIT_FAILURE);
-	}
+	if (pid == 0)
+		launch_pid_1(instance);
 
 	ret = waitpid(pid, NULL, 0);
 	if (ret < 0) {
@@ -642,8 +676,7 @@ int instance_start(struct instance *instance)
 
 	ret = pidwatch_set_pid(instance->pidfd, instance->pid);
 	if (instance->pid == -1) {
-		ret = -errno;
-		ULOGE("fork: %m");
+		ULOGE("pidwatch_set_pid: %s", strerror(-ret));
 		return ret;
 	}
 
