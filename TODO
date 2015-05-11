@@ -1,0 +1,20 @@
+start an instance from a directory
+
+add a PROPERTIES FOLDER to list the properties available for an entity
+add a GET command, generic getter for entity properties
+BUG: wrong handling of execvp error: no such file or directory
+make pts work
+generate a unique instance index
+use user namespace
+check hostname hasn't changed after boxinit has died
+pass a pointer to command handlers for retrieving an error message
+add overwritting of config via a /etc/firmwared.conf lua config file
+add a long help for commands
+add a veth pair when PREPARE-ing an instance
+implement the PULL command, with libcurl
+add a lua config file for each firmware
+log at each action
+allow to associate a "product type" to a firmware
+add a inotify watch on firmwares in the repository
+
+investigate on user namespace and on apparmor
