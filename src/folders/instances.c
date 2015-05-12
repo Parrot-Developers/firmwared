@@ -483,7 +483,7 @@ static void launch_pid_1(struct instance *instance)
 	if (ret < 0)
 		ULOGC("execvp: %m");
 
-	exit(EXIT_FAILURE);
+	_exit(EXIT_FAILURE);
 }
 
 static void launch_instance(struct instance *instance)
@@ -495,25 +495,25 @@ static void launch_instance(struct instance *instance)
 
 	ret = setup_container(instance);
 	if (ret < 0) {
-		ULOGE("fork(): %m");
-		exit(EXIT_FAILURE);
+		ULOGE("setup_container: %m");
+		_exit(EXIT_FAILURE);
 	}
 
 	pid = fork();
 	if (pid < 0) {
-		ULOGE("fork(): %m");
-		exit(EXIT_FAILURE);
+		ULOGE("fork: %m");
+		_exit(EXIT_FAILURE);
 	}
 	if (pid == 0)
 		launch_pid_1(instance);
 
 	ret = waitpid(pid, NULL, 0);
 	if (ret < 0) {
-		exit(EXIT_SUCCESS);
+		_exit(EXIT_FAILURE);
 		ULOGE("waitpid: %m");
 	}
 
-	exit(EXIT_SUCCESS);
+	_exit(EXIT_SUCCESS);
 }
 
 struct instance *instance_new(struct firmware *firmware,
