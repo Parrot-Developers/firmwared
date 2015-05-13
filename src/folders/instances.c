@@ -454,7 +454,7 @@ static int setup_container(struct instance *instance)
 	return 0;
 }
 
-static void launch_pid_1(struct instance *instance)
+static void launch_pid_1(struct instance *instance, int fd)
 {
 	int ret;
 	int i;
@@ -488,6 +488,18 @@ static void launch_pid_1(struct instance *instance)
 	ret = asprintf(&args[4], "ro.instance=%s", hostname);
 	if (ret < 0)
 		ULOGE("asprintf error");
+
+	if (fd >= 0) {
+		ret = dup2(fd, STDIN_FILENO);
+		if (ret < 0)
+			ULOGE("dup2(fd, STDIN_FILENO): %m");
+		ret = dup2(fd, STDOUT_FILENO);
+		if (ret < 0)
+			ULOGE("dup2(fd, STDOUT_FILENO): %m");
+		ret = dup2(fd, STDERR_FILENO);
+		if (ret < 0)
+			ULOGE("dup2(fd, STDERR_FILENO): %m");
+	}
 	for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
 		close(i);
 	ret = execv(args[0], args);
@@ -501,9 +513,14 @@ static void launch_instance(struct instance *instance)
 {
 	int ret;
 	pid_t pid;
+	int fd;
 
 	ULOGI("%s \"%s\"", __func__, instance->firmware_path);
 
+	fd = open(ptspair_get_path(&instance->ptspair, PTSPAIR_BAR), O_RDWR);
+	if (fd < 0) {
+		ULOGE("open: %m");
+	}
 	ret = setup_container(instance);
 	if (ret < 0) {
 		ULOGE("setup_container: %m");
@@ -516,7 +533,8 @@ static void launch_instance(struct instance *instance)
 		_exit(EXIT_FAILURE);
 	}
 	if (pid == 0)
-		launch_pid_1(instance);
+		launch_pid_1(instance, fd);
+	close(fd);
 
 	ret = waitpid(pid, NULL, 0);
 	if (ret < 0) {
