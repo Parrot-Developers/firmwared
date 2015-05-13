@@ -16,6 +16,7 @@ LOCAL_LIBRARIES := \
 	libutils \
 	libcrypto \
 	libpidwatch \
+	libptspair \
 	libuv
 
 LOCAL_SRC_FILES := \

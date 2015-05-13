@@ -46,6 +46,8 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include <ut_file.h>
 #include <ut_process.h>
 
+#include <ptspair.h>
+
 #include "folders.h"
 #include "instances.h"
 #include "firmwares.h"
@@ -71,9 +73,9 @@ struct instance {
 	char *rw_dir;
 	char *union_mount_point;
 
-	/* pseudo-terminal passed to boxinit */
-	char pts[PATH_MAX];
-	int master;
+	/* foo is the external pts, bar will be passed to the pid 1 */
+	struct ptspair ptspair;
+	uv_poll_t ptspair_handle;
 
 	/* fields used for instance sha1 computation */
 	char *firmware_sha1;
@@ -126,12 +128,6 @@ static const char *instance_sha1(struct folder_entity *entity)
 	return instance_get_sha1(to_instance(entity));
 }
 
-static void clean_pts(struct instance *instance)
-{
-	ut_file_fd_close(&instance->master);
-	instance->pts[0] = '\0';
-}
-
 static void clean_paths(struct instance *instance)
 {
 	ut_string_free(&instance->base_workspace);
@@ -182,7 +178,7 @@ static void instance_delete(struct instance **instance, bool only_unregister)
 	uv_run(&data->firmwared->loop, UV_RUN_NOWAIT);
 	free(i->pidfd_handle.data);
 	ut_file_fd_close(&i->pidfd);
-	clean_pts(i);
+	ptspair_clean(&i->ptspair);
 	clean_mount_points(i, only_unregister);
 
 	ut_string_free(&i->firmware_sha1);
@@ -241,7 +237,7 @@ static char *instance_get_info(const struct folder_entity *entity)
 			instance_state_to_str(instance->state),
 			instance->firmware_path,
 			instance->base_workspace,
-			instance->pts,
+			ptspair_get_path(&instance->ptspair, PTSPAIR_FOO),
 			instance->firmware_sha1,
 			ctime(&instance->time));
 	if (ret < 0) {
@@ -355,42 +351,6 @@ err:
 	return ret;
 }
 
-static int init_pts(struct instance *instance)
-{
-	int ret;
-
-	instance->master = posix_openpt(O_RDWR | O_NOCTTY);
-	if (instance->master < 0) {
-		ret = -errno;
-		ULOGE("posix_openpt: %m");
-		goto err;
-	}
-	ret = grantpt(instance->master);
-	if (ret < 0) {
-		ret = -errno;
-		ULOGE("grantpt: %m");
-		goto err;
-	}
-	ret = unlockpt(instance->master);
-	if (ret < 0) {
-		ret = -errno;
-		ULOGE("unlockpt: %m");
-		goto err;
-	}
-	ret = ptsname_r(instance->master, instance->pts, PATH_MAX);
-	if (ret < 0) {
-		ret = -errno;
-		ULOGE("ptsname_r: %m");
-		goto err;
-	}
-
-	return 0;
-err:
-	clean_pts(instance);
-
-	return ret;
-}
-
 static void pidfd_uv_poll_cb(uv_poll_t *handle, int status, int events)
 {
 	int ret;
@@ -425,6 +385,19 @@ static void pidfd_uv_poll_cb(uv_poll_t *handle, int status, int events)
 	instance->killer_msgid = (uint32_t) -1;
 	if (ret < 0)
 		ULOGE("firmwared_notify : err=%d(%s)", ret, strerror(-ret));
+}
+
+static void ptspair_uv_poll_cb(uv_poll_t *handle, int status, int events)
+{
+	int ret;
+	struct ptspair *ptspair = handle->data;
+
+	ret = ptspair_process_events(ptspair);
+	if (ret < 0) {
+		ULOGE("ptspair_process_events : err=%d(%s)", ret,
+				strerror(-ret));
+		return;
+	}
 }
 
 static int setup_container(struct instance *instance)
@@ -477,13 +450,11 @@ static int setup_container(struct instance *instance)
 static void launch_pid_1(struct instance *instance)
 {
 	int ret;
-	int fd;
-	int i;
 	const char *hostname;
 	// TODO load this from the firmware's config file
 	char *args[] = {
 			"/sbin/boxinit",
-			"ro.boot.console=stdin",
+			NULL, /* for ro.boot.console */
 			"ro.hardware=mk3_sim_pc",
 			"ro.debuggable=1",
 			NULL, /* for ro.instance */
@@ -500,27 +471,11 @@ static void launch_pid_1(struct instance *instance)
 	ret = prctl(PR_SET_PDEATHSIG, SIGKILL);
 	if (ret < 0)
 		ULOGE("prctl(PR_SET_PDEATHSIG, SIGKILL): %m");
-	ret = setsid();
-	if (ret < 0)
-		ULOGE("setsid: %m");
 
-	/* TODO the tty passing to the child process doesn't work */
-	fd = instance->master;
-	ret = ioctl(fd, TIOCSCTTY, 1);
+	ret = asprintf(&args[1], "ro.boot.console=%s",
+			ptspair_get_path(&instance->ptspair, PTSPAIR_BAR) + 4);
 	if (ret < 0)
-		ULOGE("ioctl: %m");
-	ret = dup2(fd, STDIN_FILENO);
-	if (ret < 0)
-		ULOGE("dup2(fd, STDIN_FILENO): %m");
-	ret = dup2(fd, STDOUT_FILENO);
-	if (ret < 0)
-		ULOGE("dup2(fd, STDOUT_FILENO): %m");
-	ret = dup2(fd, STDERR_FILENO);
-	if (ret < 0)
-		ULOGE("dup2(fd, STDERR_FILENO): %m");
-	for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
-		close(i);
-
+		ULOGE("asprintf error");
 	ret = asprintf(&args[4], "ro.instance=%s", hostname);
 	if (ret < 0)
 		ULOGE("asprintf error");
@@ -574,7 +529,6 @@ struct instance *instance_new(struct firmware *firmware,
 	instance->time = time(NULL);
 	instance->pid = 0;
 	instance->state = INSTANCE_READY;
-	instance->master = -1;
 	instance->killer_msgid = (uint32_t) -1;
 
 	instance->firmware_sha1 = strdup(firmware_get_sha1(firmware));
@@ -589,9 +543,19 @@ struct instance *instance_new(struct firmware *firmware,
 		goto err;
 	}
 
-	ret = init_pts(instance);
+	ptspair_init(&instance->ptspair);
+	instance->ptspair_handle.data = &instance->ptspair;
+	ret = uv_poll_init(firmwared_get_uv_loop(firmwared),
+			&instance->ptspair_handle,
+			ptspair_get_fd(&instance->ptspair));
 	if (ret < 0) {
-		ULOGE("install_mount_points");
+		ULOGE("uv_poll_init: %s", strerror(-ret));
+		goto err;
+	}
+	ret = uv_poll_start(&instance->ptspair_handle, UV_READABLE,
+			ptspair_uv_poll_cb);
+	if (ret < 0) {
+		ULOGE("uv_poll_start: %s", strerror(-ret));
 		goto err;
 	}
 
