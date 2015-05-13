@@ -100,7 +100,7 @@ case "${command}" in
 		format="%s%s"
 		identifier=$2
 		args="${identifier}"
-		sed_command="s/.*STR:'${identifier}', STR:'\([^']*\)', STR:'\([^']*\)'.*/new instance created\nsha1: \1\nname: \2/g"
+		sed_command="s#.*STR:'[^']*', STR:'\([^']*\)', STR:'\([^']*\)'.*#new instance created\nsha1: \1\nname: \2#g"
 		;;
 	START)
 		format="%s%s"

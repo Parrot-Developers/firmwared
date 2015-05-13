@@ -18,7 +18,12 @@ then
 	mkdir -p ${ro_mount_point} ${rw_dir} ${union_mount_point}
 
 	# mount the ro layer and remount it with a rw layer on top
-	mount -o ro,loop ${firmware} ${ro_mount_point}
+	if [ -d "${firmware}" ];
+	then
+		mount -o ro --bind ${firmware} ${ro_mount_point}
+	else
+		mount -o ro,loop ${firmware} ${ro_mount_point}
+	fi
 	mount -t aufs -o br=${rw_dir}:${ro_mount_point} ${sha1} \
 		${union_mount_point}
 elif [ "${action}" = "clean" ];

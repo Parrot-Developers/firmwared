@@ -14,6 +14,8 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include <openssl/sha.h>
+
 #include <ut_string.h>
 
 #include <libpomp.h>
@@ -23,6 +25,7 @@
 ULOG_DECLARE_TAG(firmwared_command_prepare);
 
 #include "commands.h"
+#include "utils.h"
 #include "firmwares.h"
 #include "instances.h"
 #include "folders.h"
@@ -53,6 +56,10 @@ static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	struct folder_entity *entity;
 	struct firmware *firmware;
 	struct instance *instance;
+	const char *path;
+	const char *sha1;
+	char sha1_buf[2 * SHA_DIGEST_LENGTH + 1];
+	unsigned char hash[SHA_DIGEST_LENGTH];
 
 	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &identifier);
 	if (ret < 0) {
@@ -61,10 +68,23 @@ static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	}
 
 	entity = folder_find_entity(FIRMWARES_FOLDER_NAME, identifier);
-	if (entity == NULL)
-		return -errno;
-	firmware = firmware_from_entity(entity);
-	instance = instance_new(firmware, f);
+	if (entity == NULL) {
+		if (!is_directory(identifier))
+			return -errno;
+		path = identifier;
+		/*
+		 * one has to explain me why this function doesn't use a void *
+		 * ... sorry for the ugly cast
+		 */
+		SHA1((unsigned char *)path, strlen(path), hash);
+		buffer_to_string(hash, SHA_DIGEST_LENGTH, sha1_buf);
+		sha1 = sha1_buf;
+	} else {
+		firmware = firmware_from_entity(entity);
+		path = firmware_get_path(firmware);
+		sha1 = firmware_get_sha1(firmware);
+	}
+	instance = instance_new(f, path, sha1);
 	if (instance == NULL) {
 		ret = -errno;
 		ULOGE("instance_new: %m");
@@ -72,8 +92,8 @@ static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	}
 
 	return firmwared_notify(f, pomp_msg_get_id(msg), "%s%s%s%s%s",
-			"PREPARED", firmware_get_sha1(firmware),
-			firmware_get_name(firmware),
+			"PREPARED", sha1,
+			path,
 			instance_get_sha1(instance),
 			instance_get_name(instance));
 }

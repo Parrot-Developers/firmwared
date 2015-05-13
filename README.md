@@ -35,7 +35,11 @@ and "remote\_firmwares", entities types are named *folders*.
   be killed and it's run artifacts will be removed if
   FIRMWARED\_PREVENT\_REMOVAL isn't set to "y"
 * *PREPARE* FIRMWARE\_IDENTIFIER  
-  creates an instance of the given firmware, in the *READY* state
+  creates an instance of the given firmware, in the *READY* state  
+  if FIRMWARE\_IDENTIFIER doesn't correspond to a registered firmware, then it
+  is supposed to be a path to a directory which will be mounted as the read-only
+  layer for the prepared instance, this allows to create instances from the
+  final directory of a firmware's workspace and is intended for development.
 * *START* INSTANCE\_IDENTIFIER  
   launches an instance, which switches to the *STARTED* state
 * *KILL* INSTANCE\_IDENTIFIER  
@@ -72,7 +76,7 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   notification in reaction to a *PULL* command
 * *DROPPED* FOLDER ENTITY\_ID ENTITY\_NAME  
   notification in reaction to a *DROP* command
-* *PREPARED* FIRMWARE\_ID FIRMWARE\_NAME INSTANCE\_ID INSTANCE\_NAME  
+* *PREPARED* FIRMWARE\_ID FIRMWARE\_PATH INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *PREPARE* command
 * *STARTED* INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *START* command

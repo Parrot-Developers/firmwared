@@ -50,7 +50,6 @@ ULOG_DECLARE_TAG(firmwared_instances);
 
 #include "folders.h"
 #include "instances.h"
-#include "firmwares.h"
 #include "utils.h"
 #include "config.h"
 #include "firmwared.h"
@@ -162,14 +161,10 @@ static void clean_mount_points(struct instance *instance, bool only_unregister)
 	clean_paths(instance);
 }
 
-static void instance_delete(struct instance **instance, bool only_unregister)
+static void clean_instance(struct instance *i, bool only_unregister)
 {
-	struct instance *i;
 	struct pid_cb_data *data;
 
-	if (instance == NULL || *instance == NULL)
-		return;
-	i = *instance;
 	data = i->pidfd_handle.data;
 
 	uv_poll_stop(&i->pidfd_handle);
@@ -184,6 +179,18 @@ static void instance_delete(struct instance **instance, bool only_unregister)
 	ut_string_free(&i->firmware_sha1);
 	ut_string_free(&i->firmware_path);
 	memset(i, 0, sizeof(*i));
+}
+
+static void instance_delete(struct instance **instance, bool only_unregister)
+{
+	struct instance *i;
+
+	if (instance == NULL || *instance == NULL)
+		return;
+	i = *instance;
+
+	clean_instance(i, only_unregister);
+
 	free(i);
 	*instance = NULL;
 }
@@ -450,6 +457,7 @@ static int setup_container(struct instance *instance)
 static void launch_pid_1(struct instance *instance)
 {
 	int ret;
+	int i;
 	const char *hostname;
 	// TODO load this from the firmware's config file
 	char *args[] = {
@@ -460,6 +468,7 @@ static void launch_pid_1(struct instance *instance)
 			NULL, /* for ro.instance */
 			NULL,
 	};
+	const char *pts;
 
 	/* we need to be able to differenciate instances by hostnames */
 	hostname = instance_get_name(instance);
@@ -472,16 +481,18 @@ static void launch_pid_1(struct instance *instance)
 	if (ret < 0)
 		ULOGE("prctl(PR_SET_PDEATHSIG, SIGKILL): %m");
 
-	ret = asprintf(&args[1], "ro.boot.console=%s",
-			ptspair_get_path(&instance->ptspair, PTSPAIR_BAR) + 4);
+	pts = ptspair_get_path(&instance->ptspair, PTSPAIR_BAR);
+	ret = asprintf(&args[1], "ro.boot.console=%s", pts + 4);
 	if (ret < 0)
 		ULOGE("asprintf error");
 	ret = asprintf(&args[4], "ro.instance=%s", hostname);
 	if (ret < 0)
 		ULOGE("asprintf error");
-	ret = execvp(args[0], args);
+	for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
+		close(i);
+	ret = execv(args[0], args);
 	if (ret < 0)
-		ULOGC("execvp: %m");
+		ULOGC("execv: %m");
 
 	_exit(EXIT_FAILURE);
 }
@@ -516,23 +527,18 @@ static void launch_instance(struct instance *instance)
 	_exit(EXIT_SUCCESS);
 }
 
-struct instance *instance_new(struct firmware *firmware,
-		struct firmwared *firmwared)
+static int init_instance(struct instance *instance, struct firmwared *firmwared,
+		const char *path, const char *sha1)
 {
 	int ret;
-	struct instance *instance;
 	struct pid_cb_data *data;
 
-	instance = calloc(1, sizeof(*instance));
-	if (instance == NULL)
-		return NULL;
 	instance->time = time(NULL);
 	instance->pid = 0;
 	instance->state = INSTANCE_READY;
 	instance->killer_msgid = (uint32_t) -1;
-
-	instance->firmware_sha1 = strdup(firmware_get_sha1(firmware));
-	instance->firmware_path = strdup(firmware_get_path(firmware));
+	instance->firmware_path = strdup(path);
+	instance->firmware_sha1 = strdup(sha1);
 	if (instance->firmware_path == NULL || instance->firmware_sha1 == NULL)
 		goto err;
 
@@ -594,6 +600,29 @@ struct instance *instance_new(struct firmware *firmware,
 		goto err;
 	}
 
+	return 0;
+err:
+	clean_instance(instance, false);
+
+	return ret;
+
+}
+
+struct instance *instance_new(struct firmwared *firmwared, const char *path,
+		const char *sha1)
+{
+	int ret;
+	struct instance *instance;
+
+	instance = calloc(1, sizeof(*instance));
+	if (instance == NULL)
+		return NULL;
+
+	ret = init_instance(instance, firmwared, path, sha1);
+	if (ret < 0) {
+		ULOGE("instance_init: %s", strerror(-ret));
+		goto err;
+	}
 
 	return instance;
 err:
