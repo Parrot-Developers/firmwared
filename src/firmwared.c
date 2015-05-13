@@ -120,7 +120,7 @@ static void pomp_uv_poll_cb(uv_poll_t *handle, int status, int events)
 	}
 }
 
-static void sigint_handler(uv_signal_t* handle, int signum)
+static void sigint_handler(uv_signal_t *handle, int signum)
 {
 	struct firmwared *f = handle->data;
 
@@ -216,7 +216,7 @@ int firmwared_notify(struct firmwared *ctx, uint32_t msgid, const char *fmt,
 void firmwared_clean(struct firmwared *ctx)
 {
 	int ret;
-	void uv_close_cb(uv_handle_t* handle, void* arg)
+	void uv_close_cb(uv_handle_t *handle, void *arg)
 	{
 		uv_close(handle, NULL);
 	}

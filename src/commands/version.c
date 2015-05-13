@@ -32,7 +32,7 @@ static int version_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;
-	char * __attribute__((cleanup(ut_string_free))) version;
+	char __attribute__((cleanup(ut_string_free))) *version;
 
 	ret = asprintf(&version, "Compilation time: "__DATE__" - "__TIME__"\n"
 			"Version: "ALCHEMY_REVISION_FIRMWARED"\n");
