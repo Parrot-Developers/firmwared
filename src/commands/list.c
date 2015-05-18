@@ -34,6 +34,7 @@ static int build_list(char **list, const struct folder *folder, unsigned *count)
 	if (list == NULL || folder == NULL || count == NULL)
 		return -EINVAL;
 
+	*count = 0;
 	*list = strdup("");
 	if (*list == NULL) {
 		ret = -errno;
@@ -41,7 +42,6 @@ static int build_list(char **list, const struct folder *folder, unsigned *count)
 		return ret;
 	}
 
-	*count = 0;
 	while ((e = folder_next(folder, e)) != NULL) {
 		ret = asprintf(&tmp, "(%s, %s), %s", e->name,
 				folder_entity_get_sha1(e), *list);

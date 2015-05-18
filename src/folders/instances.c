@@ -619,8 +619,11 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 	instance->killer_msgid = (uint32_t) -1;
 	instance->firmware_path = strdup(path);
 	instance->firmware_sha1 = strdup(sha1);
-	if (instance->firmware_path == NULL || instance->firmware_sha1 == NULL)
+	if (instance->firmware_path == NULL ||
+			instance->firmware_sha1 == NULL) {
+		ret = -ENOMEM;
 		goto err;
+	}
 
 	ret = init_mount_points(instance);
 	if (ret < 0) {
