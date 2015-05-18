@@ -20,6 +20,7 @@
 #include <sys/mount.h>
 #include <sys/prctl.h>
 
+#include <grp.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <fnmatch.h>
@@ -561,6 +562,51 @@ static void launch_instance(struct instance *instance)
 	_exit(EXIT_SUCCESS);
 }
 
+static int setup_pts(struct ptspair *ptspair, enum pts_index index)
+{
+	int ret;
+	struct group *g;
+	const char *pts_path = ptspair_get_path(ptspair, index);
+
+	g = getgrnam(FIRMWARED_GROUP);
+	if (g == NULL) {
+		ret = -errno;
+		ULOGE("getgrnam(%s): %s", pts_path, strerror(-ret));
+		return ret;
+	}
+	ret = chown(pts_path, -1, g->gr_gid);
+	if (ret == -1) {
+		ret = -errno;
+		ULOGE("chown(%s, -1, %jd): %s", pts_path, (intmax_t)g->gr_gid,
+				strerror(-ret));
+		return ret;
+	}
+	ret = chmod(pts_path, 0660);
+	if (ret == -1) {
+		ret = -errno;
+		ULOGE("chmod(%s, 0660): %s", pts_path, strerror(-ret));
+		return ret;
+	}
+
+	return 0;
+}
+
+static int setup_ptspair(struct ptspair *ptspair)
+{
+	int ret;
+
+	ret = ptspair_init(ptspair);
+	if (ret < 0)
+		return ret;
+	ret = setup_pts(ptspair, PTSPAIR_FOO);
+	if (ret < 0) {
+		ULOGE("init_pts foo: %s", strerror(-ret));
+		return ret;
+	}
+
+	return setup_pts(ptspair, PTSPAIR_BAR);
+}
+
 static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		const char *path, const char *sha1)
 {
@@ -583,7 +629,9 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		goto err;
 	}
 
-	ptspair_init(&instance->ptspair);
+	ret = setup_ptspair(&instance->ptspair);
+	if (ret < 0)
+		ULOGE("init_ptspair: %s", strerror(-ret));
 	instance->ptspair_handle.data = &instance->ptspair;
 	ret = uv_poll_init(firmwared_get_uv_loop(firmwared),
 			&instance->ptspair_handle,
