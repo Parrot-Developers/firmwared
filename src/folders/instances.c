@@ -469,8 +469,17 @@ static void launch_pid_1(struct instance *instance, int fd)
 			NULL,
 	};
 	const char *pts;
+	const char *sha1;
 
-	/* we need to be able to differenciate instances by hostnames */
+	sha1 = instance_get_sha1(instance);
+	ret = ut_process_change_name("pid-1-%s", sha1);
+	if (ret < 0)
+		ULOGE("ut_process_change_name(pid-1-%s): %s", sha1,
+				strerror(-ret));
+
+	ULOGI("%s \"%s\"", __func__, args[0]);
+
+	/* we need to be able to differentiate instances by hostnames */
 	hostname = instance_get_name(instance);
 	ret = sethostname(hostname, strlen(hostname));
 	if (ret < 0)
@@ -514,6 +523,13 @@ static void launch_instance(struct instance *instance)
 	int ret;
 	pid_t pid;
 	int fd;
+	const char *sha1;
+
+	sha1 = instance_get_sha1(instance);
+	ret = ut_process_change_name("monitor-%s", sha1);
+	if (ret < 0)
+		ULOGE("ut_process_change__name(monitor-%s): %s", sha1,
+				strerror(-ret));
 
 	ULOGI("%s \"%s\"", __func__, instance->firmware_path);
 
