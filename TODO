@@ -1,9 +1,6 @@
-start an instance from a directory
-
+chmod and chown pts
 add a PROPERTIES FOLDER to list the properties available for an entity
 add a GET command, generic getter for entity properties
-BUG: wrong handling of execvp error: no such file or directory
-make pts work
 generate a unique instance index
 use user namespace
 check hostname hasn't changed after boxinit has died
@@ -18,3 +15,6 @@ allow to associate a "product type" to a firmware
 add a inotify watch on firmwares in the repository
 
 investigate on user namespace and on apparmor
+
+make PREPARE return the instance name for enabling things like:
+  $ instance=$(fd-cli prepare my_firmware)
