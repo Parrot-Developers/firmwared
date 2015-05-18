@@ -611,6 +611,12 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		goto err;
 	}
 
+	ret = uv_poll_init(firmwared_get_uv_loop(firmwared),
+			&instance->pidfd_handle, instance->pidfd);
+	if (ret < 0) {
+		ULOGE("uv_poll_init: %s", strerror(-ret));
+		goto err;
+	}
 	data = calloc(1, sizeof(*data));
 	if (data == NULL) {
 		ret = -errno;
@@ -620,13 +626,6 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 	data->instance = instance;
 	data->firmwared = firmwared;
 	instance->pidfd_handle.data = data;
-
-	ret = uv_poll_init(firmwared_get_uv_loop(firmwared),
-			&instance->pidfd_handle, instance->pidfd);
-	if (ret < 0) {
-		ULOGE("uv_poll_init: %s", strerror(-ret));
-		goto err;
-	}
 	ret = uv_poll_start(&instance->pidfd_handle, UV_READABLE,
 			pidfd_uv_poll_cb);
 	if (ret < 0) {
