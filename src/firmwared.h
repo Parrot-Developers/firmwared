@@ -15,6 +15,10 @@
 
 #include <libpomp.h>
 
+#ifndef FIRMWARED_GROUP
+#define FIRMWARED_GROUP "firmwared"
+#endif /* FIRMWARED_GROUP */
+
 struct firmwared {
 	uv_loop_t loop;
 	uv_poll_t pomp_handle;

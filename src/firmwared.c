@@ -31,8 +31,6 @@ ULOG_DECLARE_TAG(firmwared);
 #include "commands.h"
 #include "config.h"
 
-#define SOCK_GROUP "firmwared"
-
 static size_t setup_address(struct sockaddr_storage *addr_storage)
 {
 	struct sockaddr *addr = (struct sockaddr *)addr_storage;
@@ -87,9 +85,9 @@ static void change_sock_group_mode()
 	struct group *g;
 	const char *socket_path = config_get(CONFIG_SOCKET_PATH);
 
-	g = getgrnam(SOCK_GROUP);
+	g = getgrnam(FIRMWARED_GROUP);
 	if (g == NULL) {
-		ULOGE("socket %s group couldn't be changed to "SOCK_GROUP,
+		ULOGE("socket %s group couldn't be changed to "FIRMWARED_GROUP,
 				socket_path);
 		return;
 	}
