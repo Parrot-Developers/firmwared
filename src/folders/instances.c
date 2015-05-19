@@ -629,6 +629,9 @@ static void launch_instance(struct instance *instance)
 	read(instance->poci[0], &c, 1);
 	ut_process_vsystem("ip link set fd_veth_peer%"PRIu8" name eth0",
 			instance->id);
+	ut_process_vsystem("ip address add 172.30.%"PRIu8".1/24 dev eth0",
+			instance->id);
+	ut_process_vsystem("ip link set eth0 up");
 
 	/*
 	 * at last, setup the pid namespace, no more fork allowed apart from
@@ -901,6 +904,12 @@ int instance_start(struct instance *instance)
 		return -EBUSY;
 	}
 
+	ut_process_vsystem("ip link add fd_veth%"PRIu8" type veth peer name "
+			"fd_veth_peer%"PRIu8, instance->id, instance->id);
+	ut_process_vsystem("ip address add 172.30.%"PRIu8".254/24 "
+			"dev fd_veth%"PRIu8, instance->id, instance->id);
+	ut_process_vsystem("ip link set fd_veth%"PRIu8" up", instance->id);
+
 	instance->state = INSTANCE_STARTED;
 	ptspair_cooked(&instance->ptspair, PTSPAIR_BAR);
 	instance->pid = fork();
@@ -909,8 +918,6 @@ int instance_start(struct instance *instance)
 		ULOGE("fork: %m");
 		return ret;
 	}
-	ut_process_vsystem("ip link add fd_veth%"PRIu8" type veth peer name "
-			"fd_veth_peer%"PRIu8, instance->id, instance->id);
 	if (instance->pid == 0)
 		launch_instance(instance); /* in child */
 	/* in parent */
