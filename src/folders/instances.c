@@ -741,6 +741,7 @@ int instance_start(struct instance *instance)
 	}
 
 	instance->state = INSTANCE_STARTED;
+	ptspair_cooked(&instance->ptspair, PTSPAIR_BAR);
 	instance->pid = fork();
 	if (instance->pid == -1) {
 		ret = -errno;
