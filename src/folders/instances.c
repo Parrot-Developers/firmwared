@@ -527,6 +527,7 @@ static void launch_instance(struct instance *instance)
 	pid_t pid;
 	int fd;
 	const char *sha1;
+	char buf[0x200];
 	const char *instance_name;
 	int sfd;
 	sigset_t mask;
@@ -595,7 +596,21 @@ static void launch_instance(struct instance *instance)
 		ULOGE("waitpid: %m");
 	}
 
+	/*
+	 * check that hostname hasn't changed, it could break some things like
+	 * ulog's pseudo-namespacing
+	 */
 	instance_name = instance_get_name(instance);
+	ret = gethostname(buf, strlen(instance_name) + 1);
+	if (ret < 0)
+		ULOGW("gethostname: %m");
+	else
+		if (!ut_string_match(buf, instance_name))
+			ULOGW("hostname has been changed during the life of the"
+					"instance, this is bad as it can break"
+					"some functionalities like ulog's "
+					"pseudo name-spacing");
+
 	ULOGI("instance %s terminated", instance_name);
 
 	_exit(EXIT_SUCCESS);
