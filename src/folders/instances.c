@@ -525,7 +525,7 @@ static int setup_container(struct instance *instance)
 	return 0;
 }
 
-static void launch_pid_1(struct instance *instance, int fd)
+static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 {
 	int ret;
 	int i;
@@ -582,6 +582,12 @@ static void launch_pid_1(struct instance *instance, int fd)
 	}
 	for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
 		close(i);
+	/* re-enable the signals previously blocked */
+	ret = sigprocmask(SIG_UNBLOCK, mask, NULL);
+	if (ret == -1) {
+		ULOGE("sigprocmask: %m");
+		_exit(EXIT_FAILURE);
+	}
 	ret = execv(args[0], args);
 	if (ret < 0)
 		ULOGC("execv: %m");
@@ -662,7 +668,7 @@ static void launch_instance(struct instance *instance)
 		_exit(EXIT_FAILURE);
 	}
 	if (pid == 0)
-		launch_pid_1(instance, fd);
+		launch_pid_1(instance, fd, &mask);
 	close(fd);
 
 	ret = TEMP_FAILURE_RETRY(read(sfd, &si, sizeof(si)));
