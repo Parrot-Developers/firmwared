@@ -29,6 +29,7 @@
 #include <signal.h>
 
 #include <errno.h>
+#include <inttypes.h>
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
@@ -57,7 +58,23 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include "config.h"
 #include "firmwared.h"
 
+#ifdef FIRMWARED_128_BIT_INDEX
+typedef unsigned __int128 uint128_t;
+#define INDEX_MAX 128
+static uint128_t indices;
+typedef uint128_t bit_t;
+#else /* FIRMWARED_128_BIT_INDEX */
+#define INDEX_MAX 64
+static uint64_t indices;
+typedef uint64_t bit_t;
+#endif /* FIRMWARED_128_BIT_INDEX */
+
+#define INVALID_INDEX ((uint8_t)-1)
+
 struct instance {
+	/* runtime unique id */
+	uint8_t id;
+
 	struct folder_entity entity;
 	pid_t pid;
 	int pidfd;
@@ -92,6 +109,45 @@ struct pid_cb_data {
 };
 
 static struct folder instances_folder;
+
+/**
+ * Finds the first free index
+ * @return INVALID_INDEX if no free index is found, index claimed otherwise,
+ * between 0 and INDEX_MAX - 1 inclusive
+ */
+static uint8_t claim_free_index(void)
+{
+	uint8_t i;
+	bit_t bit;
+	uint8_t max = INDEX_MAX - 1;
+
+	for (i = 0; i < max; i++) {
+		bit = (1 << i);
+		if ((indices & bit) == 0) {
+			/* claim the index */
+			indices |= bit;
+			return i;
+		}
+	}
+
+	/* no free index */
+	return INVALID_INDEX;
+}
+
+/**
+ * Marks an index as reusable
+ * @param index index to release
+ * @return errno-compatible negative value on error, 0 on success
+ */
+static int release_index(uint8_t index)
+{
+	if (index >= INDEX_MAX)
+		return -EINVAL;
+
+	indices &= ~(1 << index);
+
+	return 0;
+}
 
 static int sha1(struct instance *instance,
 		unsigned char hash[SHA_DIGEST_LENGTH])
@@ -181,6 +237,7 @@ static void clean_instance(struct instance *i, bool only_unregister)
 
 	ut_string_free(&i->firmware_sha1);
 	ut_string_free(&i->firmware_path);
+	release_index(i->id);
 	memset(i, 0, sizeof(*i));
 }
 
@@ -236,13 +293,15 @@ static char *instance_get_info(const struct folder_entity *entity)
 	struct instance *instance = to_instance(entity);
 	char *info;
 
-	ret = asprintf(&info, "pid: %jd\n"
+	ret = asprintf(&info, "id: %"PRIu8"\n"
+			"pid: %jd\n"
 			"state: %s\n"
 			"firmware_path: %s\n"
 			"base_workspace: %s\n"
 			"pts: %s\n"
 			"firmware_sha1: %s\n"
 			"time: %s",
+			instance->id,
 			(intmax_t)instance->pid,
 			instance_state_to_str(instance->state),
 			instance->firmware_path,
@@ -667,6 +726,7 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 	int ret;
 	struct pid_cb_data *data;
 
+	instance->id = claim_free_index();
 	instance->time = time(NULL);
 	instance->pid = 0;
 	instance->state = INSTANCE_READY;
