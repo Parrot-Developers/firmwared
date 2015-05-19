@@ -19,12 +19,14 @@
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/prctl.h>
+#include <sys/signalfd.h>
 
 #include <grp.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <fnmatch.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include <errno.h>
 #include <time.h>
@@ -525,6 +527,10 @@ static void launch_instance(struct instance *instance)
 	pid_t pid;
 	int fd;
 	const char *sha1;
+	const char *instance_name;
+	int sfd;
+	sigset_t mask;
+	struct signalfd_siginfo si;
 
 	sha1 = instance_get_sha1(instance);
 	ret = ut_process_change_name("monitor-%s", sha1);
@@ -544,6 +550,28 @@ static void launch_instance(struct instance *instance)
 		_exit(EXIT_FAILURE);
 	}
 
+	sigemptyset(&mask);
+	ret = sigaddset(&mask, SIGUSR1);
+	if (ret == -1) {
+		ULOGE("sigaddset: %m");
+		_exit(EXIT_FAILURE);
+	}
+	ret = sigaddset(&mask, SIGCHLD);
+	if (ret == -1) {
+		ULOGE("sigaddset: %m");
+		_exit(EXIT_FAILURE);
+	}
+	ret = sigprocmask(SIG_BLOCK, &mask, NULL);
+	if (ret == -1) {
+		ULOGE("sigprocmask: %m");
+		_exit(EXIT_FAILURE);
+	}
+	sfd = signalfd(-1, &mask, SFD_CLOEXEC);
+	if (sfd == -1) {
+		ULOGE("signalfd: %m");
+		_exit(EXIT_FAILURE);
+	}
+
 	pid = fork();
 	if (pid < 0) {
 		ULOGE("fork: %m");
@@ -553,11 +581,22 @@ static void launch_instance(struct instance *instance)
 		launch_pid_1(instance, fd);
 	close(fd);
 
+	ret = TEMP_FAILURE_RETRY(read(sfd, &si, sizeof(si)));
+	if (ret == -1)
+		ULOGE("read: %m");
+
+	ret = kill(pid, SIGKILL);
+	if (ret == -1)
+		ULOGE("kill: %m");
+	
 	ret = waitpid(pid, NULL, 0);
 	if (ret < 0) {
 		_exit(EXIT_FAILURE);
 		ULOGE("waitpid: %m");
 	}
+
+	instance_name = instance_get_name(instance);
+	ULOGI("instance %s terminated", instance_name);
 
 	_exit(EXIT_SUCCESS);
 }
@@ -773,10 +812,10 @@ int instance_kill(struct instance *instance, uint32_t killer_msgid)
 
 	instance->state = INSTANCE_STOPPING;
 	instance->killer_msgid = killer_msgid;
-	ret = kill(instance->pid, SIGKILL);
+	ret = kill(instance->pid, SIGUSR1);
 	if (ret < 0) {
 		ret = -errno;
-		ULOGE("kill:%m");
+		ULOGE("kill: %m");
 	}
 
 	return ret;
