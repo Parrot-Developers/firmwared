@@ -86,6 +86,10 @@ struct instance {
 	char *info;
 	uint32_t killer_msgid;
 
+	/* synchronisation pipes */
+	int pico[2]; /* parent in child out */
+	int poci[2]; /* parent out child in */
+
 	char *base_workspace;
 	/* all 3 dirs must be subdirs of base_workspace dir */
 	char *ro_mount_point;
@@ -224,6 +228,10 @@ static void clean_instance(struct instance *i, bool only_unregister)
 {
 	struct pid_cb_data *data;
 
+	ut_file_fd_close(i->pico + 0);
+	ut_file_fd_close(i->pico + 1);
+	ut_file_fd_close(i->poci + 0);
+	ut_file_fd_close(i->poci + 1);
 	data = i->pidfd_handle.data;
 
 	uv_poll_stop(&i->pidfd_handle);
@@ -475,12 +483,13 @@ static int setup_container(struct instance *instance)
 	int flags;
 
 	/*
-	 * use our own namespace for IPC, networking, mount points, pid tree
-	 * and uts (hostname and domain name)
+	 * use our own namespace for IPC, networking, mount points and uts
+	 * (hostname and domain name), the pid namespace will be set up only
+	 * after we have no more fork() (read: system()) calls to do for the
+	 * setup
 	 */
-	flags = CLONE_FILES | CLONE_NEWIPC | //CLONE_NEWNET | TODO
-			CLONE_NEWNS | CLONE_NEWPID |
-			CLONE_NEWUTS | CLONE_SYSVSEM;
+	flags = CLONE_FILES | CLONE_NEWIPC | CLONE_NEWNET |
+			CLONE_NEWNS | CLONE_NEWUTS | CLONE_SYSVSEM;
 	ret = unshare(flags);
 	if (ret < 0) {
 		ret = -errno;
@@ -591,6 +600,7 @@ static void launch_instance(struct instance *instance)
 	int sfd;
 	sigset_t mask;
 	struct signalfd_siginfo si;
+	char c = '\0';
 
 	sha1 = instance_get_sha1(instance);
 	ret = ut_process_change_name("monitor-%s", sha1);
@@ -607,6 +617,20 @@ static void launch_instance(struct instance *instance)
 	ret = setup_container(instance);
 	if (ret < 0) {
 		ULOGE("setup_container: %m");
+		_exit(EXIT_FAILURE);
+	}
+	write(instance->pico[1], &c, 1);
+	read(instance->poci[0], &c, 1);
+	ut_process_vsystem("ip link set fd_veth_peer%"PRIu8" name eth0",
+			instance->id);
+
+	/*
+	 * at last, setup the pid namespace, no more fork allowed apart from
+	 * pid 1
+	 */
+	ret = unshare(CLONE_NEWPID);
+	if (ret < 0) {
+		ULOGE("unshare: %m");
 		_exit(EXIT_FAILURE);
 	}
 
@@ -644,6 +668,7 @@ static void launch_instance(struct instance *instance)
 	ret = TEMP_FAILURE_RETRY(read(sfd, &si, sizeof(si)));
 	if (ret == -1)
 		ULOGE("read: %m");
+	close(sfd);
 
 	ret = kill(pid, SIGKILL);
 	if (ret == -1)
@@ -669,6 +694,8 @@ static void launch_instance(struct instance *instance)
 					"instance, this is bad as it can break"
 					"some functionalities like ulog's "
 					"pseudo name-spacing");
+
+	ut_process_vsystem("ip link del fd_veth_peer%"PRIu8, instance->id);
 
 	ULOGI("instance %s terminated", instance_name);
 
@@ -798,6 +825,19 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		goto err;
 	}
 
+	ret = pipe(instance->pico);
+	if (ret < 0) {
+		ret = -errno;
+		ULOGE("pipe: %m");
+		goto err;
+	}
+	ret = pipe(instance->poci);
+	if (ret < 0) {
+		ret = -errno;
+		ULOGE("pipe: %m");
+		goto err;
+	}
+
 	return 0;
 err:
 	clean_instance(instance, false);
@@ -843,6 +883,7 @@ struct instance *instance_from_entity(struct folder_entity *entity)
 int instance_start(struct instance *instance)
 {
 	int ret;
+	char c;
 
 	if (instance == NULL)
 		return -EINVAL;
@@ -862,9 +903,15 @@ int instance_start(struct instance *instance)
 		ULOGE("fork: %m");
 		return ret;
 	}
+	ut_process_vsystem("ip link add fd_veth%"PRIu8" type veth peer name "
+			"fd_veth_peer%"PRIu8, instance->id, instance->id);
 	if (instance->pid == 0)
 		launch_instance(instance); /* in child */
 	/* in parent */
+	read(instance->pico[0], &c, 1);
+	ut_process_vsystem("ip link set fd_veth_peer%"PRIu8" netns %jd",
+			instance->id, (intmax_t)instance->pid);
+	write(instance->poci[1], &c, 1);
 
 	ret = pidwatch_set_pid(instance->pidfd, instance->pid);
 	if (instance->pid == -1) {
