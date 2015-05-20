@@ -49,6 +49,7 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include <ut_string.h>
 #include <ut_file.h>
 #include <ut_process.h>
+#include <ut_bits.h>
 
 #include <ptspair.h>
 
@@ -58,18 +59,7 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include "config.h"
 #include "firmwared.h"
 
-#ifdef FIRMWARED_128_BIT_INDEX
-typedef unsigned __int128 uint128_t;
-#define INDEX_MAX 128
-static uint128_t indices;
-typedef uint128_t bit_t;
-#else /* FIRMWARED_128_BIT_INDEX */
-#define INDEX_MAX 64
-static uint64_t indices;
-typedef uint64_t bit_t;
-#endif /* FIRMWARED_128_BIT_INDEX */
-
-#define INVALID_INDEX ((uint8_t)-1)
+static ut_bit_field_t indices;
 
 struct instance {
 	/* runtime unique id */
@@ -112,46 +102,6 @@ struct pid_cb_data {
 };
 
 static struct folder instances_folder;
-
-/* TODO extract index management to libutils */
-/**
- * Finds the first free index
- * @return INVALID_INDEX if no free index is found, index claimed otherwise,
- * between 0 and INDEX_MAX - 1 inclusive
- */
-static uint8_t claim_free_index(void)
-{
-	uint8_t i;
-	bit_t bit;
-	uint8_t max = INDEX_MAX - 1;
-
-	for (i = 0; i < max; i++) {
-		bit = (1 << i);
-		if ((indices & bit) == 0) {
-			/* claim the index */
-			indices |= bit;
-			return i;
-		}
-	}
-
-	/* no free index */
-	return INVALID_INDEX;
-}
-
-/**
- * Marks an index as reusable
- * @param index index to release
- * @return errno-compatible negative value on error, 0 on success
- */
-static int release_index(uint8_t index)
-{
-	if (index >= INDEX_MAX)
-		return -EINVAL;
-
-	indices &= ~(1 << index);
-
-	return 0;
-}
 
 static int sha1(struct instance *instance,
 		unsigned char hash[SHA_DIGEST_LENGTH])
@@ -242,7 +192,7 @@ static void clean_instance(struct instance *i, bool only_unregister)
 
 	ut_string_free(&i->firmware_sha1);
 	ut_string_free(&i->firmware_path);
-	release_index(i->id);
+	ut_bit_field_release_index(&indices, i->id);
 	memset(i, 0, sizeof(*i));
 }
 
@@ -764,7 +714,11 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 	int ret;
 	struct pid_cb_data *data;
 
-	instance->id = claim_free_index();
+	instance->id = ut_bit_field_claim_free_index(&indices);
+	if (instance->id == UT_BIT_FIELD_INVALID_INDEX) {
+		ULOGE("ut_bit_field_claim_free_index: No free index");
+		return -ENOMEM;
+	}
 	instance->time = time(NULL);
 	instance->pid = 0;
 	instance->state = INSTANCE_READY;
