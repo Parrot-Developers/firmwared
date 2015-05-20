@@ -86,9 +86,8 @@ struct instance {
 	char *info;
 	uint32_t killer_msgid;
 
-	/* synchronisation pipes */
-	int pico[2]; /* parent in child out */
-	int poci[2]; /* parent out child in */
+	/* synchronisation between monitor and pid 1 */
+	struct ut_process_sync sync;
 
 	char *base_workspace;
 	/* all 3 dirs must be subdirs of base_workspace dir */
@@ -114,6 +113,7 @@ struct pid_cb_data {
 
 static struct folder instances_folder;
 
+/* TODO extract index management to libutils */
 /**
  * Finds the first free index
  * @return INVALID_INDEX if no free index is found, index claimed otherwise,
@@ -228,10 +228,7 @@ static void clean_instance(struct instance *i, bool only_unregister)
 {
 	struct pid_cb_data *data;
 
-	ut_file_fd_close(i->pico + 0);
-	ut_file_fd_close(i->pico + 1);
-	ut_file_fd_close(i->poci + 0);
-	ut_file_fd_close(i->poci + 1);
+	ut_process_sync_clean(&i->sync);
 	data = i->pidfd_handle.data;
 
 	uv_poll_stop(&i->pidfd_handle);
@@ -606,7 +603,6 @@ static void launch_instance(struct instance *instance)
 	int sfd;
 	sigset_t mask;
 	struct signalfd_siginfo si;
-	char c = '\0';
 
 	sha1 = instance_get_sha1(instance);
 	ret = ut_process_change_name("monitor-%s", sha1);
@@ -625,8 +621,14 @@ static void launch_instance(struct instance *instance)
 		ULOGE("setup_container: %m");
 		_exit(EXIT_FAILURE);
 	}
-	write(instance->pico[1], &c, 1);
-	read(instance->poci[0], &c, 1);
+	ret = ut_process_sync_child_unlock(&instance->sync);
+	if (ret < 0)
+		ULOGE("ut_process_sync_child_unlock: parent/child "
+				"synchronisation failed: %s", strerror(-ret));
+	ret = ut_process_sync_child_lock(&instance->sync);
+	if (ret < 0)
+		ULOGE("ut_process_sync_child_lock: parent/child "
+				"synchronisation failed: %s", strerror(-ret));
 	ut_process_vsystem("ip link set fd_veth_peer%"PRIu8" name eth0",
 			instance->id);
 	ut_process_vsystem("ip address add 172.30.%"PRIu8".1/24 dev eth0",
@@ -834,16 +836,9 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		goto err;
 	}
 
-	ret = pipe(instance->pico);
-	if (ret < 0) {
-		ret = -errno;
-		ULOGE("pipe: %m");
-		goto err;
-	}
-	ret = pipe(instance->poci);
-	if (ret < 0) {
-		ret = -errno;
-		ULOGE("pipe: %m");
+	ret = ut_process_sync_init(&instance->sync, true);
+	if (ret < 0){
+		ULOGE("ut_process_sync_init: %s", strerror(-ret));
 		goto err;
 	}
 
@@ -892,7 +887,6 @@ struct instance *instance_from_entity(struct folder_entity *entity)
 int instance_start(struct instance *instance)
 {
 	int ret;
-	char c;
 
 	if (instance == NULL)
 		return -EINVAL;
@@ -921,10 +915,16 @@ int instance_start(struct instance *instance)
 	if (instance->pid == 0)
 		launch_instance(instance); /* in child */
 	/* in parent */
-	read(instance->pico[0], &c, 1);
+	ret = ut_process_sync_parent_lock(&instance->sync);
+	if (ret < 0)
+		ULOGE("ut_process_sync_parent_lock: parent/child "
+				"synchronisation failed: %s", strerror(-ret));
 	ut_process_vsystem("ip link set fd_veth_peer%"PRIu8" netns %jd",
 			instance->id, (intmax_t)instance->pid);
-	write(instance->poci[1], &c, 1);
+	ret = ut_process_sync_parent_unlock(&instance->sync);
+	if (ret < 0)
+		ULOGE("ut_process_sync_parent_unlock: parent/child "
+				"synchronisation failed: %s", strerror(-ret));
 
 	ret = pidwatch_set_pid(instance->pidfd, instance->pid);
 	if (instance->pid == -1) {
