@@ -38,4 +38,7 @@ then
 			rm -rf ${base_workspace}
 		fi
 	fi
+else
+	echo "wrong action string \"$action\""
+	exit 1
 fi
