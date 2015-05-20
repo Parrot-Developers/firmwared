@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -e
+set -x
+
+action=$1		# one of create, assign or config
+instance_interface=$2	# e.g. eth0, interface seen in the container
+host_interface_base=$3	# e.g. fd_veth_peer, base for building host's end name
+instance_id=$4		# e.g. 0, 1, ...
+ip_base=$5		# e.g. 172.30., ~ first two bytes of IP
+net_bits=$6		# number of bits of an IP's network part
+netns=$7		# normally, pid (in host ns) of the pid 1 (in container)
+
+set -u
+
+host_iface=${host_interface_base}${instance_id}
+host_addr=${ip_base}${instance_id}.254/${net_bits}
+cont_temp_iface=fd_veth_peer${instance_id}
+cont_addr=${ip_base}${instance_id}.1/${net_bits}
+
+if [ "${action}" = "create" ];
+then
+	ip link add ${host_iface} type veth peer name ${cont_temp_iface}
+	ip address add ${host_addr} dev ${host_iface}
+	ip link set ${host_iface} up
+elif [ "${action}" = "assign" ];
+then
+	ip link set ${cont_temp_iface} netns ${netns}
+elif [ "${action}" = "config" ];
+then
+	ip link set ${cont_temp_iface} name ${instance_interface}
+	ip address add ${cont_addr} dev ${instance_interface}
+	ip link set ${instance_interface} up
+else
+	echo "wrong action string \"$action\""
+	exit 1
+fi

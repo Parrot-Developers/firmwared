@@ -35,6 +35,10 @@ ULOG_DECLARE_TAG(firmwared_config);
 #define INSTANCES_MOUNT_PATH_DEFAULT "/var/run/firmwared/mount_points"
 #endif /* INSTANCES_MOUNT_PATH_DEFAULT */
 
+#ifndef NET_HOOK_DEFAULT
+#define NET_HOOK_DEFAULT "/usr/libexec/firmwared/net.hook"
+#endif /* NET_HOOK_DEFAULT */
+
 struct config {
 	char *env;
 	char *value;
@@ -61,6 +65,10 @@ static struct config configs[CONFIG_NB] = {
 		[CONFIG_BASE_MOUNT_PATH] = {
 				.env = "FIRMWARED_MOUNT_PATH",
 				.default_value = INSTANCES_MOUNT_PATH_DEFAULT,
+		},
+		[CONFIG_NET_HOOK] = {
+				.env = "FIRMWARED_NET_HOOK",
+				.default_value = NET_HOOK_DEFAULT,
 		},
 };
 

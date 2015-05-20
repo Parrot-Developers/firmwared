@@ -122,8 +122,8 @@ The general rule of thumb is :
 Some base configuration parameters can be modified at startup via the following
 environment variables (see config.c for more information):
 
-* *FIRMWARED\_MOUNT\_HOOK*: path to the helper binary responsible of mounting
-  the union fs of an instance and of cleaning it, defaults to
+* *FIRMWARED\_MOUNT\_HOOK*: path to the helper executable responsible of
+  mounting the union fs of an instance and of cleaning it, defaults to
   **/usr/libexec/firmwared/mount.hook**
 * *FIRMWARED\_SOCKET\_PATH*: where the control socket will be created,
   defaults to **/var/run/firmwared.sock**
@@ -140,6 +140,9 @@ environment variables (see config.c for more information):
                                    +- rw (directory with the rw layer)
                                    +- union (union fs mount of ./rw upon ./ro)
   defaults to **/var/run/firmwared/mount\_points**
+* *FIRMWARED\_NET\_HOOK*: path to the helper executable responsible of creating
+  the veth pair and configuring it, defaults to
+  **/usr/libexec/firmwared/net.hook**
 
 These environment variables are defined in hooks:
 

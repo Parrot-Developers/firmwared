@@ -164,6 +164,20 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 			only_unregister ? "true" : "false");
 }
 
+static int invoke_net_helper(struct instance *instance, const char *action)
+{
+	return ut_process_vsystem("\"%s\" \"%s\" \"%s\" \"%s\" \"%"PRIu8"\" "
+			"\"%s\" \"%d\" \"%jd\"",
+			config_get(CONFIG_NET_HOOK),
+			action,
+			"eth0", // TODO
+			"fd_veth", // TODO
+			instance->id,
+			"172.30.", // TODO
+			24, // TODO
+			(intmax_t)instance->pid);
+}
+
 static void clean_mount_points(struct instance *instance, bool only_unregister)
 {
 	int ret;
@@ -456,6 +470,13 @@ static int setup_container(struct instance *instance)
 		return ret;
 	}
 
+	return 0;
+}
+
+static int setup_chroot(struct instance *instance)
+{
+	int ret;
+
 	ret = chroot(instance->union_mount_point);
 	if (ret < 0) {
 		ret = -errno;
@@ -579,12 +600,16 @@ static void launch_instance(struct instance *instance)
 	if (ret < 0)
 		ULOGE("ut_process_sync_child_lock: parent/child "
 				"synchronisation failed: %s", strerror(-ret));
-	ut_process_vsystem("ip link set fd_veth_peer%"PRIu8" name eth0",
-			instance->id);
-	ut_process_vsystem("ip address add 172.30.%"PRIu8".1/24 dev eth0",
-			instance->id);
-	ut_process_vsystem("ip link set eth0 up");
-
+	ret = invoke_net_helper(instance, "config");
+	if (ret != 0) {
+		ULOGE("invoke_net_helper returned %d", ret);
+		_exit(EXIT_FAILURE);
+	}
+	ret = setup_chroot(instance);
+	if (ret < 0) {
+		ULOGE("setup_chroot: %m");
+		_exit(EXIT_FAILURE);
+	}
 	/*
 	 * at last, setup the pid namespace, no more fork allowed apart from
 	 * pid 1
@@ -655,8 +680,6 @@ static void launch_instance(struct instance *instance)
 					"instance, this is bad as it can break"
 					"some functionalities like ulog's "
 					"pseudo name-spacing");
-
-	ut_process_vsystem("ip link del fd_veth_peer%"PRIu8, instance->id);
 
 	ULOGI("instance %s terminated", instance_name);
 
@@ -852,11 +875,15 @@ int instance_start(struct instance *instance)
 		return -EBUSY;
 	}
 
-	ut_process_vsystem("ip link add fd_veth%"PRIu8" type veth peer name "
-			"fd_veth_peer%"PRIu8, instance->id, instance->id);
-	ut_process_vsystem("ip address add 172.30.%"PRIu8".254/24 "
-			"dev fd_veth%"PRIu8, instance->id, instance->id);
-	ut_process_vsystem("ip link set fd_veth%"PRIu8" up", instance->id);
+	/*
+	 * the veth pair must be re-created at each instance startup, because it
+	 * is automatically deleted at the namespace's destruction
+	 */
+	ret = invoke_net_helper(instance, "create");
+	if (ret != 0) {
+		ULOGE("invoke_net_helper returned %d", ret);
+		return -EBUSY;
+	}
 
 	instance->state = INSTANCE_STARTED;
 	ptspair_cooked(&instance->ptspair, PTSPAIR_BAR);
@@ -873,8 +900,9 @@ int instance_start(struct instance *instance)
 	if (ret < 0)
 		ULOGE("ut_process_sync_parent_lock: parent/child "
 				"synchronisation failed: %s", strerror(-ret));
-	ut_process_vsystem("ip link set fd_veth_peer%"PRIu8" netns %jd",
-			instance->id, (intmax_t)instance->pid);
+	ret = invoke_net_helper(instance, "assign");
+	if (ret != 0)
+		ULOGE("invoke_net_helper returned %d", ret);
 	ret = ut_process_sync_parent_unlock(&instance->sync);
 	if (ret < 0)
 		ULOGE("ut_process_sync_parent_unlock: parent/child "
