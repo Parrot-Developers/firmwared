@@ -294,34 +294,6 @@ struct folder_entity_ops instance_ops = {
 		.get_info = instance_get_info,
 };
 
-__attribute__((destructor(FOLDERS_CONSTRUCTOR_PRIORITY + 1)))
-static void instances_cleanup(void)
-{
-	ULOGD("%s", __func__);
-
-	/*
-	 * instances destruction is managed by instance_drop, called on each
-	 * instance by folder_unregister
-	 */
-	folder_unregister(INSTANCES_FOLDER_NAME);
-}
-
-__attribute__((constructor(FOLDERS_CONSTRUCTOR_PRIORITY + 1)))
-static void instances_init(void)
-{
-	int ret;
-
-	ULOGD("%s", __func__);
-
-	instances_folder.name = INSTANCES_FOLDER_NAME;
-	memcpy(&instances_folder.ops, &instance_ops, sizeof(instance_ops));
-	ret = folder_register(&instances_folder);
-	if (ret < 0) {
-		ULOGE("folder_register: %s", strerror(-ret));
-		return;
-	}
-}
-
 static int init_paths(struct instance *instance)
 {
 	int ret;
@@ -833,6 +805,23 @@ err:
 
 }
 
+int instances_init(void)
+{
+	int ret;
+
+	ULOGD("%s", __func__);
+
+	instances_folder.name = INSTANCES_FOLDER_NAME;
+	memcpy(&instances_folder.ops, &instance_ops, sizeof(instance_ops));
+	ret = folder_register(&instances_folder);
+	if (ret < 0) {
+		ULOGE("folder_register: %s", strerror(-ret));
+		return ret;
+	}
+
+	return 0;
+}
+
 struct instance *instance_new(struct firmwared *firmwared, const char *path,
 		const char *sha1)
 {
@@ -961,4 +950,15 @@ const char *instance_get_name(const struct instance *instance)
 		return NULL;
 
 	return instance->entity.name;
+}
+
+void instances_cleanup(void)
+{
+	ULOGD("%s", __func__);
+
+	/*
+	 * instances destruction is managed by instance_drop, called on each
+	 * instance by folder_unregister
+	 */
+	folder_unregister(INSTANCES_FOLDER_NAME);
 }

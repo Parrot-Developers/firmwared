@@ -21,6 +21,7 @@
 #include <ut_process.h>
 
 #include "firmwares.h"
+#include "instances.h"
 #include "firmwared.h"
 #include "commands.h"
 #include "config.h"
@@ -42,6 +43,7 @@ static void usage(int status)
 
 static void clean_subsystems(void)
 {
+	instances_cleanup();
 	firmwares_cleanup();
 }
 
@@ -52,14 +54,19 @@ static int init_subsystems(void)
 	ret = firmwares_init();
 	if (ret < 0) {
 		ULOGE("firmwares_init: %s", strerror(-ret));
-		return ret;
+		goto err;
+	}
+	ret = instances_init();
+	if (ret < 0) {
+		ULOGE("instances_init: %s", strerror(-ret));
+		goto err;
 	}
 
 	return 0;
-//err:
-//	clean_subsystems();
-//
-//	return ret;
+err:
+	clean_subsystems();
+
+	return ret;
 }
 
 int main(int argc, char *argv[])
