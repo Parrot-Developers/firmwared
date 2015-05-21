@@ -20,6 +20,7 @@
 
 #include <ut_process.h>
 
+#include "folders.h"
 #include "firmwares.h"
 #include "instances.h"
 #include "firmwared.h"
@@ -45,12 +46,18 @@ static void clean_subsystems(void)
 {
 	instances_cleanup();
 	firmwares_cleanup();
+	folders_cleanup();
 }
 
 static int init_subsystems(void)
 {
 	int ret;
 
+	ret = folders_init();
+	if (ret < 0) {
+		ULOGE("folders_init: %s", strerror(-ret));
+		return ret;
+	}
 	ret = firmwares_init();
 	if (ret < 0) {
 		ULOGE("firmwares_init: %s", strerror(-ret));

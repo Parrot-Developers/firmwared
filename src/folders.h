@@ -14,8 +14,6 @@
 
 #include "config.h"
 
-#define FOLDERS_CONSTRUCTOR_PRIORITY (CONFIG_CONSTRUCTOR_PRIORITY + 1)
-
 /*
  * all the fields of the struct folder_entity are handled by the folders
  * module
@@ -41,6 +39,7 @@ struct folder {
 	struct folder_entity_ops ops;
 };
 
+int folders_init(void);
 int folder_register(const struct folder *folder);
 struct folder *folder_find(const char *folder_name);
 struct folder_entity *folder_next(const struct folder *folder,
@@ -56,5 +55,6 @@ const char *folders_list(void);
 const char *folder_entity_get_sha1(struct folder_entity *entity);
 const char *folder_entity_get_name(const struct folder_entity *entity);
 int folder_unregister(const char *folder);
+void folders_cleanup(void);
 
 #endif /* FOLDERS_H_ */

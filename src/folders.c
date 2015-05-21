@@ -112,34 +112,6 @@ static int load_words(const char *resources_dir, const char *list_name,
 	return store_word_list(list, f);
 }
 
-/*
- * priority is needed so that folder implementations can make use of the folders
- * API
- */
-__attribute__((constructor(FOLDERS_CONSTRUCTOR_PRIORITY)))
-static void folders_init(void)
-{
-	int ret;
-	const char *resources_dir = config_get(CONFIG_RESOURCES_DIR);
-	const char *list_name;
-	time_t seed;
-
-	ULOGD("%s", __func__);
-
-	seed = time(NULL);
-	srand(seed);
-	ULOGI("random seed is %jd", (intmax_t)seed);
-
-	list_name = "names";
-	ret = load_words(resources_dir, list_name, &folders_names);
-	if (ret < 0)
-		ULOGE("load_words %s: %s", list_name, strerror(-ret));
-	list_name = "adjectives";
-	ret = load_words(resources_dir, list_name, &folders_adjectives);
-	if (ret < 0)
-		ULOGE("load_words %s: %s", list_name, strerror(-ret));
-}
-
 static int destroy_word(struct rs_node *node)
 {
 	struct word *word = ut_container_of(node, struct word, node);
@@ -148,16 +120,6 @@ static int destroy_word(struct rs_node *node)
 	free(word);
 
 	return 0;
-}
-
-__attribute__((destructor(FOLDERS_CONSTRUCTOR_PRIORITY)))
-static void folders_cleanup(void)
-{
-	ULOGD("%s", __func__);
-
-	ut_string_free(&list);
-	rs_dll_remove_all_cb(&folders_names, destroy_word);
-	rs_dll_remove_all_cb(&folders_adjectives, destroy_word);
 }
 
 static bool folder_entity_ops_are_invalid(const struct folder_entity_ops *ops)
@@ -239,6 +201,39 @@ static char *folder_request_friendly_name(struct folder *folder)
 static bool folder_can_drop(struct folder *folder, struct folder_entity *entity)
 {
 	return folder->ops.can_drop(entity);
+}
+
+int folders_init(void)
+{
+	int ret;
+	const char *resources_dir = config_get(CONFIG_RESOURCES_DIR);
+	const char *list_name;
+	time_t seed;
+
+	ULOGD("%s", __func__);
+
+	seed = time(NULL);
+	srand(seed);
+	ULOGI("random seed is %jd", (intmax_t)seed);
+
+	list_name = "names";
+	ret = load_words(resources_dir, list_name, &folders_names);
+	if (ret < 0) {
+		ULOGE("load_words %s: %s", list_name, strerror(-ret));
+		return ret;
+	}
+	list_name = "adjectives";
+	ret = load_words(resources_dir, list_name, &folders_adjectives);
+	if (ret < 0) {
+		ULOGE("load_words %s: %s", list_name, strerror(-ret));
+		goto err;
+	}
+
+	return 0;
+err:
+	folders_cleanup();
+
+	return ret;
 }
 
 int folder_register(const struct folder *folder)
@@ -481,4 +476,13 @@ int folder_unregister(const char *folder_name)
 	memset(max - 1, 0, sizeof(*folder)); /* NULL guard */
 
 	return 0;
+}
+
+void folders_cleanup(void)
+{
+	ULOGD("%s", __func__);
+
+	ut_string_free(&list);
+	rs_dll_remove_all_cb(&folders_names, destroy_word);
+	rs_dll_remove_all_cb(&folders_adjectives, destroy_word);
 }
