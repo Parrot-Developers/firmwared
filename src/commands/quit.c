@@ -30,7 +30,7 @@ static int quit_command_handler(struct firmwared *f, struct pomp_conn *conn,
 
 static const struct command quit_command = {
 		.name = COMMAND_NAME,
-		.help = "Asks the server to terminate.",
+		.help = "Asks firmwared to exit.",
 		.synopsis = "",
 		.handler = quit_command_handler,
 };

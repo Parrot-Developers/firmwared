@@ -100,7 +100,16 @@ static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
 
 static const struct command prepare_command = {
 		.name = COMMAND_NAME,
-		.help = "Create a firmware instance, ready to be launched.",
+		.help = "Creates an instance of the given firmware, in the "
+				"READY state.",
+		.long_help = "If FIRMWARE_IDENTIFIER doesn't correspond to a "
+				"registered firmware, then it is supposed to "
+				"be a path to a directory which will be "
+				"mounted as the read-only layer for the "
+				"prepared instance, this allows to create "
+				"instances from the final directory of a "
+				"firmware's workspace and is intended for "
+				"development.",
 		.synopsis = "FIRMWARE_IDENTIFIER",
 		.handler = prepare_command_handler,
 };

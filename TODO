@@ -3,8 +3,6 @@ code cleanup / refactoring in instances.c
 add a PROPERTIES FOLDER to list the properties available for an entity
 add a GET command, generic getter for entity properties
 pass a pointer to command handlers for retrieving an error message
-add overwritting of config via a /etc/firmwared.conf lua config file
-add a long help for commands
 implement the PULL command, with libcurl
 add a lua config file for each firmware
 log at each action

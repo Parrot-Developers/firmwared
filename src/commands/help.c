@@ -44,7 +44,7 @@ static int help_command_handler(struct firmwared *f, struct pomp_conn *conn,
 
 static const struct command help_command = {
 		.name = COMMAND_NAME,
-		.help = "Shows a little help about a given command.",
+		.help = "Sends back a little help on the command COMMAND.",
 		.synopsis = "COMMAND",
 		.handler = help_command_handler,
 };

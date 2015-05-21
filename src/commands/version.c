@@ -46,7 +46,8 @@ static int version_command_handler(struct firmwared *f, struct pomp_conn *conn,
 
 static const struct command version_command = {
 		.name = COMMAND_NAME,
-		.help = "Asks the server to describe it's current version.",
+		.help = "Sends back informations concerning this firmwared "
+				"program's version.",
 		.synopsis = "",
 		.handler = version_command_handler,
 };

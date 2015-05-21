@@ -82,8 +82,9 @@ static int command_build_help_message(struct command *command)
 
 	ret = asprintf(&command->help_msg, "Command %s\n"
 			"Synopsis: %s %s\n"
-			"Overview: %s", command->name, command->name,
-			command->synopsis, command->help);
+			"Overview: %s\n%s", command->name, command->name,
+			command->synopsis, command->help, command->long_help ?
+					command->long_help : "");
 	if (ret < 0) {
 		ULOGE("asprintf error");
 		errno = ENOMEM;

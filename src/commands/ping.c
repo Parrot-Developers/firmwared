@@ -28,7 +28,8 @@ static int ping_command_handler(struct firmwared *f, struct pomp_conn *conn,
 
 static const struct command ping_command = {
 		.name = COMMAND_NAME,
-		.help = "Asks the server to give a PONG answer.",
+		.help = "Asks for the server to answer with a PONG "
+				"notification.",
 		.synopsis = "",
 		.handler = ping_command_handler,
 };

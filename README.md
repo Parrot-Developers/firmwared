@@ -23,7 +23,7 @@ and "remote\_firmwares", entities types are named *folders*.
 * *FOLDERS*  
   asks the server to list the currently registered folders
 * *LIST* FOLDER  
-  list all the items in the folder FOLDER  
+  lists all the items in the folder FOLDER  
   FOLDER is one of folders listed in an answer to a *FOLDERS* command
 * *SHOW* FOLDER IDENTIFIER  
   asks for all the information on a given entity of a folder
@@ -41,15 +41,16 @@ and "remote\_firmwares", entities types are named *folders*.
   layer for the prepared instance, this allows to create instances from the
   final directory of a firmware's workspace and is intended for development.
 * *START* INSTANCE\_IDENTIFIER  
-  launches an instance, which switches to the *STARTED* state
+  launches an instance, which switches to the *STARTED* state and must be in the
+  READY state
 * *KILL* INSTANCE\_IDENTIFIER  
   kills an instance, all the processes are killed, the instance is still
   registered and it's rw aufs layer is still present  
-  the instance must be in the *STARTED* state..  
+  the instance must be in the *STARTED* state.  
   the instance switches to the *STOPPING* state, before switching back to the
   *READY* state
 * *HELP* COMMAND  
-  sends back a little help on a given command
+  sends back a little help on the command COMMAND
 * *QUIT*  
   asks firmwared to exit
 * *VERSION*  

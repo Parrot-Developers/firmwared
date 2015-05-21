@@ -16,6 +16,7 @@
 struct command {
 	const char *name;
 	const char *help;
+	const char *long_help;
 	const char *synopsis;
 	int (*handler)(struct firmwared *f, struct pomp_conn *conn,
 			const struct pomp_msg *msg);
