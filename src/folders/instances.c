@@ -548,14 +548,14 @@ static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 		if (ret < 0)
 			ULOGE("dup2(fd, STDERR_FILENO): %m");
 	}
-	for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
-		close(i);
 	/* re-enable the signals previously blocked */
 	ret = sigprocmask(SIG_UNBLOCK, mask, NULL);
 	if (ret == -1) {
 		ULOGE("sigprocmask: %m");
 		_exit(EXIT_FAILURE);
 	}
+	for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
+		close(i);
 	ret = execv(args[0], args);
 	if (ret < 0)
 		ULOGC("execv: %m");
