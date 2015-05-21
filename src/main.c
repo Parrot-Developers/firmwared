@@ -13,16 +13,31 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <libgen.h>
 
 #include <unistd.h>
 
+#include <ut_process.h>
+
 #include "firmwared.h"
 #include "commands.h"
+#include "config.h"
 
 #define ULOG_TAG firmwared_main
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_main);
+
+static void usage(int status)
+{
+	char name[17];
+
+	fprintf(stderr, "usage: %s [configuration_file]\n",
+			ut_process_get_name(name));
+	ULOGE("usage: %s [configuration_file]\n", ut_process_get_name(name));
+
+	exit(status);
+}
 
 int main(int argc, char *argv[])
 {
@@ -31,8 +46,21 @@ int main(int argc, char *argv[])
 	struct firmwared ctx;
 	sighandler_t sret;
 	const char *commands_list;
+	const char *config_file;
 
 	ULOGI("%s[%jd] starting", basename(argv[0]), (intmax_t)getpid());
+
+	if (argc > 2)
+		usage(EXIT_FAILURE);
+
+	if (argc == 2) {
+		config_file = argv[1];
+		ret = config_load_file(config_file);
+		if (ret < 0) {
+			ULOGE("loading config file %s failed", config_file);
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	ret = firmwared_init(&ctx);
 	if (ret < 0) {

@@ -8,6 +8,11 @@
  */
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+#include <lua.h>
+#include <lauxlib.h>
 
 #define ULOG_TAG firmwared_config
 #include <ulog.h>
@@ -90,6 +95,9 @@ static void init_config(void)
 	}
 }
 
+// TODO add a config cleanup
+// TODO merge retrieval from both environment and config file
+
 const char *config_get(enum config_key key)
 {
 	const char *value;
@@ -99,4 +107,83 @@ const char *config_get(enum config_key key)
 	value = value == NULL ? "" : value;
 
 	return value;
+}
+
+static int lua_error_to_errno(int error)
+{
+	switch (error) {
+	case LUA_OK:
+		return 0;
+
+	case LUA_ERRRUN:
+		return ENOEXEC;
+
+	case LUA_ERRMEM:
+		return ENOMEM;
+
+	case LUA_ERRFILE:
+		return EIO;
+
+	case LUA_ERRGCMM:
+	case LUA_ERRERR:
+	case LUA_YIELD:
+	case LUA_ERRSYNTAX:
+	default:
+		return EINVAL;
+	}
+}
+
+static int l_read_config_file(lua_State *l)
+{
+	int i;
+	struct config *config;
+	const char *value;
+
+	ULOGD("%s", __func__);
+
+	for (i = CONFIG_FIRST; i < CONFIG_NB; i++) {
+		config = configs + i;
+		if (config->env == NULL)
+			continue;
+		if (config->value == config->default_value)
+			continue;
+		lua_getglobal(l,  config->env);
+		value = lua_tostring(l, -1);
+		if (value != NULL) {
+			config->value = strdup(value);
+			ULOGD("%s = %s", config->env, value);
+		}
+	}
+
+	return 0;
+}
+
+int config_load_file(const char *path)
+{
+	int ret;
+	lua_State *l;
+
+	l = luaL_newstate();
+	if (l == NULL) {
+		ULOGE("luaL_newstate() failed");
+		return -ENOMEM;
+	}
+
+	ret = luaL_dofile(l, path);
+	if (ret != LUA_OK) {
+		ULOGE("reading config file: %s", lua_tostring(l, -1));
+		goto out;
+	}
+
+	lua_pushcfunction(l, l_read_config_file);
+	ret = lua_pcall(l, 0, 0, 0);
+	if (ret != LUA_OK) {
+		ULOGE("retrieving config options from config file: %s",
+				lua_tostring(l, -1));
+		goto out;
+	}
+out:
+	lua_close(l);
+
+	return -lua_error_to_errno(ret);
 }

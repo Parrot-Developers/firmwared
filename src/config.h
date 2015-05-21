@@ -26,4 +26,6 @@ enum config_key {
 
 const char *config_get(enum config_key);
 
+int config_load_file(const char *path);
+
 #endif /* CONFIG_H_ */
