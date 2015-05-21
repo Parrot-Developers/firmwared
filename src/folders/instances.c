@@ -586,6 +586,7 @@ static void launch_instance(struct instance *instance)
 	fd = open(ptspair_get_path(&instance->ptspair, PTSPAIR_BAR), O_RDWR);
 	if (fd < 0) {
 		ULOGE("open: %m");
+		_exit(EXIT_FAILURE);
 	}
 	ret = setup_container(instance);
 	if (ret < 0) {
