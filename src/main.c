@@ -20,6 +20,7 @@
 
 #include <ut_process.h>
 
+#include "firmwares.h"
 #include "firmwared.h"
 #include "commands.h"
 #include "config.h"
@@ -37,6 +38,28 @@ static void usage(int status)
 	ULOGE("usage: %s [configuration_file]\n", ut_process_get_name(name));
 
 	exit(status);
+}
+
+static void clean_subsystems(void)
+{
+	firmwares_cleanup();
+}
+
+static int init_subsystems(void)
+{
+	int ret;
+
+	ret = firmwares_init();
+	if (ret < 0) {
+		ULOGE("firmwares_init: %s", strerror(-ret));
+		return ret;
+	}
+
+	return 0;
+//err:
+//	clean_subsystems();
+//
+//	return ret;
 }
 
 int main(int argc, char *argv[])
@@ -62,9 +85,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	ret = init_subsystems();
+	if (ret < 0) {
+		ULOGE("init_subsystems: %s", strerror(-ret));
+		goto out;
+	}
 	ret = firmwared_init(&ctx);
 	if (ret < 0) {
-		ULOGE("init_main: err=%d(%s)", ret, strerror(-ret));
+		ULOGE("firmwared_init: err=%d(%s)", ret, strerror(-ret));
 		goto out;
 	}
 
@@ -79,6 +107,7 @@ int main(int argc, char *argv[])
 
 	status = EXIT_SUCCESS;
 out:
+	clean_subsystems();
 	firmwared_clean(&ctx);
 
 	ULOGI("%s[%jd] exiting", basename(argv[0]), (intmax_t)getpid());

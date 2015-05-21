@@ -261,20 +261,7 @@ static int index_firmwares(void)
 	return res;
 }
 
-__attribute__((destructor(FOLDERS_CONSTRUCTOR_PRIORITY + 1)))
-static void firmwares_cleanup(void)
-{
-	ULOGD("%s", __func__);
-
-	/*
-	 * firmwares destruction is managed by firmware_drop, called on each
-	 * firmware by folder_unregister
-	 */
-	folder_unregister(FIRMWARES_FOLDER_NAME);
-}
-
-__attribute__((constructor(FOLDERS_CONSTRUCTOR_PRIORITY + 1)))
-static void firmwares_init(void)
+int firmwares_init(void)
 {
 	int ret;
 
@@ -285,7 +272,7 @@ static void firmwares_init(void)
 	ret = folder_register(&firmware_folder);
 	if (ret < 0) {
 		ULOGE("folder_register: %s", strerror(-ret));
-		return;
+		return ret;
 	}
 
 	ret = index_firmwares();
@@ -293,6 +280,8 @@ static void firmwares_init(void)
 		ULOGE("index_firmwares: %s", strerror(-ret));
 		firmwares_cleanup();
 	}
+
+	return ret;
 }
 
 struct firmware *firmware_from_entity(struct folder_entity *entity)
@@ -329,4 +318,15 @@ const char *firmware_get_name(const struct firmware *firmware)
 		return NULL;
 
 	return firmware->entity.name;
+}
+
+void firmwares_cleanup(void)
+{
+	ULOGD("%s", __func__);
+
+	/*
+	 * firmwares destruction is managed by firmware_drop, called on each
+	 * firmware by folder_unregister
+	 */
+	folder_unregister(FIRMWARES_FOLDER_NAME);
 }
