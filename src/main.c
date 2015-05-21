@@ -6,7 +6,11 @@
  * @author nicolas.carrier@parrot.com
  * @copyright Copyright (C) 2015 Parrot S.A.
  */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif /* _GNU_SOURCE */
+#include <signal.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <libgen.h>
