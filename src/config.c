@@ -46,10 +46,15 @@ ULOG_DECLARE_TAG(firmwared_config);
 #define NET_HOOK_DEFAULT "/usr/libexec/firmwared/net.hook"
 #endif /* NET_HOOK_DEFAULT */
 
+#ifndef PREVENT_REMOVAL
+#define PREVENT_REMOVAL "n"
+#endif /* PREVENT_REMOVAL */
+
 struct config {
 	char *env;
 	char *value;
 	char *default_value;
+	// TODO add a validation callback
 };
 
 static struct config configs[CONFIG_NB] = {
@@ -76,6 +81,10 @@ static struct config configs[CONFIG_NB] = {
 		[CONFIG_NET_HOOK] = {
 				.env = "FIRMWARED_NET_HOOK",
 				.default_value = NET_HOOK_DEFAULT,
+		},
+		[CONFIG_PREVENT_REMOVAL] = {
+				.env = "FIRMWARED_PREVENT_REMOVAL",
+				.default_value = PREVENT_REMOVAL,
 		},
 };
 
@@ -126,6 +135,7 @@ static int l_read_config_file(lua_State *l)
 			continue;
 		}
 		config->value = strdup(config->default_value);
+		// TODO abort on strdup error
 	}
 
 	/* dump the config for debug */
