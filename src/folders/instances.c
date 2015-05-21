@@ -659,7 +659,7 @@ static void launch_instance(struct instance *instance)
 	ret = kill(pid, SIGKILL);
 	if (ret == -1)
 		ULOGE("kill: %m");
-	
+
 	ret = waitpid(pid, NULL, 0);
 	if (ret < 0) {
 		_exit(EXIT_FAILURE);
