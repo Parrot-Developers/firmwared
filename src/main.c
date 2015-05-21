@@ -90,13 +90,11 @@ int main(int argc, char *argv[])
 	if (argc > 2)
 		usage(EXIT_FAILURE);
 
-	if (argc == 2) {
-		config_file = argv[1];
-		ret = config_load_file(config_file);
-		if (ret < 0) {
-			ULOGE("loading config file %s failed", config_file);
-			exit(EXIT_FAILURE);
-		}
+	config_file = argc == 2 ? argv[1] : NULL;
+	ret = config_init(config_file);
+	if (ret < 0) {
+		ULOGE("loading config file %s failed", config_file);
+		exit(EXIT_FAILURE);
 	}
 
 	ret = init_subsystems();
@@ -122,6 +120,7 @@ int main(int argc, char *argv[])
 	status = EXIT_SUCCESS;
 out:
 	clean_subsystems();
+	config_cleanup();
 	firmwared_clean(&ctx);
 
 	ULOGI("%s[%jd] exiting", basename(argv[0]), (intmax_t)getpid());

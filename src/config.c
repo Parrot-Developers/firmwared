@@ -18,6 +18,8 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_config);
 
+#include <ut_string.h>
+
 #include "config.h"
 
 #ifndef MOUNT_HOOK_DEFAULT
@@ -77,38 +79,6 @@ static struct config configs[CONFIG_NB] = {
 		},
 };
 
-__attribute__((constructor(CONFIG_CONSTRUCTOR_PRIORITY)))
-static void init_config(void)
-{
-	int i;
-	struct config *config;
-
-	ULOGD("%s", __func__);
-
-	for (i = CONFIG_FIRST; i < CONFIG_NB; i++) {
-		config = configs + i;
-		if (config->env == NULL)
-			continue;
-		config->value = getenv(config->env);
-		if (config->value == NULL)
-			config->value = config->default_value;
-	}
-}
-
-// TODO add a config cleanup
-// TODO merge retrieval from both environment and config file
-
-const char *config_get(enum config_key key)
-{
-	const char *value;
-
-	value = configs[key].value;
-
-	value = value == NULL ? "" : value;
-
-	return value;
-}
-
 static int lua_error_to_errno(int error)
 {
 	switch (error) {
@@ -141,24 +111,31 @@ static int l_read_config_file(lua_State *l)
 
 	ULOGD("%s", __func__);
 
+	/* precedence is env >> config file >> compilation default value */
 	for (i = CONFIG_FIRST; i < CONFIG_NB; i++) {
 		config = configs + i;
-		if (config->env == NULL)
+		value = getenv(config->env);
+		if (value != NULL) {
+			config->value = strdup(value);
 			continue;
-		if (config->value == config->default_value)
-			continue;
+		}
 		lua_getglobal(l,  config->env);
 		value = lua_tostring(l, -1);
 		if (value != NULL) {
 			config->value = strdup(value);
-			ULOGD("%s = %s", config->env, value);
+			continue;
 		}
+		config->value = strdup(config->default_value);
 	}
+
+	/* dump the config for debug */
+	for (i = CONFIG_FIRST; i < CONFIG_NB; i++)
+		ULOGD("%s = %s", configs[i].env, configs[i].value);
 
 	return 0;
 }
 
-int config_load_file(const char *path)
+int config_init(const char *path)
 {
 	int ret;
 	lua_State *l;
@@ -169,10 +146,12 @@ int config_load_file(const char *path)
 		return -ENOMEM;
 	}
 
-	ret = luaL_dofile(l, path);
-	if (ret != LUA_OK) {
-		ULOGE("reading config file: %s", lua_tostring(l, -1));
-		goto out;
+	if (path != NULL) {
+		ret = luaL_dofile(l, path);
+		if (ret != LUA_OK) {
+			ULOGE("reading config file: %s", lua_tostring(l, -1));
+			goto out;
+		}
 	}
 
 	lua_pushcfunction(l, l_read_config_file);
@@ -186,4 +165,23 @@ out:
 	lua_close(l);
 
 	return -lua_error_to_errno(ret);
+}
+
+const char *config_get(enum config_key key)
+{
+	const char *value;
+
+	value = configs[key].value;
+
+	value = value == NULL ? "" : value;
+
+	return value;
+}
+
+void config_cleanup(void)
+{
+	int i;
+
+	for (i = CONFIG_FIRST; i < CONFIG_NB; i++)
+		ut_string_free(&configs[i].value);
 }

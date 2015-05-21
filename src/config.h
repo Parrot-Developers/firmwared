@@ -9,8 +9,6 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define CONFIG_CONSTRUCTOR_PRIORITY 101
-
 enum config_key {
 	CONFIG_FIRST,
 
@@ -24,8 +22,8 @@ enum config_key {
 	CONFIG_NB,
 };
 
+int config_init(const char *path);
 const char *config_get(enum config_key);
-
-int config_load_file(const char *path);
+void config_cleanup(void);
 
 #endif /* CONFIG_H_ */
