@@ -556,9 +556,14 @@ static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 	}
 	for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
 		close(i);
+	/* from here, ulog doesn't work anymore */
 	ret = execv(args[0], args);
 	if (ret < 0)
-		ULOGC("execv: %m");
+		/*
+		 * if one want to search for potential failure of the execve
+		 * call, he has to read in the instances pts
+		 */
+		fprintf(stderr, "execv: %m");
 
 	_exit(EXIT_FAILURE);
 }
