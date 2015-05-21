@@ -552,6 +552,7 @@ static void launch_instance(struct instance *instance)
 	int sfd;
 	sigset_t mask;
 	struct signalfd_siginfo si;
+	int status;
 
 	sha1 = instance_get_sha1(instance);
 	ret = ut_process_change_name("monitor-%s", sha1);
@@ -639,11 +640,13 @@ static void launch_instance(struct instance *instance)
 	if (ret == -1)
 		ULOGE("kill: %m");
 
-	ret = waitpid(pid, NULL, 0);
+	ret = waitpid(pid, &status, 0);
 	if (ret < 0) {
 		_exit(EXIT_FAILURE);
 		ULOGE("waitpid: %m");
 	}
+	if (WIFEXITED(status))
+		ULOGC("program exited with status %d", WEXITSTATUS(status));
 
 	/*
 	 * check that hostname hasn't changed, it could break some things like
@@ -660,7 +663,7 @@ static void launch_instance(struct instance *instance)
 					"some functionalities like ulog's "
 					"pseudo name-spacing");
 
-	ULOGI("instance %s terminated", instance_name);
+	ULOGI("instance %s terminated with status %d", instance_name, status);
 
 	_exit(EXIT_SUCCESS);
 }
