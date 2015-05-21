@@ -40,7 +40,7 @@ static const struct command folders_command = {
 		.handler = folders_command_handler,
 };
 
-static __attribute__((constructor)) void folders_init(void)
+static __attribute__((constructor)) void folders_cmd_init(void)
 {
 	int ret;
 
@@ -51,7 +51,7 @@ static __attribute__((constructor)) void folders_init(void)
 		ULOGE("command_register: %s", strerror(-ret));
 }
 
-static __attribute__((destructor)) void folders_cleanup(void)
+static __attribute__((destructor)) void folders_cmd_cleanup(void)
 {
 	int ret;
 
