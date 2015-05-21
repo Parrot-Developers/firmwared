@@ -158,3 +158,10 @@ Limiting their number can be done with:
 * *OMP\_NUM\_THREADS*: a number which sets the maximum number of threads, openmp
   will use to compute the firmwares sha1 in parallel. This number doens't take
   the main thread into account.
+
+## Configuration file
+
+firmwared accepts an optional path to a configuration file as it's first
+argument. The syntax is that of the lua language, an example is provided in
+examples/firmwared.conf. The admitted keys are the same as the FIRMWARED_XXX
+environment variables.
