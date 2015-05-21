@@ -112,8 +112,9 @@ static int lua_error_to_errno(int error)
 	}
 }
 
-static int l_read_config_file(lua_State *l)
+static int read_config_file(lua_State *l)
 {
+	int ret;
 	int i;
 	struct config *config;
 	const char *value;
@@ -135,7 +136,12 @@ static int l_read_config_file(lua_State *l)
 			continue;
 		}
 		config->value = strdup(config->default_value);
-		// TODO abort on strdup error
+		if (config->value == NULL) {
+			ret = errno;
+			ULOGE("strdup: %m");
+			lua_pushnumber(l, ret);
+			lua_error(l);
+		}
 	}
 
 	/* dump the config for debug */
@@ -149,6 +155,7 @@ int config_init(const char *path)
 {
 	int ret;
 	lua_State *l;
+	bool is_number;
 
 	l = luaL_newstate();
 	if (l == NULL) {
@@ -159,22 +166,27 @@ int config_init(const char *path)
 	if (path != NULL) {
 		ret = luaL_dofile(l, path);
 		if (ret != LUA_OK) {
+			ret = -lua_error_to_errno(ret);
 			ULOGE("reading config file: %s", lua_tostring(l, -1));
 			goto out;
 		}
 	}
 
-	lua_pushcfunction(l, l_read_config_file);
+	lua_pushcfunction(l, read_config_file);
 	ret = lua_pcall(l, 0, 0, 0);
 	if (ret != LUA_OK) {
-		ULOGE("retrieving config options from config file: %s",
-				lua_tostring(l, -1));
+		is_number = lua_isnumber(l, -1);
+		ret = -(is_number ? lua_tonumber(l, -1) : EINVAL);
+		ULOGE("read_config_file: %s", is_number ? strerror(-ret) :
+						lua_tostring(l, -1));
 		goto out;
 	}
+	ret = 0;
+
 out:
 	lua_close(l);
 
-	return -lua_error_to_errno(ret);
+	return ret;
 }
 
 const char *config_get(enum config_key key)
