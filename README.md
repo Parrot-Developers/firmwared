@@ -144,12 +144,18 @@ environment variables (see config.c for more information):
 * *FIRMWARED\_NET\_HOOK*: path to the helper executable responsible of creating
   the veth pair and configuring it, defaults to
   **/usr/libexec/firmwared/net.hook**
-
-These environment variables are defined in hooks:
-
 * *FIRMWARED\_PREVENT\_REMOVAL*: if set to "y", after dropping an instance, it's
   run artifacts will be preserved, that is, the
   FIRMWARED\_MOUNT\_PATH/instance\_sha1 directory will _not_ be destroyed
+* *FIRMWARED\_CONTAINER\_INTERFACE*: name of the network interface created for
+  the instances to communicate with the host, defaults to **eth0**, must be less
+  than 15 characters long
+* *FIRMWARED\_HOST\_INTERFACE\_PREFIX*: prefix for building the interface name
+  for the veth end living in the host network namespace, defaults to
+  **fd_veth**, must be less than 12 characters long
+* *FIRMWARED\_NET\_FIRST\_TWO\_BYTES*: prefix for building the IP addresses for
+  the host and the container, defaults to **172.30.**, must have the form
+  'X1.X2.' with X1 and X2 being two integers in [0, 255] inclusive
 
 The firmwares initial indexing performs sha1 computation which can take a
 significant amount of time. Openmp is used to automatically make them in

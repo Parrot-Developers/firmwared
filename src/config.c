@@ -6,6 +6,8 @@
  * @author nicolas.carrier@parrot.com
  * @copyright Copyright (C) 2015 Parrot S.A.
  */
+#include <net/if.h>
+
 #include <unistd.h>
 #include <libgen.h>
 
@@ -13,6 +15,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
+#include <regex.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -22,6 +26,7 @@
 ULOG_DECLARE_TAG(firmwared_config);
 
 #include <ut_string.h>
+#include <ut_utils.h>
 
 #include "config.h"
 
@@ -52,6 +57,18 @@ ULOG_DECLARE_TAG(firmwared_config);
 #ifndef PREVENT_REMOVAL
 #define PREVENT_REMOVAL "n"
 #endif /* PREVENT_REMOVAL */
+
+#ifndef CONTAINER_INTERFACE
+#define CONTAINER_INTERFACE "eth0"
+#endif /* CONTAINER_INTERFACE */
+
+#ifndef HOST_INTERFACE_PREFIX
+#define HOST_INTERFACE_PREFIX "fd_veth"
+#endif /* HOST_INTERFACE_PREFIX */
+
+#ifndef NET_FIRST_TWO_BYTES
+#define NET_FIRST_TWO_BYTES "172.30."
+#endif /* NET_FIRST_TWO_BYTES */
 
 typedef bool (*validate_cb_t)(const char *value);
 
@@ -127,6 +144,85 @@ static bool valid_yes_no(const char *value)
 	return valid;
 }
 
+static bool valid_interface(const char *value)
+{
+	bool valid;
+
+	if (value == NULL)
+		return false;
+
+	valid = strlen(value) < IFNAMSIZ;
+	if (!valid)
+		ULOGE("%s is longer than the max interface name length (%d)",
+				value, IFNAMSIZ - 1);
+
+	return valid;
+}
+
+static bool valid_interface_prefix(const char *value)
+{
+	bool valid;
+	/* -4 gives sufficient room for an id on 1 byte */
+	const size_t max = IFNAMSIZ - 4;
+
+	if (value == NULL)
+		return false;
+
+	valid = strlen(value) <= max;
+	if (!valid)
+		ULOGE("%s is longer than the max interface prefix length (%ju)",
+				value, (uintmax_t)max);
+
+	return valid;
+}
+
+static bool valid_net_first_two_bytes(const char *value)
+{
+	int ret;
+	const char *str_regex = "^([0-9]+)\\.([0-9]+)\\.$";
+	regex_t preg;
+	char errbuf[0x80];
+	bool valid;
+	/*
+	 * 3 is because the regex has 3 sub expressions, and the entire
+	 * expression is put in matches[0]
+	 */
+	regmatch_t matches[3];
+	int len1;
+	int len2;
+	char byte1[4];
+	char byte2[4];
+
+	ret = regcomp(&preg, str_regex, REG_EXTENDED);
+	if (ret != 0) {
+		regerror(ret, &preg, errbuf, 0x80);
+		ULOGE("regcomp: %s", errbuf);
+		return false;
+	}
+	valid = regexec(&preg, value, UT_ARRAY_SIZE(matches), matches, 0) == 0;
+	regfree(&preg);
+	if (valid) {
+		len1 = matches[1].rm_eo - matches[1].rm_so;
+		len2 = matches[2].rm_eo - matches[2].rm_so;
+		if (len1 > 3 || len2 > 3) {
+			valid = false;
+		} else {
+			snprintf(byte1, 4, "%.*s", len1,
+					matches[1].rm_so + value);
+			snprintf(byte2, 4, "%.*s", len2,
+					matches[2].rm_so + value);
+
+			valid = atoi(byte1) < 256 && atoi(byte2) < 256;
+		}
+	}
+	if (!valid)
+		ULOGE("%s should follow the pattern \"X1.X2.\" with X1 and X2 "
+				"being two integers in [0, 255] inclusive",
+				value);
+
+	return valid;
+}
+
 static struct config configs[CONFIG_NB] = {
 		[CONFIG_MOUNT_HOOK] = {
 				.env = "FIRMWARED_MOUNT_HOOK",
@@ -162,6 +258,21 @@ static struct config configs[CONFIG_NB] = {
 				.env = "FIRMWARED_PREVENT_REMOVAL",
 				.default_value = PREVENT_REMOVAL,
 				.valid = valid_yes_no,
+		},
+		[CONFIG_CONTAINER_INTERFACE] = {
+				.env = "FIRMWARED_CONTAINER_INTERFACE",
+				.default_value = CONTAINER_INTERFACE,
+				.valid = valid_interface,
+		},
+		[CONFIG_HOST_INTERFACE_PREFIX] = {
+				.env = "FIRMWARED_HOST_INTERFACE_PREFIX",
+				.default_value = HOST_INTERFACE_PREFIX,
+				.valid = valid_interface_prefix,
+		},
+		[CONFIG_NET_FIRST_TWO_BYTES] = {
+				.env = "FIRMWARED_NET_FIRST_TWO_BYTES",
+				.default_value = NET_FIRST_TWO_BYTES,
+				.valid = valid_net_first_two_bytes,
 		},
 };
 

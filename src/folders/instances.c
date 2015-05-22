@@ -59,6 +59,12 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include "config.h"
 #include "firmwared.h"
 
+/*
+ * this hardcoded value could be a modifiable parameter, but it really adds to
+ * much complexity to the code and so isn't worth the effort
+ */
+#define NET_BITS 24
+
 static ut_bit_field_t indices;
 
 struct instance {
@@ -171,11 +177,11 @@ static int invoke_net_helper(struct instance *instance, const char *action)
 			"\"%s\" \"%d\" \"%jd\"",
 			config_get(CONFIG_NET_HOOK),
 			action,
-			"eth0", // TODO
-			"fd_veth", // TODO
+			config_get(CONFIG_CONTAINER_INTERFACE),
+			config_get(CONFIG_HOST_INTERFACE_PREFIX),
 			instance->id,
-			"172.30.", // TODO
-			24, // TODO
+			config_get(CONFIG_NET_FIRST_TWO_BYTES),
+			NET_BITS,
 			(intmax_t)instance->pid);
 }
 
