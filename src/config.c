@@ -6,6 +6,9 @@
  * @author nicolas.carrier@parrot.com
  * @copyright Copyright (C) 2015 Parrot S.A.
  */
+#include <unistd.h>
+#include <libgen.h>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,41 +53,115 @@ ULOG_DECLARE_TAG(firmwared_config);
 #define PREVENT_REMOVAL "n"
 #endif /* PREVENT_REMOVAL */
 
+typedef bool (*validate_cb_t)(const char *value);
+
 struct config {
 	char *env;
 	char *value;
 	char *default_value;
-	// TODO add a validation callback
+	validate_cb_t valid;
 };
+
+static bool valid_path(const char *value)
+{
+	bool valid;
+
+	if (value == NULL)
+		return false;
+
+	valid = access(value, F_OK) == 0;
+	if (!valid)
+		ULOGE("%s is not a valid path", value);
+
+	return valid;
+}
+
+
+static bool valid_executable(const char *value)
+{
+	bool valid;
+
+	if (value == NULL)
+		return false;
+
+	valid = access(value, X_OK) == 0;
+	if (!valid)
+		ULOGE("%s is not a valid executable", value);
+
+	return valid;
+}
+
+
+static bool valid_accessible(const char *value)
+{
+	bool valid;
+	char __attribute__((cleanup(ut_string_free))) *tmp = NULL;
+	char *bn;
+
+	if (value == NULL)
+		return false;
+
+	tmp = strdup(value);
+	if (tmp == NULL)
+		return false;
+	bn = dirname(tmp);
+
+	valid = valid_path(bn);
+	if (!valid)
+		ULOGE("%s is not accessible", value);
+
+	return valid;
+}
+
+static bool valid_yes_no(const char *value)
+{
+	bool valid;
+
+	if (value == NULL)
+		return false;
+
+	valid = ut_string_match("y", value) || ut_string_match("n", value);
+	if (!valid)
+		ULOGE("%s is neither \"y\" nor \"n\"", value);
+
+	return valid;
+}
 
 static struct config configs[CONFIG_NB] = {
 		[CONFIG_MOUNT_HOOK] = {
 				.env = "FIRMWARED_MOUNT_HOOK",
 				.default_value = MOUNT_HOOK_DEFAULT,
+				.valid = valid_executable,
 		},
 		[CONFIG_SOCKET_PATH] = {
 				.env = "FIRMWARED_SOCKET_PATH",
 				.default_value = SOCKET_PATH_DEFAULT,
+				.valid = valid_accessible,
 		},
 		[CONFIG_RESOURCES_DIR] = {
 				.env = "FIRMWARED_RESOURCES_DIR",
 				.default_value = FOLDERS_RESOURCES_DIR_DEFAULT,
+				.valid = valid_path,
 		},
 		[CONFIG_FIRMWARE_REPOSITORY] = {
 				.env = "FIRMWARED_REPOSITORY_PATH",
 				.default_value = FIRMWARE_REPOSITORY_DEFAULT,
+				.valid = valid_path,
 		},
 		[CONFIG_BASE_MOUNT_PATH] = {
 				.env = "FIRMWARED_MOUNT_PATH",
 				.default_value = INSTANCES_MOUNT_PATH_DEFAULT,
+				.valid = valid_path,
 		},
 		[CONFIG_NET_HOOK] = {
 				.env = "FIRMWARED_NET_HOOK",
 				.default_value = NET_HOOK_DEFAULT,
+				.valid = valid_executable,
 		},
 		[CONFIG_PREVENT_REMOVAL] = {
 				.env = "FIRMWARED_PREVENT_REMOVAL",
 				.default_value = PREVENT_REMOVAL,
+				.valid = valid_yes_no,
 		},
 };
 
@@ -112,9 +189,28 @@ static int lua_error_to_errno(int error)
 	}
 }
 
-static int read_config_file(lua_State *l)
+static int validate(lua_State *l, const struct config *config)
 {
 	int ret;
+
+	if (config->value == NULL) {
+		ret = errno;
+		ULOGE("strdup: %m");
+		lua_pushnumber(l, ret);
+		return lua_error(l);
+	}
+
+	if (config->valid != NULL && !config->valid(config->value)) {
+		ULOGE("invalid %s value \"%s\"", config->env, config->value);
+		lua_pushnumber(l, EINVAL);
+		return lua_error(l);
+	}
+
+	return 0;
+}
+
+static int read_config_file(lua_State *l)
+{
 	int i;
 	struct config *config;
 	const char *value;
@@ -127,21 +223,18 @@ static int read_config_file(lua_State *l)
 		value = getenv(config->env);
 		if (value != NULL) {
 			config->value = strdup(value);
+			validate(l, config);
 			continue;
 		}
 		lua_getglobal(l,  config->env);
 		value = lua_tostring(l, -1);
 		if (value != NULL) {
 			config->value = strdup(value);
+			validate(l, config);
 			continue;
 		}
 		config->value = strdup(config->default_value);
-		if (config->value == NULL) {
-			ret = errno;
-			ULOGE("strdup: %m");
-			lua_pushnumber(l, ret);
-			lua_error(l);
-		}
+		validate(l, config);
 	}
 
 	/* dump the config for debug */
