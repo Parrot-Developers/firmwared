@@ -13,6 +13,10 @@ netns=$7		# normally, pid (in host ns) of the pid 1 (in container)
 
 set -u
 
+# the script doesn't handle values for net_bits other than 24, as it would add
+# too much complexity
+test $net_bits -eq 24
+
 host_iface=${host_interface_base}${instance_id}
 host_addr=${ip_base}${instance_id}.254/${net_bits}
 cont_temp_iface=fd_veth_peer${instance_id}
