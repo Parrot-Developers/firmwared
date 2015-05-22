@@ -20,6 +20,7 @@
 
 #include <ut_process.h>
 
+#include "apparmor.h"
 #include "folders.h"
 #include "firmwares.h"
 #include "instances.h"
@@ -44,6 +45,7 @@ static void usage(int status)
 
 static void clean_subsystems(void)
 {
+	apparmor_cleanup();
 	instances_cleanup();
 	firmwares_cleanup();
 	folders_cleanup();
@@ -66,6 +68,11 @@ static int init_subsystems(void)
 	ret = instances_init();
 	if (ret < 0) {
 		ULOGE("instances_init: %s", strerror(-ret));
+		goto err;
+	}
+	ret = apparmor_init();
+	if (ret < 0) {
+		ULOGE("apparmor_init: %s", strerror(-ret));
 		goto err;
 	}
 
