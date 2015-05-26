@@ -54,7 +54,7 @@ int apparmor_init(void)
 	return 0;
 }
 
-int apparmor_enable(const char *root, const char *name)
+int apparmor_load_profile(const char *root, const char *name)
 {
 	int ret;
 	FILE *aa_parser_stdin;
@@ -87,13 +87,17 @@ out:
 		ret = -EIO;
 	}
 
-	if (ret == 0) {
-		ret = aa_change_profile(name);
-		if (ret < 0) {
-			ret = -errno;
-			ULOGE("aa_change_profile: %s", strerror(-ret));
-			return ret;
-		}
+	return ret;
+}
+
+int apparmor_change_profile(const char *name)
+{
+	int ret;
+
+	ret = aa_change_profile(name);
+	if (ret < 0) {
+		ret = -errno;
+		ULOGE("aa_change_profile: %s", strerror(-ret));
 	}
 
 	return ret;

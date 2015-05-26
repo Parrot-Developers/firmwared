@@ -10,7 +10,8 @@
 #define APPARMOR_H_
 
 int apparmor_init(void);
-int apparmor_enable(const char *root, const char *name);
+int apparmor_load_profile(const char *root, const char *name);
+int apparmor_change_profile(const char *name);
 void apparmor_cleanup(void);
 
 #endif /* APPARMOR_H_ */
