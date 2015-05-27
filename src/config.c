@@ -70,6 +70,10 @@ ULOG_DECLARE_TAG(firmwared_config);
 #define NET_FIRST_TWO_BYTES "172.30."
 #endif /* NET_FIRST_TWO_BYTES */
 
+#ifndef DUMP_PROFILE
+#define DUMP_PROFILE "n"
+#endif /* DUMP_PROFILE */
+
 typedef bool (*validate_cb_t)(const char *value);
 
 struct config {
@@ -278,6 +282,11 @@ static struct config configs[CONFIG_NB] = {
 				.env = "FIRMWARED_NET_FIRST_TWO_BYTES",
 				.default_value = NET_FIRST_TWO_BYTES,
 				.valid = valid_net_first_two_bytes,
+		},
+		[CONFIG_DUMP_PROFILE] = {
+				.env = "FIRMWARED_DUMP_PROFILE",
+				.default_value = DUMP_PROFILE,
+				.valid = valid_yes_no,
 		},
 };
 

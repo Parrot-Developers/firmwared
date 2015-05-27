@@ -28,8 +28,10 @@ ULOG_DECLARE_TAG(apparmor_config);
 
 #define APPARMOR_COMMAND "apparmor_parser -r -q"
 #define APPARMOR_LOG "/tmp/fd.apparmor"
+#define STATIC_PROFILE_PATTERN "@{root}=%s\nprofile %s %s"
 
 #define APPARMOR_ENABLED_FILE "/sys/module/apparmor/parameters/enabled"
+
 
 static char *static_apparmor_profile;
 
@@ -91,13 +93,16 @@ int apparmor_load_profile(const char *root, const char *name)
 		goto out;
 	}
 
-	ret = fprintf(aa_parser_stdin, "@{root}=%s\nprofile %s %s", root, name,
+	ret = fprintf(aa_parser_stdin, STATIC_PROFILE_PATTERN, root, name,
 			static_apparmor_profile);
 	if (ret < 0) {
 		ret = -EIO;
 		ULOGE("fprintf to apparmor_parser's stdin failed");
 		goto out;
 	}
+	if (config_get_bool(CONFIG_DUMP_PROFILE))
+		fprintf(stderr, STATIC_PROFILE_PATTERN, root, name,
+				static_apparmor_profile);
 	ret = 0;
 out:
 	ret = pclose(aa_parser_stdin);

@@ -156,6 +156,8 @@ environment variables (see config.c for more information):
 * *FIRMWARED\_NET\_FIRST\_TWO\_BYTES*: prefix for building the IP addresses for
   the host and the container, defaults to **172.30.**, must have the form
   'X1.X2.' with X1 and X2 being two integers in [0, 255] inclusive
+* *FIRMWARED\_DUMP\_PROFILE*: if set to "y", the AppArmor profile will be dumped
+  to firmwared's standard error, at each instance creation, defaults to "n"
 
 The firmwares initial indexing performs sha1 computation which can take a
 significant amount of time. Openmp is used to automatically make them in
