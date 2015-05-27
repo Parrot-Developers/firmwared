@@ -130,6 +130,11 @@ static bool valid_accessible(const char *value)
 	return valid;
 }
 
+static bool is_yes(const char *value)
+{
+	return ut_string_match("y", value);
+}
+
 static bool valid_yes_no(const char *value)
 {
 	bool valid;
@@ -137,7 +142,7 @@ static bool valid_yes_no(const char *value)
 	if (value == NULL)
 		return false;
 
-	valid = ut_string_match("y", value) || ut_string_match("n", value);
+	valid = is_yes(value) || ut_string_match("n", value);
 	if (!valid)
 		ULOGE("%s is neither \"y\" nor \"n\"", value);
 
@@ -403,6 +408,16 @@ const char *config_get(enum config_key key)
 
 	return value;
 }
+
+bool config_get_bool(enum config_key key)
+{
+	const char *value;
+
+	value = config_get(key);
+
+	return value == NULL ? false : is_yes(value);
+}
+
 
 void config_cleanup(void)
 {

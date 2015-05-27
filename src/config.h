@@ -8,6 +8,7 @@
  */
 #ifndef CONFIG_H_
 #define CONFIG_H_
+#include <stdbool.h>
 
 enum config_key {
 	CONFIG_FIRST,
@@ -28,6 +29,7 @@ enum config_key {
 
 int config_init(const char *path);
 const char *config_get(enum config_key);
+bool config_get_bool(enum config_key);
 void config_cleanup(void);
 
 #endif /* CONFIG_H_ */
