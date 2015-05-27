@@ -26,7 +26,7 @@ ULOG_DECLARE_TAG(apparmor_config);
 #include "./apparmor.h"
 #include "config.h"
 
-#define APPARMOR_COMMAND "apparmor_parser -r -q"
+#define APPARMOR_COMMAND "apparmor_parser --replace --quiet"
 #define APPARMOR_LOG "/tmp/fd.apparmor"
 #define STATIC_PROFILE_PATTERN "@{root}=%s\nprofile %s %s"
 
