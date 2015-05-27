@@ -22,6 +22,7 @@ ULOG_DECLARE_TAG(apparmor_config);
 
 #include <ut_string.h>
 #include <ut_file.h>
+#include <ut_process.h>
 
 #include "./apparmor.h"
 #include "config.h"
@@ -81,26 +82,6 @@ int apparmor_init(void)
 	return 0;
 }
 
-__attribute__ ((format (printf, 1, 3)))
-static FILE *vpopen(const char *fmt, const char *type, ...)
-{
-	int ret = -1;
-	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
-	va_list args;
-
-	va_start(args, type);
-	ret = vasprintf(&cmd, fmt, args);
-	va_end(args);
-	if (-1 == ret) {
-		cmd = NULL;
-		errno = ENOMEM;
-		return NULL;
-	}
-
-	return popen(cmd, type);
-}
-
-
 __attribute__ ((format (printf, 2, 3)))
 static int vload_profile(const char *command, const char *fmt, ...)
 {
@@ -108,7 +89,8 @@ static int vload_profile(const char *command, const char *fmt, ...)
 	FILE *aa_parser_stdin;
 	va_list args;
 
-	aa_parser_stdin = vpopen("%s > "APPARMOR_LOG" 2>&1", "we", command);
+	aa_parser_stdin = ut_process_vpopen("%s > "APPARMOR_LOG" 2>&1", "we",
+			command);
 	if (aa_parser_stdin == NULL) {
 		ret = -errno;
 		ULOGE("popen(%s, \"we\"): %s", command, strerror(-ret));
