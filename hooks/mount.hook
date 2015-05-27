@@ -13,14 +13,12 @@ sha1=$7
 only_unregister=$8
 prevent_removal=$9
 
+workdir=${base_workspace}/workdir
+
 if [ "${action}" = "init" ];
 then
 	# create mount points
-	mkdir -p ${ro_mount_point} ${rw_dir} ${union_mount_point}
-	if [ "${use_overlay_fs}" = "y" ]; then
-		workdir=${base_workspace}/workdir
-		mkdir -p ${workdir}
-	fi
+	mkdir -p ${ro_mount_point} ${rw_dir} ${union_mount_point} ${workdir}
 
 	# mount the ro layer and remount it with a rw layer on top
 	if [ -d "${firmware}" ];
@@ -29,13 +27,13 @@ then
 	else
 		mount -o ro,loop ${firmware} ${ro_mount_point}
 	fi
-	if [ "${use_overlay_fs}" = "y" ]; then
+	if [ "${use_aufs}" = "y" ]; then
+		mount -t aufs -o br=${rw_dir}:${ro_mount_point} ${sha1} \
+			${union_mount_point}
+	else
 		mount -t overlay -o \
 			lowerdir=${ro_mount_point},upperdir=${rw_dir},workdir=${workdir} \
 			${sha1} ${union_mount_point}
-	else
-		mount -t aufs -o br=${rw_dir}:${ro_mount_point} ${sha1} \
-			${union_mount_point}
 	fi
 
 elif [ "${action}" = "clean" ];
