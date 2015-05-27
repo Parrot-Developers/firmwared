@@ -58,6 +58,7 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include "utils.h"
 #include "config.h"
 #include "firmwared.h"
+#include "apparmor.h"
 
 /*
  * this hardcoded value could be a modifiable parameter, but it really adds to
@@ -560,6 +561,7 @@ static void launch_instance(struct instance *instance)
 	struct signalfd_siginfo si;
 	int status;
 
+	instance_name = instance_get_name(instance);
 	sha1 = instance_get_sha1(instance);
 	ret = ut_process_change_name("monitor-%s", sha1);
 	if (ret < 0)
@@ -591,11 +593,17 @@ static void launch_instance(struct instance *instance)
 		ULOGE("invoke_net_helper returned %d", ret);
 		_exit(EXIT_FAILURE);
 	}
+	ret = apparmor_change_profile(instance_name);
+	if (ret < 0) {
+		ULOGE("apparmor_change_profile: %s", strerror(-ret));
+		_exit(EXIT_FAILURE);
+	}
 	ret = setup_chroot(instance);
 	if (ret < 0) {
 		ULOGE("setup_chroot: %m");
 		_exit(EXIT_FAILURE);
 	}
+
 	/*
 	 * at last, setup the pid namespace, no more fork allowed apart from
 	 * pid 1
@@ -658,7 +666,6 @@ static void launch_instance(struct instance *instance)
 	 * check that hostname hasn't changed, it could break some things like
 	 * ulog's pseudo-namespacing
 	 */
-	instance_name = instance_get_name(instance);
 	ret = gethostname(buf, strlen(instance_name) + 1);
 	if (ret < 0)
 		ULOGW("gethostname: %m");
@@ -806,6 +813,13 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		ULOGE("ut_process_sync_init: %s", strerror(-ret));
 		goto err;
 	}
+	ret = apparmor_load_profile(instance->union_mount_point,
+		instance_get_name(instance));
+	if (ret < 0) {
+		ULOGE("apparmor_load_profile: %s", strerror(-ret));
+		goto err;
+	}
+
 
 	return 0;
 err:
