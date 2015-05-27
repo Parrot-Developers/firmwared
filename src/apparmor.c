@@ -81,30 +81,53 @@ int apparmor_init(void)
 	return 0;
 }
 
-int apparmor_load_profile(const char *root, const char *name)
+__attribute__ ((format (printf, 1, 3)))
+static FILE *vpopen(const char *fmt, const char *type, ...)
+{
+	int ret = -1;
+	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
+	va_list args;
+
+	va_start(args, type);
+	ret = vasprintf(&cmd, fmt, args);
+	va_end(args);
+	if (-1 == ret) {
+		cmd = NULL;
+		errno = ENOMEM;
+		return NULL;
+	}
+
+	return popen(cmd, type);
+}
+
+
+__attribute__ ((format (printf, 2, 3)))
+static int vload_profile(const char *command, const char *fmt, ...)
 {
 	int ret;
 	FILE *aa_parser_stdin;
+	va_list args;
 
-	ULOGI("%s(%s, %s)", __func__, root, name);
-
-	aa_parser_stdin = popen(APPARMOR_COMMAND" > "APPARMOR_LOG" 2>&1", "we");
+	aa_parser_stdin = vpopen("%s > "APPARMOR_LOG" 2>&1", "we", command);
 	if (aa_parser_stdin == NULL) {
 		ret = -errno;
-		ULOGE("popen(apparmor_parser, \"we\"): %s", strerror(-ret));
+		ULOGE("popen(%s, \"we\"): %s", command, strerror(-ret));
 		goto out;
 	}
 
-	ret = fprintf(aa_parser_stdin, STATIC_PROFILE_PATTERN, root, name,
-			static_apparmor_profile);
+	va_start(args, fmt);
+	ret = vfprintf(aa_parser_stdin, fmt, args);
+	va_end(args);
 	if (ret < 0) {
 		ret = -EIO;
 		ULOGE("fprintf to apparmor_parser's stdin failed");
 		goto out;
 	}
-	if (config_get_bool(CONFIG_DUMP_PROFILE))
-		fprintf(stderr, STATIC_PROFILE_PATTERN, root, name,
-				static_apparmor_profile);
+	if (config_get_bool(CONFIG_DUMP_PROFILE)) {
+		va_start(args, fmt);
+		vfprintf(stderr, fmt, args);
+		va_end(args);
+	}
 	ret = 0;
 out:
 	ret = pclose(aa_parser_stdin);
@@ -112,12 +135,20 @@ out:
 		ret = -errno;
 		ULOGE("pclose: %s", strerror(-ret));
 	} else if (WIFEXITED(ret) && WEXITSTATUS(ret) != 0) {
-		ULOGE(APPARMOR_COMMAND" returned %d", WEXITSTATUS(ret));
+		ULOGE("%s returned %d", command, WEXITSTATUS(ret));
 		ULOGE("one can try to check "APPARMOR_LOG" for errors");
 		ret = -EIO;
 	}
 
 	return ret;
+}
+
+int apparmor_load_profile(const char *root, const char *name)
+{
+	ULOGI("%s(%s, %s)", __func__, root, name);
+
+	return vload_profile(APPARMOR_COMMAND, STATIC_PROFILE_PATTERN, root,
+			name, static_apparmor_profile);
 }
 
 int apparmor_change_profile(const char *name)
@@ -135,40 +166,10 @@ int apparmor_change_profile(const char *name)
 
 int apparmor_remove_profile(const char *name)
 {
-	int ret;
-	FILE *aa_parser_stdin;
-
 	ULOGI("%s(%s)", __func__, name);
 
-	aa_parser_stdin = popen(APPARMOR_REMOVE_COMMAND" > "APPARMOR_LOG" 2>&1",
-			"we");
-	if (aa_parser_stdin == NULL) {
-		ret = -errno;
-		ULOGE("popen(apparmor_parser, \"we\"): %s", strerror(-ret));
-		goto out;
-	}
-
-	ret = fprintf(aa_parser_stdin, REMOVE_PROFILE_PATTERN, name);
-	if (ret < 0) {
-		ret = -EIO;
-		ULOGE("fprintf to apparmor_parser's stdin failed");
-		goto out;
-	}
-	if (config_get_bool(CONFIG_DUMP_PROFILE))
-		fprintf(stderr, REMOVE_PROFILE_PATTERN, name);
-	ret = 0;
-out:
-	ret = pclose(aa_parser_stdin);
-	if (ret == -1) {
-		ret = -errno;
-		ULOGE("pclose: %s", strerror(-ret));
-	} else if (WIFEXITED(ret) && WEXITSTATUS(ret) != 0) {
-		ULOGE(APPARMOR_COMMAND" returned %d", WEXITSTATUS(ret));
-		ULOGE("one can try to check "APPARMOR_LOG" for errors");
-		ret = -EIO;
-	}
-
-	return ret;
+	return vload_profile(APPARMOR_REMOVE_COMMAND, REMOVE_PROFILE_PATTERN,
+			name);
 }
 
 void apparmor_cleanup(void)
