@@ -309,8 +309,10 @@ unsigned folder_get_count(const char *folder_name)
 
 int folder_drop(const char *folder_name, struct folder_entity *entity)
 {
+	int ret;
 	struct folder *folder;
 	struct rs_node *node;
+	char *name;
 
 	/* folder_name is checked in folder_find */
 	if (entity == NULL)
@@ -328,9 +330,14 @@ int folder_drop(const char *folder_name, struct folder_entity *entity)
 	if (node == NULL)
 		return -EINVAL;
 	entity = to_entity(node);
-	ut_string_free(&entity->name);
+	name = entity->name;
 
-	return folder->ops.drop(entity, false);
+	ret = folder->ops.drop(entity, false);
+
+	/* we have to free name after calling drop() in case it needs it */
+	ut_string_free(&name);
+
+	return ret;
 }
 
 int folder_store(const char *folder_name, struct folder_entity *entity)
@@ -456,11 +463,15 @@ int folder_unregister(const char *folder_name)
 	struct folder *max = folders + FOLDERS_MAX - 1;
 	int destroy_entity(struct rs_node *node)
 	{
+		char *name;
 		struct folder_entity *entity = to_entity(node);
 
-		ut_string_free(&entity->name);
+		name = entity->name;
 
 		folder->ops.drop(entity, true);
+
+		/* we have to free name after calling drop() in case it needs it */
+		ut_string_free(&name);
 
 		return 0;
 	}
