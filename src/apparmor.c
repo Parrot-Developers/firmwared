@@ -27,8 +27,10 @@ ULOG_DECLARE_TAG(apparmor_config);
 #include "config.h"
 
 #define APPARMOR_COMMAND "apparmor_parser --replace --quiet"
+#define APPARMOR_REMOVE_COMMAND "apparmor_parser --remove --quiet"
 #define APPARMOR_LOG "/tmp/fd.apparmor"
 #define STATIC_PROFILE_PATTERN "@{root}=%s\nprofile %s %s"
+#define REMOVE_PROFILE_PATTERN "profile %s {\n}\n"
 
 #define APPARMOR_ENABLED_FILE "/sys/module/apparmor/parameters/enabled"
 
@@ -126,6 +128,44 @@ int apparmor_change_profile(const char *name)
 	if (ret < 0) {
 		ret = -errno;
 		ULOGE("aa_change_profile: %s", strerror(-ret));
+	}
+
+	return ret;
+}
+
+int apparmor_remove_profile(const char *name)
+{
+	int ret;
+	FILE *aa_parser_stdin;
+
+	ULOGI("%s(%s)", __func__, name);
+
+	aa_parser_stdin = popen(APPARMOR_REMOVE_COMMAND" > "APPARMOR_LOG" 2>&1",
+			"we");
+	if (aa_parser_stdin == NULL) {
+		ret = -errno;
+		ULOGE("popen(apparmor_parser, \"we\"): %s", strerror(-ret));
+		goto out;
+	}
+
+	ret = fprintf(aa_parser_stdin, REMOVE_PROFILE_PATTERN, name);
+	if (ret < 0) {
+		ret = -EIO;
+		ULOGE("fprintf to apparmor_parser's stdin failed");
+		goto out;
+	}
+	if (config_get_bool(CONFIG_DUMP_PROFILE))
+		fprintf(stderr, REMOVE_PROFILE_PATTERN, name);
+	ret = 0;
+out:
+	ret = pclose(aa_parser_stdin);
+	if (ret == -1) {
+		ret = -errno;
+		ULOGE("pclose: %s", strerror(-ret));
+	} else if (WIFEXITED(ret) && WEXITSTATUS(ret) != 0) {
+		ULOGE(APPARMOR_COMMAND" returned %d", WEXITSTATUS(ret));
+		ULOGE("one can try to check "APPARMOR_LOG" for errors");
+		ret = -EIO;
 	}
 
 	return ret;

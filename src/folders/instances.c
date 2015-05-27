@@ -200,6 +200,7 @@ static void clean_instance(struct instance *i, bool only_unregister)
 {
 	struct pid_cb_data *data;
 
+	apparmor_remove_profile(instance_get_name(i));
 	ut_process_sync_clean(&i->sync);
 	data = i->pidfd_handle.data;
 
