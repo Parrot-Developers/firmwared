@@ -158,6 +158,9 @@ environment variables (see config.c for more information):
   'X1.X2.' with X1 and X2 being two integers in [0, 255] inclusive
 * *FIRMWARED\_DUMP\_PROFILE*: if set to "y", the AppArmor profile will be dumped
   to firmwared's standard error, at each instance creation, defaults to "n"
+* *FIRMWARED\_DISABLE\_APPARMOR*: if set to "y", AppArmor will not be use, 
+  please be aware that this is a dangerous option as it is likely to kill
+  kittens, you have been warned, defaults to "n"
 
 The firmwares initial indexing performs sha1 computation which can take a
 significant amount of time. Openmp is used to automatically make them in

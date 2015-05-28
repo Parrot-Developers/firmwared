@@ -74,6 +74,10 @@ ULOG_DECLARE_TAG(firmwared_config);
 #define DUMP_PROFILE "n"
 #endif /* DUMP_PROFILE */
 
+#ifndef DISABLE_APPARMOR
+#define DISABLE_APPARMOR "n"
+#endif /* DISABLE_APPARMOR */
+
 typedef bool (*validate_cb_t)(const char *value);
 
 struct config {
@@ -286,6 +290,11 @@ static struct config configs[CONFIG_NB] = {
 		[CONFIG_DUMP_PROFILE] = {
 				.env = "FIRMWARED_DUMP_PROFILE",
 				.default_value = DUMP_PROFILE,
+				.valid = valid_yes_no,
+		},
+		[CONFIG_DISABLE_APPARMOR] = {
+				.env = "FIRMWARED_DISABLE_APPARMOR",
+				.default_value = DISABLE_APPARMOR,
 				.valid = valid_yes_no,
 		},
 };

@@ -45,7 +45,8 @@ static void usage(int status)
 
 static void clean_subsystems(void)
 {
-	apparmor_cleanup();
+	if (!config_get_bool(CONFIG_DISABLE_APPARMOR))
+		apparmor_cleanup();
 	instances_cleanup();
 	firmwares_cleanup();
 	folders_cleanup();
@@ -70,10 +71,12 @@ static int init_subsystems(void)
 		ULOGE("instances_init: %s", strerror(-ret));
 		goto err;
 	}
-	ret = apparmor_init();
-	if (ret < 0) {
-		ULOGE("apparmor_init: %s", strerror(-ret));
-		goto err;
+	if (!config_get_bool(CONFIG_DISABLE_APPARMOR)) {
+		ret = apparmor_init();
+		if (ret < 0) {
+			ULOGE("apparmor_init: %s", strerror(-ret));
+			goto err;
+		}
 	}
 
 	return 0;

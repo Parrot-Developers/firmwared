@@ -200,7 +200,8 @@ static void clean_instance(struct instance *i, bool only_unregister)
 {
 	struct pid_cb_data *data;
 
-	apparmor_remove_profile(instance_get_name(i));
+	if (!config_get_bool(CONFIG_DISABLE_APPARMOR))
+		apparmor_remove_profile(instance_get_name(i));
 	ut_process_sync_clean(&i->sync);
 	data = i->pidfd_handle.data;
 
@@ -594,10 +595,12 @@ static void launch_instance(struct instance *instance)
 		ULOGE("invoke_net_helper returned %d", ret);
 		_exit(EXIT_FAILURE);
 	}
-	ret = apparmor_change_profile(instance_name);
-	if (ret < 0) {
-		ULOGE("apparmor_change_profile: %s", strerror(-ret));
-		_exit(EXIT_FAILURE);
+	if (!config_get_bool(CONFIG_DISABLE_APPARMOR)) {
+		ret = apparmor_change_profile(instance_name);
+		if (ret < 0) {
+			ULOGE("apparmor_change_profile: %s", strerror(-ret));
+			_exit(EXIT_FAILURE);
+		}
 	}
 	ret = setup_chroot(instance);
 	if (ret < 0) {
@@ -814,13 +817,14 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		ULOGE("ut_process_sync_init: %s", strerror(-ret));
 		goto err;
 	}
-	ret = apparmor_load_profile(instance->union_mount_point,
-		instance_get_name(instance));
-	if (ret < 0) {
-		ULOGE("apparmor_load_profile: %s", strerror(-ret));
-		goto err;
+	if (!config_get_bool(CONFIG_DISABLE_APPARMOR)) {
+		ret = apparmor_load_profile(instance->union_mount_point,
+				instance_get_name(instance));
+		if (ret < 0) {
+			ULOGE("apparmor_load_profile: %s", strerror(-ret));
+			goto err;
+		}
 	}
-
 
 	return 0;
 err:
