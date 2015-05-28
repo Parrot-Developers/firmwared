@@ -818,7 +818,7 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		goto err;
 	}
 	if (!config_get_bool(CONFIG_DISABLE_APPARMOR)) {
-		ret = apparmor_load_profile(instance->union_mount_point,
+		ret = apparmor_load_profile(instance->base_workspace,
 				instance_get_name(instance));
 		if (ret < 0) {
 			ULOGE("apparmor_load_profile: %s", strerror(-ret));
