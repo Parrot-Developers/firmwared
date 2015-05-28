@@ -213,8 +213,7 @@ static bool folder_property_is_invalid(struct folder_property *property)
 /* folder_property_match_str_name */
 static RS_NODE_MATCH_STR_MEMBER(folder_property, name, node)
 
-static int folder_entity_get_name(const struct folder_entity *entity,
-		char **value)
+static int folder_entity_get_name(struct folder_entity *entity, char **value)
 {
 	if (entity == NULL || value == NULL)
 		return -EINVAL;

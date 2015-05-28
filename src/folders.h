@@ -47,7 +47,7 @@ struct folder_property {
 	 * must return NULL on error and set errno, allocates the string stored
 	 * in value which must be freed after usage
 	 */
-	int (*get)(const struct folder_entity *entity, char **value);
+	int (*get)(struct folder_entity *entity, char **value);
 	int (*set)(struct folder_entity *entity, const char *value);
 };
 
