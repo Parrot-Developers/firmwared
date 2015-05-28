@@ -60,6 +60,9 @@ and "remote\_firmwares", entities types are named *folders*.
 * *PROPERTIES* FOLDER  
   asks the server to list the currently registered properties for the folder
   FOLDER
+* *GET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME  
+  retrieves the value of the property PROPERTY for the entity whose name or sha1
+  is ENTITY\_IDENTIFIER from the folder FOLDER.
 
 ### Notifications
 
@@ -98,6 +101,8 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
 * *PROPERTIES* FOLDER PROPERTIES\_LIST  
   answer to a *PROPERTIES* command, PROPERTIES\_LIST is a comma-separated list
   of the properties registered for the folder
+* *GET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
+  answer to a *GET\_PROPERTY* command
 
 ### Instance states
 

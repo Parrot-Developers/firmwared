@@ -1,6 +1,7 @@
 code cleanup / refactoring in instances.c
 
-add a GET command, generic getter for entity properties
+use the properties system for all the entities properties existing so far
+add a SET command, generic setter for entity properties, and handle the list case
 pass a pointer to command handlers for retrieving an error message
 implement the PULL command, with libcurl
 add a lua config file for each firmware

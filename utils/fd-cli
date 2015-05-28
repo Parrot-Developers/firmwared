@@ -141,6 +141,14 @@ case "${command}" in
 		args="${folder}"
 		sed_command="s/.*STR:'PROPERTIES', STR:'\([^']*\)'.*/\1/g"
 		;;
+	GET_PROPERTY)
+		format="%s%s%s%s"
+		folder=$2
+		entity_identifier=$3
+		property_name=$4
+		args="${folder} ${entity_identifier} ${property_name}"
+		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
+		;;
 	*)
 		exit ${ERROR_INVALID_COMMAND}
 		;;
