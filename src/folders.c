@@ -228,6 +228,27 @@ static struct folder_property name_property = {
 		.get = folder_entity_get_name,
 };
 
+static int get_sha1(struct folder_entity *entity, char **value)
+{
+	const char *sha1;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+
+	sha1 = folder_entity_get_sha1(entity);
+	if (sha1 == NULL)
+		return -errno;
+
+	*value = strdup(sha1);
+
+	return *value == NULL ? -errno : 0;
+}
+
+static struct folder_property sha1_property = {
+		.name = "sha1",
+		.get = get_sha1,
+};
+
 int folders_init(void)
 {
 	int ret;
@@ -286,6 +307,7 @@ int folder_register(const struct folder *folder)
 
 	rs_dll_init(&(folders[i].properties), NULL);
 	folder_register_property(folders + i, &name_property);
+	folder_register_property(folders + i, &sha1_property);
 
 	return rs_dll_init(&(folders[i].entities), NULL);
 }
