@@ -89,7 +89,8 @@ static int vload_profile(const char *command, const char *fmt, ...)
 	FILE *aa_parser_stdin;
 	va_list args;
 
-	aa_parser_stdin = ut_process_vpopen("%s > "APPARMOR_LOG" 2>&1", "we",
+	aa_parser_stdin = ut_process_vpopen("date >> "APPARMOR_LOG"; %s >> "
+			APPARMOR_LOG" 2>&1", "we",
 			command);
 	if (aa_parser_stdin == NULL) {
 		ret = -errno;
