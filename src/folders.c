@@ -213,6 +213,22 @@ static bool folder_property_is_invalid(struct folder_property *property)
 /* folder_property_match_str_name */
 static RS_NODE_MATCH_STR_MEMBER(folder_property, name, node)
 
+static int folder_entity_get_name(const struct folder_entity *entity,
+		char **value)
+{
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+
+	*value = strdup(entity->name);
+
+	return *value == NULL ? -errno : 0;
+}
+
+static struct folder_property name_property = {
+		.name = "name",
+		.get = folder_entity_get_name,
+};
+
 int folders_init(void)
 {
 	int ret;
@@ -270,6 +286,7 @@ int folder_register(const struct folder *folder)
 	folders[i] = *folder;
 
 	rs_dll_init(&(folders[i].properties), NULL);
+	folder_register_property(folders + i, &name_property);
 
 	return rs_dll_init(&(folders[i].entities), NULL);
 }
@@ -458,15 +475,6 @@ const char *folder_entity_get_sha1(struct folder_entity *entity)
 		return NULL;
 
 	return entity->folder->ops.sha1(entity);
-}
-
-const char *folder_entity_get_name(const struct folder_entity *entity)
-{
-	errno = EINVAL;
-	if (entity == NULL)
-		return NULL;
-
-	return entity->name;
 }
 
 int folder_register_property(struct folder *folder,

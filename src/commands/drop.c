@@ -45,7 +45,9 @@ static int drop_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	entity = folder_find_entity(folder, identifier);
 	if (entity == NULL)
 		return -errno;
-	name = strdup(folder_entity_get_name(entity));
+	ret = folder_entity_get_property(entity, "name", &name);
+	if (ret < 0)
+		return ret;
 	sha1 = strdup(folder_entity_get_sha1(entity));
 	if (name == NULL || sha1 == NULL)
 		return -ENOMEM;
