@@ -5,8 +5,8 @@ add a GET command, generic getter for entity properties
 pass a pointer to command handlers for retrieving an error message
 implement the PULL command, with libcurl
 add a lua config file for each firmware
-log at each action
 allow to associate a "product type" to a firmware
 add a inotify watch on firmwares in the repository
-investigate on user namespace and on apparmor
-refuse QUIT when there are instances stil running
+implement all the TODOs in the source
+
+only keep base_workspace, don't allow to change the others

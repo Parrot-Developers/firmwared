@@ -73,6 +73,8 @@ static int command_process(struct firmwared *f, struct pomp_conn *conn,
 		return -ENOSYS;
 	}
 
+	ULOGD("execute command %s", name);
+
 	return cmd->handler(f, conn, msg);
 }
 
