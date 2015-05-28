@@ -30,6 +30,7 @@ ULOG_DECLARE_TAG(firmwared_folders);
 #define FOLDERS_MAX 3
 
 #define to_entity(p) ut_container_of(p, struct folder_entity, node)
+#define to_property(p) ut_container_of(p, struct folder_property, node)
 
 static struct folder folders[FOLDERS_MAX];
 
@@ -203,6 +204,15 @@ static bool folder_can_drop(struct folder *folder, struct folder_entity *entity)
 	return folder->ops.can_drop(entity);
 }
 
+static bool folder_property_is_invalid(struct folder_property *property)
+{
+	return property == NULL || ut_string_is_invalid(property->name) ||
+			property->get == NULL;
+}
+
+/* folder_property_match_str_name */
+static RS_NODE_MATCH_STR_MEMBER(folder_property, name, node)
+
 int folders_init(void)
 {
 	int ret;
@@ -258,6 +268,8 @@ int folder_register(const struct folder *folder)
 		return -ENOMEM;
 
 	folders[i] = *folder;
+
+	rs_dll_init(&(folders[i].properties), NULL);
 
 	return rs_dll_init(&(folders[i].entities), NULL);
 }
@@ -457,6 +469,77 @@ const char *folder_entity_get_name(const struct folder_entity *entity)
 	return entity->name;
 }
 
+int folder_register_property(struct folder *folder,
+		struct folder_property *property)
+{
+	if (folder == NULL || folder_property_is_invalid(property))
+		return -EINVAL;
+
+	return rs_dll_push(&folder->properties, &property->node);
+}
+
+int folder_entity_get_property(struct folder_entity *entity, const char *name,
+		char **value)
+{
+	int ret = 0;
+	struct rs_node *property_node;
+	struct folder_property *property;
+
+	if (entity == NULL || ut_string_is_invalid(name) || value == NULL)
+		return -EINVAL;
+
+	property_node = rs_dll_find_match(&entity->folder->properties,
+			folder_property_match_str_name, name);
+	if (property_node == NULL) {
+		ULOGE("property \"%s\" not found for folder %s", name,
+				entity->folder->name);
+		return -ESRCH;
+	}
+	property = to_property(property_node);
+
+	ret = property->get(entity, value);
+	if (ret < 0) {
+		ULOGE("property->set: %s", strerror(-ret));
+		return ret;
+	}
+
+	return *value == NULL ? -errno : 0;
+}
+
+int folder_entity_set_property(struct folder_entity *entity, const char *name,
+		const char *value)
+{
+	int ret = 0;
+	struct rs_node *property_node;
+	struct folder_property *property;
+
+	if (entity == NULL || ut_string_is_invalid(name) ||
+			ut_string_is_invalid(value))
+		return -EINVAL;
+
+	property_node = rs_dll_find_match(&entity->folder->properties,
+			folder_property_match_str_name, name);
+	if (property_node == NULL) {
+		ULOGE("property \"%s\" not found for folder %s", name,
+				entity->folder->name);
+		return -ESRCH;
+	}
+	property = to_property(property_node);
+	if (property->set == NULL) {
+		ULOGE("property %s.%s is read-only", entity->folder->name,
+				name);
+		return -EPERM;
+	}
+
+	ret = property->set(entity, value);
+	if (ret < 0) {
+		ULOGE("property->set: %s", strerror(-ret));
+		return ret;
+	}
+
+	return 0;
+}
+
 int folder_unregister(const char *folder_name)
 {
 	struct folder *folder;
@@ -481,6 +564,7 @@ int folder_unregister(const char *folder_name)
 		return -ENOENT;
 
 	rs_dll_remove_all_cb(&folder->entities, destroy_entity);
+	rs_dll_remove_all(&folder->properties);
 
 	for (; folder < max; folder++)
 		*folder = *(folder + 1);

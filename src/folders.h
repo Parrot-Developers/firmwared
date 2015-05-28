@@ -37,6 +37,18 @@ struct folder {
 	struct rs_dll entities;
 	char *name;
 	struct folder_entity_ops ops;
+	struct rs_dll properties;
+};
+
+struct folder_property {
+	struct rs_node node;
+	const char *name;
+	/*
+	 * must return NULL on error and set errno, allocates the string stored
+	 * in value which must be freed after usage
+	 */
+	int (*get)(const struct folder_entity *entity, char **value);
+	int (*set)(struct folder_entity *entity, const char *value);
 };
 
 int folders_init(void);
@@ -54,6 +66,14 @@ struct folder_entity *folder_find_entity(const char *folder,
 const char *folders_list(void);
 const char *folder_entity_get_sha1(struct folder_entity *entity);
 const char *folder_entity_get_name(const struct folder_entity *entity);
+/* only setter can be NULL */
+int folder_register_property(struct folder *folder,
+		struct folder_property *property);
+/* string stored in value in output must be freed after usage */
+int folder_entity_get_property(struct folder_entity *entity, const char *name,
+		char **value);
+int folder_entity_set_property(struct folder_entity *entity, const char *name,
+		const char *value);
 int folder_unregister(const char *folder);
 void folders_cleanup(void);
 
