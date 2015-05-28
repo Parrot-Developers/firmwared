@@ -306,8 +306,8 @@ int folder_register(const struct folder *folder)
 	folders[i] = *folder;
 
 	rs_dll_init(&(folders[i].properties), NULL);
-	folder_register_property(folders + i, &name_property);
-	folder_register_property(folders + i, &sha1_property);
+	folder_register_property(folder->name, &name_property);
+	folder_register_property(folder->name, &sha1_property);
 
 	return rs_dll_init(&(folders[i].entities), NULL);
 }
@@ -526,11 +526,17 @@ const char *folder_entity_get_sha1(struct folder_entity *entity)
 	return entity->folder->ops.sha1(entity);
 }
 
-int folder_register_property(struct folder *folder,
+int folder_register_property(const char *folder_name,
 		struct folder_property *property)
 {
-	if (folder == NULL || folder_property_is_invalid(property))
+	struct folder *folder;
+
+	if (ut_string_is_invalid(folder_name) ||
+			folder_property_is_invalid(property))
 		return -EINVAL;
+	folder = folder_find(folder_name);
+	if (folder == NULL)
+		return -errno;
 
 	return rs_dll_push(&folder->properties, &property->node);
 }
