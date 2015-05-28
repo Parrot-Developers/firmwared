@@ -83,7 +83,7 @@ struct instance {
 	char *info;
 	uint32_t killer_msgid;
 
-	/* synchronisation between monitor and pid 1 */
+	/* synchronization between monitor and pid 1 */
 	struct ut_process_sync sync;
 
 	char *base_workspace;
