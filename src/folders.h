@@ -63,6 +63,7 @@ int folder_store(const char *folder, struct folder_entity *entity);
 char *folder_get_info(const char *folder, const char *entity_identifier);
 struct folder_entity *folder_find_entity(const char *folder,
 		const char *entity_identifier);
+char *folder_list_properties(const char *folder_name);
 const char *folders_list(void);
 const char *folder_entity_get_sha1(struct folder_entity *entity);
 /* only setter can be NULL */

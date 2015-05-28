@@ -1,6 +1,5 @@
 code cleanup / refactoring in instances.c
 
-add a PROPERTIES FOLDER to list the properties available for an entity
 add a GET command, generic getter for entity properties
 pass a pointer to command handlers for retrieving an error message
 implement the PULL command, with libcurl

@@ -468,6 +468,34 @@ const char *folders_list(void)
 	return list;
 }
 
+char *folder_list_properties(const char *folder_name)
+{
+	int ret;
+	struct folder *folder;
+	char *properties_list = NULL;
+	struct rs_node *node = NULL;
+	struct folder_property *property;
+
+	folder = folder_find(folder_name);
+	if (folder == NULL)
+		return NULL;
+
+	while ((node = rs_dll_next_from(&folder->properties, node))) {
+		property = to_property(node);
+		ret = ut_string_append(&properties_list, "%s, ",
+				property->name);
+		if (ret < 0) {
+			ULOGC("ut_string_append");
+			errno = -ret;
+			return NULL;
+		}
+	}
+	if (properties_list[0] != '\0')
+		properties_list[strlen(properties_list) - 2] = '\0';
+
+	return properties_list;
+}
+
 const char *folder_entity_get_sha1(struct folder_entity *entity)
 {
 	errno = EINVAL;

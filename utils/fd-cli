@@ -135,6 +135,12 @@ case "${command}" in
 		args=""
 		sed_command="s/.*STR:'COMMANDS', STR:'\([^']*\)'.*/\1/g"
 		;;
+	PROPERTIES)
+		format="%s%s"
+		folder=$2
+		args="${folder}"
+		sed_command="s/.*STR:'PROPERTIES', STR:'\([^']*\)'.*/\1/g"
+		;;
 	*)
 		exit ${ERROR_INVALID_COMMAND}
 		;;

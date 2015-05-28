@@ -57,6 +57,9 @@ and "remote\_firmwares", entities types are named *folders*.
   sends back informations concerning this firmwared program's version
 * *COMMANDS*  
   asks the server to list the currently registered commands
+* *PROPERTIES* FOLDER  
+  asks the server to list the currently registered properties for the folder
+  FOLDER
 
 ### Notifications
 
@@ -92,6 +95,9 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   acknowledge reception of a *QUIT* command
 * *ERROR* ERRNO MESSAGE  
   answer to any command whose execution encountered a problem
+* *PROPERTIES* FOLDER PROPERTIES\_LIST  
+  answer to a *PROPERTIES* command, PROPERTIES\_LIST is a comma-separated list
+  of the properties registered for the folder
 
 ### Instance states
 
