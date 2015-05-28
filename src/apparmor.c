@@ -30,7 +30,7 @@ ULOG_DECLARE_TAG(apparmor_config);
 #define APPARMOR_COMMAND "apparmor_parser --replace --quiet"
 #define APPARMOR_REMOVE_COMMAND "apparmor_parser --remove --quiet"
 #define APPARMOR_LOG "/tmp/fd.apparmor"
-#define STATIC_PROFILE_PATTERN "@{root}=%s\nprofile %s %s"
+#define STATIC_PROFILE_PATTERN "@{root}=%s\nprofile %s %s "
 #define REMOVE_PROFILE_PATTERN "profile %s {\n}\n"
 
 #define APPARMOR_ENABLED_FILE "/sys/module/apparmor/parameters/enabled"
