@@ -234,11 +234,16 @@ static void instance_delete(struct instance **instance, bool only_unregister)
 	*instance = NULL;
 }
 
+static bool instance_is_running(struct instance *instance)
+{
+	return instance == NULL ? false : instance->state != INSTANCE_READY;
+}
+
 static bool instance_can_drop(struct folder_entity *entity)
 {
 	struct instance *instance = to_instance(entity);
 
-	return instance->state == INSTANCE_READY;
+	return !instance_is_running(instance);
 }
 
 static int instance_drop(struct folder_entity *entity, bool only_unregister)
@@ -247,6 +252,12 @@ static int instance_drop(struct folder_entity *entity, bool only_unregister)
 
 	ULOGD("%s", __func__);
 
+	if (instance_is_running(instance)) {
+		ULOGW("instance %s still running, try to kill an wait for it",
+				instance_get_name(instance));
+		instance_kill(instance, (uint32_t)-1);
+		sleep(1);
+	}
 	instance_delete(&instance, only_unregister);
 
 	return 0;
