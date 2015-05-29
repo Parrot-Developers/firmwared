@@ -14,11 +14,11 @@ fi
 
 usage() {
 	cat <<usage_here_document
-Usage : fd-cli COMMAND [arguments_list]
+Usage : fdc COMMAND [arguments_list]
 	Command names are case-insensitive.
 	The arguments_list depend on the commands used.
-	Use 'fd-cli commands' to obtain the list of available commands.
-	Use 'fd-cli help COMMAND' to get some help on a command COMMAND.
+	Use 'fdc commands' to obtain the list of available commands.
+	Use 'fdc help COMMAND' to get some help on a command COMMAND.
 usage_here_document
 }
 

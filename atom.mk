@@ -44,11 +44,11 @@ LOCAL_LDLIBS := -lapparmor
 include $(BUILD_EXECUTABLE)
 
 ################################################################################
-# fd-cli
+# fdc
 ################################################################################
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := fd-cli
+LOCAL_MODULE := fdc
 LOCAL_DESCRIPTION := Command line interface for firmwared
 LOCAL_CATEGORY_PATH := simulator/firmwared
 
@@ -56,6 +56,6 @@ LOCAL_REQUIRED_MODULES := firmwared \
 	pomp-cli
 
 LOCAL_COPY_FILES := \
-	utils/fd-cli:usr/bin/fd-cli
+	utils/fdc:usr/bin/fdc
 
 include $(BUILD_CUSTOM)
