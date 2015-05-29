@@ -343,7 +343,7 @@ static int validate(lua_State *l, const struct config *config)
 	return 0;
 }
 
-static int read_config_file(lua_State *l)
+static int read_config(lua_State *l)
 {
 	int i;
 	struct config *config;
@@ -391,6 +391,7 @@ int config_init(const char *path)
 	}
 
 	if (path != NULL) {
+		ULOGI("loading configuration from \"%s\"", path);
 		ret = luaL_dofile(l, path);
 		if (ret != LUA_OK) {
 			ret = -lua_error_to_errno(ret);
@@ -399,7 +400,7 @@ int config_init(const char *path)
 		}
 	}
 
-	lua_pushcfunction(l, read_config_file);
+	lua_pushcfunction(l, read_config);
 	ret = lua_pcall(l, 0, 0, 0);
 	if (ret != LUA_OK) {
 		is_number = lua_isnumber(l, -1);
