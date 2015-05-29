@@ -1,7 +1,6 @@
 code cleanup / refactoring in instances.c
 
-use the properties system for all the entities properties existing so far
-add a SET command, generic setter for entity properties, and handle the list case
+handle the list case for the SET command
 pass a pointer to command handlers for retrieving an error message
 implement the PULL command, with libcurl
 add a lua config file for each firmware
@@ -10,3 +9,12 @@ add a inotify watch on firmwares in the repository
 implement all the TODOs in the source
 
 only keep base_workspace, don't allow to change the others
+
+study ulog-stdcerr
+
+Add an automated way to test the config and the AppArmor profile
+automated cleanup mechanism in case of crash
+add a config command to get the config keys
+bash completion
+
+create a input_validation module
