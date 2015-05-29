@@ -498,7 +498,6 @@ static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 			NULL, /* for ro.boot.console */
 			"ro.hardware=mk3_sim_pc",
 			"ro.debuggable=1",
-			NULL, /* for ro.instance */
 			NULL,
 	};
 	const char *pts;
@@ -525,9 +524,6 @@ static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 
 	pts = ptspair_get_path(&instance->ptspair, PTSPAIR_BAR);
 	ret = asprintf(&args[1], "ro.boot.console=%s", pts + 4);
-	if (ret < 0)
-		ULOGE("asprintf error");
-	ret = asprintf(&args[4], "ro.instance=%s", hostname);
 	if (ret < 0)
 		ULOGE("asprintf error");
 
