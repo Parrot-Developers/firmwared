@@ -80,7 +80,7 @@ case "${command}" in
 		format="%s%s"
 		folder=$2
 		args="${folder}"
-		sed_command="s/.*STR:'${folder}', U32:\([0-9]*\), STR:'\([^']*\)'.*/\1 ${folder} :\n\2/g"
+		sed_command="s/.*STR:'${folder}', U32:[0-9]*, STR:'\([^']*\)'.*/\1/g"
 		;;
 	SHOW)
 		format="%s%s%s"

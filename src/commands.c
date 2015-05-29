@@ -187,7 +187,7 @@ const char *command_list(void)
 	while (command-- > commands) {
 		if (command->name == NULL)
 			continue;
-		ret = ut_string_append(&list, "%s, ", command->name);
+		ret = ut_string_append(&list, "%s ", command->name);
 		if (ret < 0) {
 			ULOGC("ut_string_append");
 			errno = -ret;
@@ -195,7 +195,7 @@ const char *command_list(void)
 		}
 	}
 	if (list[0] != '\0')
-		list[strlen(list) - 2] = '\0';
+		list[strlen(list) - 1] = '\0';
 
 	return list;
 }

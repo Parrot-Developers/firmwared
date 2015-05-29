@@ -43,7 +43,7 @@ static int build_list(char **list, const struct folder *folder, unsigned *count)
 	}
 
 	while ((e = folder_next(folder, e)) != NULL) {
-		ret = asprintf(&tmp, "(%s, %s), %s", e->name,
+		ret = asprintf(&tmp, "%s[%s] %s", e->name,
 				folder_entity_get_sha1(e), *list);
 		if (ret < 0) {
 			ULOGC("asprintf error");
@@ -54,7 +54,7 @@ static int build_list(char **list, const struct folder *folder, unsigned *count)
 		(*count)++;
 	}
 	if ((*list)[0] != '\0')
-		(*list)[strlen((*list)) - 2] = '\0';
+		(*list)[strlen((*list)) - 1] = '\0';
 
 	return 0;
 }
