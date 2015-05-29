@@ -68,7 +68,7 @@ static const struct command get_property_command = {
 		.name = COMMAND_NAME,
 		.help = "Retrieves the value of the property PROPERTY for the "
 				"entity whose name or sha1 is ENTITY_IDENTIFIER"
-				"from the folder FOLDER.",
+				" from the folder FOLDER.",
 		.synopsis = "FOLDER ENTITY_IDENTIFIER PROPERTY_NAME",
 		.handler = get_property_command_handler,
 };
