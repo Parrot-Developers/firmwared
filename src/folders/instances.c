@@ -60,6 +60,7 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include "firmwared.h"
 #include "apparmor.h"
 #include "instances-private.h"
+#include "properties/instance_properties.h"
 
 /*
  * this hardcoded value could be a modifiable parameter, but it really adds to
@@ -68,8 +69,6 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #define NET_BITS 24
 
 static ut_bit_field_t indices;
-
-#define to_instance(p) ut_container_of(p, struct instance, entity)
 
 struct pid_cb_data {
 	struct firmwared *firmwared;
@@ -230,20 +229,6 @@ static int instance_drop(struct folder_entity *entity, bool only_unregister)
 	instance_delete(&instance, only_unregister);
 
 	return 0;
-}
-
-static char *instance_state_to_str(enum instance_state state)
-{
-	switch (state) {
-	case INSTANCE_READY:
-		return "ready";
-	case INSTANCE_STARTED:
-		return "started";
-	case INSTANCE_STOPPING:
-		return "stopping";
-	default:
-		return "(unknown)";
-	}
 }
 
 static char *instance_get_info(const struct folder_entity *entity)
@@ -856,74 +841,21 @@ err:
 	clean_instance(instance, false);
 
 	return ret;
-
 }
 
-static int get_id(struct folder_entity *entity, char **value)
+char *instance_state_to_str(enum instance_state state)
 {
-	int ret;
-	struct instance *instance;
-
-	if (entity == NULL || value == NULL)
-		return -EINVAL;
-	instance = to_instance(entity);
-
-	ret = asprintf(value, "%"PRIu8, instance->id);
-	if (ret < 0) {
-		*value = NULL;
-		ULOGE("asprintf error");
-		return -ENOMEM;
+	switch (state) {
+	case INSTANCE_READY:
+		return "ready";
+	case INSTANCE_STARTED:
+		return "started";
+	case INSTANCE_STOPPING:
+		return "stopping";
+	default:
+		return "(unknown)";
 	}
-
-	return 0;
 }
-
-static int get_pid(struct folder_entity *entity, char **value)
-{
-	int ret;
-	struct instance *instance;
-
-	if (entity == NULL || value == NULL)
-		return -EINVAL;
-	instance = to_instance(entity);
-
-	ret = asprintf(value, "%jd", (intmax_t)instance->pid);
-	if (ret < 0) {
-		*value = NULL;
-		ULOGE("asprintf error");
-		return -ENOMEM;
-	}
-
-	return 0;
-}
-
-static int get_state(struct folder_entity *entity, char **value)
-{
-	struct instance *instance;
-
-	if (entity == NULL || value == NULL)
-		return -EINVAL;
-	instance = to_instance(entity);
-
-	*value = strdup(instance_state_to_str(instance->state));
-
-	return *value == NULL ? -errno : 0;
-}
-
-static struct folder_property id_property = {
-		.name = "id",
-		.get = get_id,
-};
-
-static struct folder_property pid_property = {
-		.name = "pid",
-		.get = get_pid,
-};
-
-static struct folder_property state_property = {
-		.name = "state",
-		.get = get_state,
-};
 
 int instances_init(void)
 {

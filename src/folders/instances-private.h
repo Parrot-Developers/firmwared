@@ -23,6 +23,12 @@
 
 #include "../folders.h"
 
+enum instance_state {
+	INSTANCE_READY,
+	INSTANCE_STARTED,
+	INSTANCE_STOPPING,
+};
+
 struct instance {
 	/* runtime unique id */
 	uint8_t id;
@@ -55,5 +61,9 @@ struct instance {
 	char *firmware_sha1;
 	time_t time;
 };
+
+#define to_instance(p) ut_container_of(p, struct instance, entity)
+
+char *instance_state_to_str(enum instance_state state);
 
 #endif /* INSTANCES_PRIVATE_H_ */

@@ -16,12 +16,6 @@ struct instance;
 
 #define INSTANCES_FOLDER_NAME "instances"
 
-enum instance_state {
-	INSTANCE_READY,
-	INSTANCE_STARTED,
-	INSTANCE_STOPPING,
-};
-
 int instances_init(void);
 /*
  * a newly created instance is automatically stored in the instance folder and
