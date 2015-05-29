@@ -891,6 +891,30 @@ err:
 
 }
 
+static int get_id(struct folder_entity *entity, char **value)
+{
+	int ret;
+	struct instance *instance;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	ret = asprintf(value, "%"PRIu8, instance->id);
+	if (ret < 0) {
+		*value = NULL;
+		ULOGE("asprintf error");
+		return -ENOMEM;
+	}
+
+	return 0;
+}
+
+static struct folder_property id_property = {
+		.name = "id",
+		.get = get_id,
+};
+
 int instances_init(void)
 {
 	int ret;
@@ -904,6 +928,7 @@ int instances_init(void)
 		ULOGE("folder_register: %s", strerror(-ret));
 		return ret;
 	}
+	folder_register_property(INSTANCES_FOLDER_NAME, &id_property);
 
 	return 0;
 }
