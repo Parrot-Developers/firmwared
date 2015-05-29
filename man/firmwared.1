@@ -23,7 +23,7 @@ If
 .RB $ FIRMWARED_MOUNT_HOOK
 is set, it's value is used as the path to the helper executable responsible of
 mounting the union fs of an instance and of cleaning it, defaults to
-.BR /usr/libexec/firmwared/mount.hook .
+.BR /opt/sphinx/usr/libexec/firmwared/mount.hook .
 .TP
 .B FIRMWARED_SOCKET_PATH
 If
@@ -41,7 +41,7 @@ used by
 are stored.
 There should be three files in this directory, names, adjectives and
 apparmor.profile, defaults to
-.BR /usr/share/firmwared/ .
+.BR /opt/sphinx/usr/share/firmwared/ .
 .TP
 .B FIRMWARED_REPOSITORY_PATH
 If
@@ -65,14 +65,14 @@ Under this directory the following subtree will be used :
                    +- workdir (used internally by OverlayFS)
 
 defaults to
-.BR /var/run/firmwared/mount_points .
+.BR /var/run/firmwared/mount_points/ .
 .TP
 .B FIRMWARED_NET_HOOK
 If
 .RB $ FIRMWARED_NET_HOOK
 is set, it's value is used as the path to the helper executable responsible of
 creating the veth pair and configuring it, defaults to
-.BR /usr/libexec/firmwared/net.hook .
+.BR /opt/sphinx/usr/libexec/firmwared/net.hook .
 .TP
 .B FIRMWARED_PREVENT_REMOVAL
 If

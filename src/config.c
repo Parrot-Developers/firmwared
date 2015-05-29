@@ -31,7 +31,7 @@ ULOG_DECLARE_TAG(firmwared_config);
 #include "config.h"
 
 #ifndef MOUNT_HOOK_DEFAULT
-#define MOUNT_HOOK_DEFAULT "/usr/libexec/firmwared/mount.hook"
+#define MOUNT_HOOK_DEFAULT "/opt/sphinx/usr/libexec/firmwared/mount.hook"
 #endif /* MOUNT_HOOK_DEFAULT */
 
 #ifndef SOCKET_PATH_DEFAULT
@@ -39,7 +39,7 @@ ULOG_DECLARE_TAG(firmwared_config);
 #endif /* SOCKET_PATH_DEFAULT */
 
 #ifndef FOLDERS_RESOURCES_DIR_DEFAULT
-#define FOLDERS_RESOURCES_DIR_DEFAULT "/usr/share/firmwared/"
+#define FOLDERS_RESOURCES_DIR_DEFAULT "/opt/sphinx/usr/share/firmwared/"
 #endif /* FOLDERS_RESOURCES_DIR_DEFAULT */
 
 #ifndef FIRMWARE_REPOSITORY_DEFAULT
@@ -47,11 +47,11 @@ ULOG_DECLARE_TAG(firmwared_config);
 #endif /* FIRMWARE_REPOSITORY_DEFAULT */
 
 #ifndef INSTANCES_MOUNT_PATH_DEFAULT
-#define INSTANCES_MOUNT_PATH_DEFAULT "/var/run/firmwared/mount_points"
+#define INSTANCES_MOUNT_PATH_DEFAULT "/var/run/firmwared/mount_points/"
 #endif /* INSTANCES_MOUNT_PATH_DEFAULT */
 
 #ifndef NET_HOOK_DEFAULT
-#define NET_HOOK_DEFAULT "/usr/libexec/firmwared/net.hook"
+#define NET_HOOK_DEFAULT "/opt/sphinx/usr/libexec/firmwared/net.hook"
 #endif /* NET_HOOK_DEFAULT */
 
 #ifndef PREVENT_REMOVAL
