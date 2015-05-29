@@ -132,55 +132,8 @@ The general rule of thumb is :
 ## Environment variables
 
 Some base configuration parameters can be modified at startup via the following
-environment variables (see config.c for more information):
-
-* *FIRMWARED\_MOUNT\_HOOK*: path to the helper executable responsible of
-  mounting the union fs of an instance and of cleaning it, defaults to
-  **/usr/libexec/firmwared/mount.hook**
-* *FIRMWARED\_SOCKET\_PATH*: where the control socket will be created,
-  defaults to **/var/run/firmwared.sock**
-* *FIRMWARED\_RESOURCES\_DIR*: where the resource files for firmwared are
-  stored, defaults to **/usr/share/firmwared/**
-* *FIRMWARED\_REPOSITORY\_PATH*: where the installed firmwares are located,
-  defaults to **/usr/share/firmwared/firmwares/**
-* *FIRMWARED\_MOUNT\_PATH*: where the firmwares mountings will take place,
-  under this directory the following subtree will be used :
-
-                  +- /instance_sha1/
-                                   |
-                                   +- ro (read-only mount point of the firmware)
-                                   +- rw (directory with the rw layer)
-                                   +- union (union fs mount of ./rw upon ./ro)
-  defaults to **/var/run/firmwared/mount\_points**
-* *FIRMWARED\_NET\_HOOK*: path to the helper executable responsible of creating
-  the veth pair and configuring it, defaults to
-  **/usr/libexec/firmwared/net.hook**
-* *FIRMWARED\_PREVENT\_REMOVAL*: if set to "y", after dropping an instance, it's
-  run artifacts will be preserved, that is, the
-  FIRMWARED\_MOUNT\_PATH/instance\_sha1 directory will _not_ be destroyed
-* *FIRMWARED\_CONTAINER\_INTERFACE*: name of the network interface created for
-  the instances to communicate with the host, defaults to **eth0**, must be less
-  than 15 characters long
-* *FIRMWARED\_HOST\_INTERFACE\_PREFIX*: prefix for building the interface name
-  for the veth end living in the host network namespace, defaults to
-  **fd_veth**, must be less than 12 characters long
-* *FIRMWARED\_NET\_FIRST\_TWO\_BYTES*: prefix for building the IP addresses for
-  the host and the container, defaults to **172.30.**, must have the form
-  'X1.X2.' with X1 and X2 being two integers in [0, 255] inclusive
-* *FIRMWARED\_DUMP\_PROFILE*: if set to "y", the AppArmor profile will be dumped
-  to firmwared's standard error, at each instance creation, defaults to "n"
-* *FIRMWARED\_DISABLE\_APPARMOR*: if set to "y", AppArmor will not be use, 
-  please be aware that this is a dangerous option as it is likely to kill
-  kittens, you have been warned, defaults to "n"
-
-The firmwares initial indexing performs sha1 computation which can take a
-significant amount of time. Openmp is used to automatically make them in
-parallel. It will try to choose the best number of threads automatically.
-Limiting their number can be done with:
-
-* *OMP\_NUM\_THREADS*: a number which sets the maximum number of threads, openmp
-  will use to compute the firmwares sha1 in parallel. This number doens't take
-  the main thread into account.
+environment variables (see config.c for more information). All the supported
+variables are documented in the *firmwared*(1) manpage.
 
 ## Configuration file
 

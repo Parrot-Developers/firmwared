@@ -1,0 +1,175 @@
+.TH FIRMWARED 1
+.SH NAME
+firmwared \- Daemon for spawning and managing drone firmare instances
+.SH SYNOPSIS
+.B firmwared
+[\fICONFIGURATION_FILE\fR]
+.SH DESCRIPTION
+.B firmwared
+allows to create multiple instances of drone firmwares in containers and to
+manage their lifecycle.
+It is controlled by a socket, with libpomp for the protocol, so it can be used
+with a variety of language.
+A command line client,
+.BR fd-cli(1)
+is also available.
+.SH EXIT STATUS
+.B firmwared
+returns 0 on success and 1 on error.
+.SH ENVIRONMENT
+.TP
+.B FIRMWARED_MOUNT_HOOK
+If
+.RB $ FIRMWARED_MOUNT_HOOK
+is set, it's value is used as the path to the helper executable responsible of
+mounting the union fs of an instance and of cleaning it, defaults to
+.BR /usr/libexec/firmwared/mount.hook .
+.TP
+.B FIRMWARED_SOCKET_PATH
+If
+.RB $ FIRMWARED_SOCKET_PATH
+is set, it's value is used as the path to the socket used to control firmwared,
+defaults to
+.BR /var/run/firmwared.sock .
+.TP
+.B FIRMWARED_RESOURCES_DIR
+If
+.RB $ FIRMWARED_RESOURCES_DIR
+is set, it's value is used as the path to the directory where the resource files
+used by
+.B firmwared
+are stored.
+There should be three files in this directory, names, adjectives and
+apparmor.profile, defaults to
+.BR /usr/share/firmwared/ .
+.TP
+.B FIRMWARED_REPOSITORY_PATH
+If
+.RB $ FIRMWARED_REPOSITORY_PATH
+is set, it's value is used as the path to the directory in which the firmwares
+filesystem images are stored, defaults to
+.BR /usr/share/firmwared/firmwares/ .
+.TP
+.B FIRMWARED_MOUNT_PATH
+If
+.RB $ FIRMWARED_MOUNT_PATH
+is set, then the firmware workspaces, that is, their set of mount points, will
+be created in this directory.
+Under this directory the following subtree will be used :
+
+  +- /instance_sha1/
+                   |
+                   +- ro (read-only mount point of the firmware)
+                   +- rw (directory with the rw layer)
+                   +- union (union fs mount of ./rw upon ./ro)
+                   +- workdir (used internally by OverlayFS)
+
+defaults to
+.BR /var/run/firmwared/mount_points .
+.TP
+.B FIRMWARED_NET_HOOK
+If
+.RB $ FIRMWARED_NET_HOOK
+is set, it's value is used as the path to the helper executable responsible of
+creating the veth pair and configuring it, defaults to
+.BR /usr/libexec/firmwared/net.hook .
+.TP
+.B FIRMWARED_PREVENT_REMOVAL
+If
+.RB $ FIRMWARED_PREVENT_REMOVAL
+is set to
+.BR y ,
+after dropping an instance, it's run artifacts will be preserved, that is, the
+FIRMWARED_MOUNT_PATH/instance_sha1 directory will
+.I not
+be destroyed, defaults to
+.BR n .
+.TP
+.B FIRMWARED_CONTAINER_INTERFACE
+If
+.RB $ FIRMWARED_CONTAINER_INTERFACE
+is set, it will be used as the name of the network interface created for the
+instances to communicate with the host, defaults to
+.BR eth0 ,
+must be less than 15 characters long.
+.TP
+.B FIRMWARED_HOST_INTERFACE_PREFIX
+If
+.RB $ FIRMWARED_HOST_INTERFACE_PREFIX
+is set, then it will be used as the prefix for building the interface name for
+the veth pair's end living in the host network namespace, defaults to
+.BR fd_veth ,
+must be less than 12 characters long.
+.TP
+.B FIRMWARED_NET_FIRST_TWO_BYTES
+If
+.RB $ FIRMWARED_NET_FIRST_TWO_BYTES
+is set, then it will be used as the prefix for building the IP addresses for the
+host and the container, defaults to
+.BR 172.30. ,
+must have the form 'X1.X2.' with X1 and X2 being two integers in [0, 255]
+inclusive.
+The host veth's end will have X1.X2.INSTANCE_ID.1/24 as it's IP address and the
+instance's veth's end will have X1.X2.INSTANCE_ID.1/24.
+.TP
+.B FIRMWARED_DUMP_PROFILE
+If
+.RB $ FIRMWARED_DUMP_PROFILE
+is set to
+.BR y ,
+the AppArmor profile used at each instance creation will be dumped to
+firmwared's standard error, defaults to
+.BR n .
+.TP
+.B FIRMWARED_DISABLE_APPARMOR
+If
+.RB $ FIRMWARED_DISABLE_APPARMOR
+is set to
+.BR y ,
+AppArmor will not be used for protecting the host against potentially harmful
+behaviour of the instances.
+Please be aware that this is a dangerous option as it is likely to kill kittens,
+you have been warned, defaults to
+.BR n .
+
+The firmwares initial indexing performs sha1 computation which can take a
+significant amount of time.
+Openmp is used to automatically make them in parallel.
+It will try to choose the best number of threads automatically.
+Limiting their number can be done with:
+.TP
+.B OMP_NUM_THREADS
+If
+.RB $ OMP_NUM_THREADS
+is set to a valid number, it will be used as the maximum number of threads,
+openmp will use to compute the firmwares sha1 in parallel. This number doens't
+take the main thread into account.
+
+.SH FILES
+.TP
+.I $FIRMWARED_MOUNT_HOOK
+Helper executable responsible of instances' mount points management.
+.TP
+.I $FIRMWARED_NET_HOOK
+Helper executable responsible of instances' network interfaces management.
+.TP
+.I $FIRMWARED_RESOURCES_DIR/names
+List of names, used in the generation of entities unique names.
+.TP
+.I $FIRMWARED_RESOURCES_DIR/adjectives
+List of adjectives, used in the generation of entities unique names.
+.TP
+.I $FIRMWARED_RESOURCES_DIR/firmwared.apparmor.profile
+Template AppArmor profile, used to protect the host machine from potentially
+dangerous behaviour of the instances.
+
+.SH BUGS
+.B firmwared
+is in it's early stage and some bugs are may still be present.
+Please report any bug found.
+.SH AUTHORS
+Written by Nicolas Carrier <nicolas.carrier@parrot.com>.
+.SH SEE ALSO
+.BR fd-cli (1),
+.BR firmwared.conf (5),
+.BR apparmor (7),
