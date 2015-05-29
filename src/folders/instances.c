@@ -159,7 +159,7 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 		bool only_unregister)
 {
 	return ut_process_vsystem("\"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" "
-				"\"%s\" \"%s\" \"%s\" \"%s\"",
+				"\"%s\" \"%s\" \"%s\" \"%s\" \"%s\"",
 			config_get(CONFIG_MOUNT_HOOK),
 			action,
 			instance->base_workspace,
@@ -169,7 +169,8 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 			instance->firmware_path,
 			instance->firmware_sha1,
 			only_unregister ? "true" : "false",
-			config_get(CONFIG_PREVENT_REMOVAL));
+			config_get(CONFIG_PREVENT_REMOVAL),
+			config_get(CONFIG_USE_AUFS));
 }
 
 static int invoke_net_helper(struct instance *instance, const char *action)

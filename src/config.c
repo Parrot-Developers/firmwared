@@ -78,6 +78,10 @@ ULOG_DECLARE_TAG(firmwared_config);
 #define DISABLE_APPARMOR "n"
 #endif /* DISABLE_APPARMOR */
 
+#ifndef USE_AUFS
+#define USE_AUFS "n"
+#endif /* DISABLE_APPARMOR */
+
 typedef bool (*validate_cb_t)(const char *value);
 
 struct config {
@@ -297,6 +301,11 @@ static struct config configs[CONFIG_NB] = {
 				.default_value = DISABLE_APPARMOR,
 				.valid = valid_yes_no,
 		},
+		[CONFIG_USE_AUFS] = {
+				.env = "FIRMWARED_USE_AUFS",
+				.default_value = USE_AUFS,
+				.valid = valid_yes_no,
+		},
 };
 
 static int lua_error_to_errno(int error)
@@ -378,6 +387,22 @@ static int read_config(lua_State *l)
 	return 0;
 }
 
+static int check_config(void)
+{
+	if (config_get_bool(CONFIG_DISABLE_APPARMOR)
+			&& config_get_bool(CONFIG_USE_AUFS)) {
+		ULOGE("AuFS isn't supported by firmwared's AppArmor integration"
+				" you should disable AppArmor or better, "
+				"use OverlayFS");
+		return -EINVAL;
+	}
+
+	if (config_get_bool(CONFIG_DISABLE_APPARMOR))
+		ULOGW("AppArmor disabled, this is dangerous");
+
+	return 0;
+}
+
 int config_init(const char *path)
 {
 	int ret;
@@ -409,7 +434,8 @@ int config_init(const char *path)
 						lua_tostring(l, -1));
 		goto out;
 	}
-	ret = 0;
+
+	ret = check_config();
 
 out:
 	lua_close(l);

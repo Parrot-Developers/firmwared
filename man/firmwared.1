@@ -139,6 +139,18 @@ behaviour of the instances.
 Please be aware that this is a dangerous option as it is likely to kill kittens,
 you have been warned, defaults to
 .BR n .
+.TP
+.B FIRMWARED_USE_AUFS
+If
+.RB $ FIRMWARED_USE_AUFS
+is set to
+.BR y ,
+aufs will be used instead of overlayfs.
+This option is here if one doesn't want to upgrade it's kernel to a version in
+which, overlayfs support has been integrated.
+Using this option is strongly discouraged since it forces to disable AppArmor.
+Defaults to
+.BR n .
 
 The firmwares initial indexing performs sha1 computation which can take a
 significant amount of time.
