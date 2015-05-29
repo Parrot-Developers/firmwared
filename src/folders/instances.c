@@ -146,7 +146,7 @@ static int invoke_net_helper(struct instance *instance, const char *action)
 			"\"%s\" \"%d\" \"%jd\"",
 			config_get(CONFIG_NET_HOOK),
 			action,
-			config_get(CONFIG_CONTAINER_INTERFACE),
+			instance->interface,
 			config_get(CONFIG_HOST_INTERFACE_PREFIX),
 			instance->id,
 			config_get(CONFIG_NET_FIRST_TWO_BYTES),
@@ -182,6 +182,7 @@ static void clean_instance(struct instance *i, bool only_unregister)
 	ptspair_clean(&i->ptspair);
 	clean_mount_points(i, only_unregister);
 
+	ut_string_free(&i->interface);
 	ut_string_free(&i->firmware_sha1);
 	ut_string_free(&i->firmware_path);
 	ut_bit_field_release_index(&indices, i->id);
@@ -725,6 +726,7 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 	instance->killer_msgid = (uint32_t) -1;
 	instance->firmware_path = strdup(path);
 	instance->firmware_sha1 = strdup(sha1);
+	instance->interface = strdup(config_get(CONFIG_CONTAINER_INTERFACE));
 	if (instance->firmware_path == NULL ||
 			instance->firmware_sha1 == NULL) {
 		ret = -ENOMEM;

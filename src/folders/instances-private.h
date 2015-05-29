@@ -60,6 +60,9 @@ struct instance {
 	/* fields used for instance sha1 computation */
 	char *firmware_sha1;
 	time_t time;
+
+	/* run-time configurable properties */
+	char *interface;
 };
 
 #define to_instance(p) ut_container_of(p, struct instance, entity)

@@ -21,6 +21,8 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_instance_properties);
 
+#include <ut_string.h>
+
 #include <ptspair.h>
 
 #include "instance_properties.h"
@@ -145,6 +147,36 @@ static int get_time(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
+static int get_interface(struct folder_entity *entity, char **value)
+{
+	struct instance *instance;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	*value = strdup(instance->interface);
+
+	return *value == NULL ? -errno : 0;
+}
+
+static int set_interface(struct folder_entity *entity, const char *value)
+{
+	struct instance *instance;
+
+	if (entity == NULL || ut_string_is_invalid(value))
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	ut_string_free(&instance->interface);
+
+	instance->interface = strdup(value);
+
+	// TODO validate the input
+
+	return instance->interface == NULL ? -errno : 0;
+}
+
 struct folder_property properties[] = {
 		{
 				.name = "id",
@@ -177,6 +209,11 @@ struct folder_property properties[] = {
 		{
 				.name = "time",
 				.get = get_time,
+		},
+		{
+				.name = "interface",
+				.get = get_interface,
+				.set = set_interface,
 		},
 		{ /* NULL guard */
 				.name = NULL,
