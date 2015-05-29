@@ -33,7 +33,7 @@ static int properties_command_handler(struct firmwared *f,
 
 	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &folder);
 	if (ret < 0) {
-		cmd = folder = NULL; // TODO do that everywhere
+		cmd = folder = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}

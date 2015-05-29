@@ -63,6 +63,7 @@ static int command_process(struct firmwared *f, struct pomp_conn *conn,
 
 	ret = pomp_msg_read(msg, "%ms", &name);
 	if (ret < 0) {
+		cmd = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}

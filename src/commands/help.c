@@ -34,6 +34,7 @@ static int help_command_handler(struct firmwared *f, struct pomp_conn *conn,
 
 	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &command_name);
 	if (ret < 0) {
+		cmd = command_name = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}

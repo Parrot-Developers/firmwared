@@ -99,6 +99,7 @@ static int load_words(const char *resources_dir, const char *list_name,
 
 	ret = asprintf(&path, "%s/%s", resources_dir, list_name);
 	if (ret == -1) {
+		path = NULL;
 		ULOGE("asprintf error");
 		exit(1);
 	}
