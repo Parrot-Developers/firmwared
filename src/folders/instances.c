@@ -870,9 +870,7 @@ int instances_init(void)
 		ULOGE("folder_register: %s", strerror(-ret));
 		return ret;
 	}
-	folder_register_property(INSTANCES_FOLDER_NAME, &id_property);
-	folder_register_property(INSTANCES_FOLDER_NAME, &pid_property);
-	folder_register_property(INSTANCES_FOLDER_NAME, &state_property);
+	instance_properties_register(INSTANCES_FOLDER_NAME);
 
 	return 0;
 }

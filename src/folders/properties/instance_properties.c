@@ -21,6 +21,9 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_instance_properties);
 
+#include <ptspair.h>
+
+#include "instance_properties.h"
 #include "../instances-private.h"
 
 static int get_id(struct folder_entity *entity, char **value)
@@ -74,18 +77,125 @@ static int get_state(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-struct folder_property id_property = {
-		.name = "id",
-		.get = get_id,
+static int get_firmware_path(struct folder_entity *entity, char **value)
+{
+	struct instance *instance;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	*value = strdup(instance->firmware_path);
+
+	return *value == NULL ? -errno : 0;
+}
+
+static int get_base_workspace(struct folder_entity *entity, char **value)
+{
+	struct instance *instance;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	*value = strdup(instance->base_workspace);
+
+	return *value == NULL ? -errno : 0;
+}
+
+static int get_pts(struct folder_entity *entity, char **value)
+{
+	struct instance *instance;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	*value = strdup(ptspair_get_path(&instance->ptspair, PTSPAIR_FOO));
+
+	return *value == NULL ? -errno : 0;
+}
+
+static int get_firmware_sha1(struct folder_entity *entity, char **value)
+{
+	struct instance *instance;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	*value = strdup(instance->firmware_sha1);
+
+	return *value == NULL ? -errno : 0;
+}
+
+static int get_time(struct folder_entity *entity, char **value)
+{
+	struct instance *instance;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	*value = strdup(ctime(&instance->time));
+	if (value == NULL)
+		return -errno;
+	(*value)[strlen(*value) - 1] = '\0';
+
+	return *value == NULL ? -errno : 0;
+}
+
+struct folder_property properties[] = {
+		{
+				.name = "id",
+				.get = get_id,
+		},
+		{
+				.name = "pid",
+				.get = get_pid,
+		},
+		{
+				.name = "state",
+				.get = get_state,
+		},
+		{
+				.name = "firmware_path",
+				.get = get_firmware_path,
+		},
+		{
+				.name = "base_workspace",
+				.get = get_base_workspace,
+		},
+		{
+				.name = "pts",
+				.get = get_pts,
+		},
+		{
+				.name = "firmware_sha1",
+				.get = get_firmware_sha1,
+		},
+		{
+				.name = "time",
+				.get = get_time,
+		},
+		{ /* NULL guard */
+				.name = NULL,
+				.get = NULL,
+		},
 };
 
-struct folder_property pid_property = {
-		.name = "pid",
-		.get = get_pid,
-};
+int instance_properties_register(const char *folder_name)
+{
+	int ret;
+	struct folder_property *property = properties;
 
-struct folder_property state_property = {
-		.name = "state",
-		.get = get_state,
-};
+	for (property = properties; property->name != NULL; property++) {
+		ret = folder_register_property(folder_name, property);
+		if (ret < 0) {
+			ULOGE("folder_register_property: %s", strerror(-ret));
+			return ret;
+		}
+	}
 
+	return 0;
+}
