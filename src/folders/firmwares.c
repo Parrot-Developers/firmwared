@@ -135,18 +135,10 @@ static int firmware_drop(struct folder_entity *entity, bool only_unregister)
 	return 0;
 }
 
-static char *firmware_get_info(const struct folder_entity *entity)
-{
-	struct firmware *firmware = to_firmware(entity);
-
-	return strdup(firmware->path);
-}
-
 struct folder_entity_ops firmware_ops = {
 		.sha1 = firmware_sha1,
 		.can_drop = firmware_can_drop,
 		.drop = firmware_drop,
-		.get_info = firmware_get_info,
 };
 
 static int pattern_filter(const struct dirent *d)

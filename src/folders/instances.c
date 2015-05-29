@@ -231,42 +231,10 @@ static int instance_drop(struct folder_entity *entity, bool only_unregister)
 	return 0;
 }
 
-static char *instance_get_info(const struct folder_entity *entity)
-{
-	int ret;
-	struct instance *instance = to_instance(entity);
-	char *info;
-
-	ret = asprintf(&info, "id: %"PRIu8"\n"
-			"pid: %jd\n"
-			"state: %s\n"
-			"firmware_path: %s\n"
-			"base_workspace: %s\n"
-			"pts: %s\n"
-			"firmware_sha1: %s\n"
-			"time: %s",
-			instance->id,
-			(intmax_t)instance->pid,
-			instance_state_to_str(instance->state),
-			instance->firmware_path,
-			instance->base_workspace,
-			ptspair_get_path(&instance->ptspair, PTSPAIR_FOO),
-			instance->firmware_sha1,
-			ctime(&instance->time));
-	if (ret < 0) {
-		ULOGE("asprintf error");
-		errno = ENOMEM;
-		return NULL;
-	}
-
-	return info;
-}
-
 struct folder_entity_ops instance_ops = {
 		.sha1 = instance_sha1,
 		.can_drop = instance_can_drop,
 		.drop = instance_drop,
-		.get_info = instance_get_info,
 };
 
 static int init_paths(struct instance *instance)

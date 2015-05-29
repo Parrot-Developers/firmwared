@@ -126,8 +126,7 @@ static int destroy_word(struct rs_node *node)
 
 static bool folder_entity_ops_are_invalid(const struct folder_entity_ops *ops)
 {
-	return ops->drop == NULL || ops->get_info == NULL ||
-			ops->sha1 == NULL || ops->can_drop == NULL;
+	return ops->drop == NULL || ops->sha1 == NULL || ops->can_drop == NULL;
 }
 
 static bool folder_is_invalid(const struct folder *folder)
@@ -418,8 +417,14 @@ int folder_store(const char *folder_name, struct folder_entity *entity)
 char *folder_get_info(const char *folder_name,
 		const char *entity_identifier)
 {
+	int ret;
+	char *info = NULL;
+	char *old_info = NULL;
+	char *value = NULL;
 	const struct folder *folder;
 	struct folder_entity *entity;
+	struct rs_node *node = NULL;
+	struct folder_property *property;
 
 	errno = 0;
 	if (ut_string_is_invalid(folder_name) ||
@@ -438,7 +443,29 @@ char *folder_get_info(const char *folder_name,
 	if (entity == NULL)
 		return NULL;
 
-	return folder->ops.get_info(entity);
+	while ((node = rs_dll_next_from(&folder->properties, node)) != NULL) {
+		property = to_property(node);
+		ret = property->get(entity, &value);
+		if (ret < 0) {
+			ut_string_free(&info);
+			ULOGE("property->get: %s", strerror(-ret));
+			errno = -ret;
+			return NULL;
+		}
+		old_info = info;
+		ret = asprintf(&info, "%s%s: %s\n", info ? info : "",
+				property->name, value);
+		ut_string_free(&value);
+		ut_string_free(&old_info);
+		if (ret < 0) {
+			info = NULL;
+			ULOGE("asprintf error");
+			errno = -ENOMEM;
+			return NULL;
+		}
+	}
+
+	return info == NULL ? strdup("") : info;
 }
 
 struct folder_entity *folder_find_entity(const char *folder_name,

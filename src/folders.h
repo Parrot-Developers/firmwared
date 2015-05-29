@@ -30,7 +30,6 @@ struct folder_entity_ops {
 	const char *(*sha1)(struct folder_entity *entity);
 	bool (*can_drop)(struct folder_entity *entity);
 	int (*drop)(struct folder_entity *entity, bool only_unregister);
-	char *(*get_info)(const struct folder_entity *entity);
 };
 
 struct folder {
