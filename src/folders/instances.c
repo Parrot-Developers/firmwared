@@ -910,9 +910,33 @@ static int get_id(struct folder_entity *entity, char **value)
 	return 0;
 }
 
+static int get_pid(struct folder_entity *entity, char **value)
+{
+	int ret;
+	struct instance *instance;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	ret = asprintf(value, "%jd", (intmax_t)instance->pid);
+	if (ret < 0) {
+		*value = NULL;
+		ULOGE("asprintf error");
+		return -ENOMEM;
+	}
+
+	return 0;
+}
+
 static struct folder_property id_property = {
 		.name = "id",
 		.get = get_id,
+};
+
+static struct folder_property pid_property = {
+		.name = "pid",
+		.get = get_pid,
 };
 
 int instances_init(void)
@@ -929,6 +953,7 @@ int instances_init(void)
 		return ret;
 	}
 	folder_register_property(INSTANCES_FOLDER_NAME, &id_property);
+	folder_register_property(INSTANCES_FOLDER_NAME, &pid_property);
 
 	return 0;
 }
