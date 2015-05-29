@@ -320,7 +320,7 @@ static int init_paths(struct instance *instance)
 	int ret;
 
 	ret = asprintf(&instance->base_workspace, "%s/%s",
-			config_get(CONFIG_BASE_MOUNT_PATH),
+			config_get(CONFIG_MOUNT_PATH),
 			instance_get_sha1(instance));
 	if (ret < 0) {
 		instance->base_workspace = NULL;

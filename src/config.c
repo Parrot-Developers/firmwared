@@ -252,12 +252,12 @@ static struct config configs[CONFIG_NB] = {
 				.default_value = FOLDERS_RESOURCES_DIR_DEFAULT,
 				.valid = valid_path,
 		},
-		[CONFIG_FIRMWARE_REPOSITORY] = {
+		[CONFIG_REPOSITORY_PATH] = {
 				.env = "FIRMWARED_REPOSITORY_PATH",
 				.default_value = FIRMWARE_REPOSITORY_DEFAULT,
 				.valid = valid_path,
 		},
-		[CONFIG_BASE_MOUNT_PATH] = {
+		[CONFIG_MOUNT_PATH] = {
 				.env = "FIRMWARED_MOUNT_PATH",
 				.default_value = INSTANCES_MOUNT_PATH_DEFAULT,
 				.valid = valid_path,

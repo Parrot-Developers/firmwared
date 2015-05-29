@@ -161,7 +161,7 @@ static struct firmware *firmware_new(const char *repository_path,
 	const char *sha1;
 	struct firmware *firmware;
 	const char *firmware_repository_path =
-			config_get(CONFIG_FIRMWARE_REPOSITORY);
+			config_get(CONFIG_REPOSITORY_PATH);
 
 	ULOGD("indexing firmware %s", path);
 
@@ -214,7 +214,7 @@ static int index_firmwares(void)
 	int res = 0;
 	int n;
 	struct dirent __attribute__((cleanup(free_namelist))) **namelist = NULL;
-	const char *repository = config_get(CONFIG_FIRMWARE_REPOSITORY);
+	const char *repository = config_get(CONFIG_REPOSITORY_PATH);
 	struct firmware __attribute__((cleanup(free_firmwares))) **firmwares;
 
 	ULOGI("indexing "FIRMWARES_FOLDER_NAME);
