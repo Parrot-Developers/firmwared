@@ -929,6 +929,19 @@ static int get_pid(struct folder_entity *entity, char **value)
 	return 0;
 }
 
+static int get_state(struct folder_entity *entity, char **value)
+{
+	struct instance *instance;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	*value = strdup(instance_state_to_str(instance->state));
+
+	return *value == NULL ? -errno : 0;
+}
+
 static struct folder_property id_property = {
 		.name = "id",
 		.get = get_id,
@@ -937,6 +950,11 @@ static struct folder_property id_property = {
 static struct folder_property pid_property = {
 		.name = "pid",
 		.get = get_pid,
+};
+
+static struct folder_property state_property = {
+		.name = "state",
+		.get = get_state,
 };
 
 int instances_init(void)
@@ -954,6 +972,7 @@ int instances_init(void)
 	}
 	folder_register_property(INSTANCES_FOLDER_NAME, &id_property);
 	folder_register_property(INSTANCES_FOLDER_NAME, &pid_property);
+	folder_register_property(INSTANCES_FOLDER_NAME, &state_property);
 
 	return 0;
 }
