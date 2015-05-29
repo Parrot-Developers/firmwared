@@ -13,6 +13,14 @@ with a variety of language.
 A command line client,
 .BR fdc(1)
 is also available.
+If a
+.B CONFIGURATION_FILE
+argument is passed, it will be used to read the configuration, if not,
+.B firmwared
+will check if
+.I /etc/firmwared.conf
+exists and load it in this case.
+If no configuration file is found, default values or environment are used.
 .SH EXIT STATUS
 .B firmwared
 returns 0 on success and 1 on error.

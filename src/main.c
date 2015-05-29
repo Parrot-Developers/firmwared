@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include <ut_process.h>
+#include <ut_file.h>
 
 #include "apparmor.h"
 #include "folders.h"
@@ -31,6 +32,10 @@
 #define ULOG_TAG firmwared_main
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_main);
+
+#ifndef DEFAULT_CONFIG_FILE
+#define DEFAULT_CONFIG_FILE "/etc/firmwared.conf"
+#endif /* DEFAULT_CONFIG_FILE */
 
 static void usage(int status)
 {
@@ -100,7 +105,13 @@ int main(int argc, char *argv[])
 	if (argc > 2)
 		usage(EXIT_FAILURE);
 
-	config_file = argc == 2 ? argv[1] : NULL;
+	if (argc == 2)
+		config_file = argv[1];
+	else if (ut_file_exists(DEFAULT_CONFIG_FILE))
+		config_file = DEFAULT_CONFIG_FILE;
+	else
+		config_file = NULL;
+
 	ret = config_init(config_file);
 	if (ret < 0) {
 		ULOGE("loading config file %s failed", config_file);
