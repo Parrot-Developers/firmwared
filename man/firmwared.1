@@ -26,37 +26,48 @@ If no configuration file is found, default values or environment are used.
 returns 0 on success and 1 on error.
 .SH ENVIRONMENT
 .TP
+.B FIRMWARED_CONTAINER_INTERFACE
+If
+.RB $ FIRMWARED_CONTAINER_INTERFACE
+is set, it will be used as the name of the network interface created for the
+instances to communicate with the host, defaults to
+.BR eth0 ,
+must be less than 15 characters long.
+.TP
+.B FIRMWARED_DISABLE_APPARMOR
+If
+.RB $ FIRMWARED_DISABLE_APPARMOR
+is set to
+.BR y ,
+AppArmor will not be used for protecting the host against potentially harmful
+behaviour of the instances.
+Please be aware that this is a dangerous option as it is likely to kill kittens,
+you have been warned, defaults to
+.BR n .
+.TP
+.B FIRMWARED_DUMP_PROFILE
+If
+.RB $ FIRMWARED_DUMP_PROFILE
+is set to
+.BR y ,
+the AppArmor profile used at each instance creation will be dumped to
+firmwared's standard error, defaults to
+.BR n .
+.TP
+.B FIRMWARED_HOST_INTERFACE_PREFIX
+If
+.RB $ FIRMWARED_HOST_INTERFACE_PREFIX
+is set, then it will be used as the prefix for building the interface name for
+the veth pair's end living in the host network namespace, defaults to
+.BR fd_veth ,
+must be less than 12 characters long.
+.TP
 .B FIRMWARED_MOUNT_HOOK
 If
 .RB $ FIRMWARED_MOUNT_HOOK
 is set, it's value is used as the path to the helper executable responsible of
 mounting the union fs of an instance and of cleaning it, defaults to
 .BR /opt/sphinx/usr/libexec/firmwared/mount.hook .
-.TP
-.B FIRMWARED_SOCKET_PATH
-If
-.RB $ FIRMWARED_SOCKET_PATH
-is set, it's value is used as the path to the socket used to control firmwared,
-defaults to
-.BR /var/run/firmwared.sock .
-.TP
-.B FIRMWARED_RESOURCES_DIR
-If
-.RB $ FIRMWARED_RESOURCES_DIR
-is set, it's value is used as the path to the directory where the resource files
-used by
-.B firmwared
-are stored.
-There should be three files in this directory, names, adjectives and
-apparmor.profile, defaults to
-.BR /opt/sphinx/usr/share/firmwared/ .
-.TP
-.B FIRMWARED_REPOSITORY_PATH
-If
-.RB $ FIRMWARED_REPOSITORY_PATH
-is set, it's value is used as the path to the directory in which the firmwares
-filesystem images are stored, defaults to
-.BR /usr/share/firmwared/firmwares/ .
 .TP
 .B FIRMWARED_MOUNT_PATH
 If
@@ -74,6 +85,17 @@ Under this directory the following subtree will be used :
 
 defaults to
 .BR /var/run/firmwared/mount_points/ .
+.TP
+.B FIRMWARED_NET_FIRST_TWO_BYTES
+If
+.RB $ FIRMWARED_NET_FIRST_TWO_BYTES
+is set, then it will be used as the prefix for building the IP addresses for the
+host and the container, defaults to
+.BR 172.30. ,
+must have the form 'X1.X2.' with X1 and X2 being two integers in [0, 255]
+inclusive.
+The host veth's end will have X1.X2.INSTANCE_ID.1/24 as it's IP address and the
+instance's veth's end will have X1.X2.INSTANCE_ID.1/24.
 .TP
 .B FIRMWARED_NET_HOOK
 If
@@ -93,52 +115,30 @@ FIRMWARED_MOUNT_PATH/instance_sha1 directory will
 be destroyed, defaults to
 .BR n .
 .TP
-.B FIRMWARED_CONTAINER_INTERFACE
+.B FIRMWARED_RESOURCES_DIR
 If
-.RB $ FIRMWARED_CONTAINER_INTERFACE
-is set, it will be used as the name of the network interface created for the
-instances to communicate with the host, defaults to
-.BR eth0 ,
-must be less than 15 characters long.
+.RB $ FIRMWARED_RESOURCES_DIR
+is set, it's value is used as the path to the directory where the resource files
+used by
+.B firmwared
+are stored.
+There should be three files in this directory, names, adjectives and
+apparmor.profile, defaults to
+.BR /opt/sphinx/usr/share/firmwared/ .
 .TP
-.B FIRMWARED_HOST_INTERFACE_PREFIX
+.B FIRMWARED_REPOSITORY_PATH
 If
-.RB $ FIRMWARED_HOST_INTERFACE_PREFIX
-is set, then it will be used as the prefix for building the interface name for
-the veth pair's end living in the host network namespace, defaults to
-.BR fd_veth ,
-must be less than 12 characters long.
+.RB $ FIRMWARED_REPOSITORY_PATH
+is set, it's value is used as the path to the directory in which the firmwares
+filesystem images are stored, defaults to
+.BR /usr/share/firmwared/firmwares/ .
 .TP
-.B FIRMWARED_NET_FIRST_TWO_BYTES
+.B FIRMWARED_SOCKET_PATH
 If
-.RB $ FIRMWARED_NET_FIRST_TWO_BYTES
-is set, then it will be used as the prefix for building the IP addresses for the
-host and the container, defaults to
-.BR 172.30. ,
-must have the form 'X1.X2.' with X1 and X2 being two integers in [0, 255]
-inclusive.
-The host veth's end will have X1.X2.INSTANCE_ID.1/24 as it's IP address and the
-instance's veth's end will have X1.X2.INSTANCE_ID.1/24.
-.TP
-.B FIRMWARED_DUMP_PROFILE
-If
-.RB $ FIRMWARED_DUMP_PROFILE
-is set to
-.BR y ,
-the AppArmor profile used at each instance creation will be dumped to
-firmwared's standard error, defaults to
-.BR n .
-.TP
-.B FIRMWARED_DISABLE_APPARMOR
-If
-.RB $ FIRMWARED_DISABLE_APPARMOR
-is set to
-.BR y ,
-AppArmor will not be used for protecting the host against potentially harmful
-behaviour of the instances.
-Please be aware that this is a dangerous option as it is likely to kill kittens,
-you have been warned, defaults to
-.BR n .
+.RB $ FIRMWARED_SOCKET_PATH
+is set, it's value is used as the path to the socket used to control firmwared,
+defaults to
+.BR /var/run/firmwared.sock .
 .TP
 .B FIRMWARED_USE_AUFS
 If

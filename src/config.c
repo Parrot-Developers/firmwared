@@ -241,30 +241,40 @@ static bool valid_net_first_two_bytes(const char *value)
 }
 
 static struct config configs[CONFIG_NB] = {
+		[CONFIG_CONTAINER_INTERFACE] = {
+				.env = "FIRMWARED_CONTAINER_INTERFACE",
+				.default_value = CONTAINER_INTERFACE,
+				.valid = valid_interface,
+		},
+		[CONFIG_DISABLE_APPARMOR] = {
+				.env = "FIRMWARED_DISABLE_APPARMOR",
+				.default_value = DISABLE_APPARMOR,
+				.valid = valid_yes_no,
+		},
+		[CONFIG_DUMP_PROFILE] = {
+				.env = "FIRMWARED_DUMP_PROFILE",
+				.default_value = DUMP_PROFILE,
+				.valid = valid_yes_no,
+		},
+		[CONFIG_HOST_INTERFACE_PREFIX] = {
+				.env = "FIRMWARED_HOST_INTERFACE_PREFIX",
+				.default_value = HOST_INTERFACE_PREFIX,
+				.valid = valid_interface_prefix,
+		},
 		[CONFIG_MOUNT_HOOK] = {
 				.env = "FIRMWARED_MOUNT_HOOK",
 				.default_value = MOUNT_HOOK_DEFAULT,
 				.valid = valid_executable,
 		},
-		[CONFIG_SOCKET_PATH] = {
-				.env = "FIRMWARED_SOCKET_PATH",
-				.default_value = SOCKET_PATH_DEFAULT,
-				.valid = valid_accessible,
-		},
-		[CONFIG_RESOURCES_DIR] = {
-				.env = "FIRMWARED_RESOURCES_DIR",
-				.default_value = FOLDERS_RESOURCES_DIR_DEFAULT,
-				.valid = valid_path,
-		},
-		[CONFIG_REPOSITORY_PATH] = {
-				.env = "FIRMWARED_REPOSITORY_PATH",
-				.default_value = FIRMWARE_REPOSITORY_DEFAULT,
-				.valid = valid_path,
-		},
 		[CONFIG_MOUNT_PATH] = {
 				.env = "FIRMWARED_MOUNT_PATH",
 				.default_value = INSTANCES_MOUNT_PATH_DEFAULT,
 				.valid = valid_path,
+		},
+		[CONFIG_NET_FIRST_TWO_BYTES] = {
+				.env = "FIRMWARED_NET_FIRST_TWO_BYTES",
+				.default_value = NET_FIRST_TWO_BYTES,
+				.valid = valid_net_first_two_bytes,
 		},
 		[CONFIG_NET_HOOK] = {
 				.env = "FIRMWARED_NET_HOOK",
@@ -276,30 +286,20 @@ static struct config configs[CONFIG_NB] = {
 				.default_value = PREVENT_REMOVAL,
 				.valid = valid_yes_no,
 		},
-		[CONFIG_CONTAINER_INTERFACE] = {
-				.env = "FIRMWARED_CONTAINER_INTERFACE",
-				.default_value = CONTAINER_INTERFACE,
-				.valid = valid_interface,
+		[CONFIG_RESOURCES_DIR] = {
+				.env = "FIRMWARED_RESOURCES_DIR",
+				.default_value = FOLDERS_RESOURCES_DIR_DEFAULT,
+				.valid = valid_path,
 		},
-		[CONFIG_HOST_INTERFACE_PREFIX] = {
-				.env = "FIRMWARED_HOST_INTERFACE_PREFIX",
-				.default_value = HOST_INTERFACE_PREFIX,
-				.valid = valid_interface_prefix,
+		[CONFIG_REPOSITORY_PATH] = {
+				.env = "FIRMWARED_REPOSITORY_PATH",
+				.default_value = FIRMWARE_REPOSITORY_DEFAULT,
+				.valid = valid_path,
 		},
-		[CONFIG_NET_FIRST_TWO_BYTES] = {
-				.env = "FIRMWARED_NET_FIRST_TWO_BYTES",
-				.default_value = NET_FIRST_TWO_BYTES,
-				.valid = valid_net_first_two_bytes,
-		},
-		[CONFIG_DUMP_PROFILE] = {
-				.env = "FIRMWARED_DUMP_PROFILE",
-				.default_value = DUMP_PROFILE,
-				.valid = valid_yes_no,
-		},
-		[CONFIG_DISABLE_APPARMOR] = {
-				.env = "FIRMWARED_DISABLE_APPARMOR",
-				.default_value = DISABLE_APPARMOR,
-				.valid = valid_yes_no,
+		[CONFIG_SOCKET_PATH] = {
+				.env = "FIRMWARED_SOCKET_PATH",
+				.default_value = SOCKET_PATH_DEFAULT,
+				.valid = valid_accessible,
 		},
 		[CONFIG_USE_AUFS] = {
 				.env = "FIRMWARED_USE_AUFS",
