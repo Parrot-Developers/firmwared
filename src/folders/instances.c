@@ -59,6 +59,7 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include "config.h"
 #include "firmwared.h"
 #include "apparmor.h"
+#include "instances-private.h"
 
 /*
  * this hardcoded value could be a modifiable parameter, but it really adds to
@@ -67,39 +68,6 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #define NET_BITS 24
 
 static ut_bit_field_t indices;
-
-struct instance {
-	/* runtime unique id */
-	uint8_t id;
-
-	struct folder_entity entity;
-	pid_t pid;
-	int pidfd;
-	uv_poll_t pidfd_handle;
-	enum instance_state state;
-	char *firmware_path;
-	/* caching of sha1 computation */
-	char sha1[2 * SHA_DIGEST_LENGTH + 1];
-	char *info;
-	uint32_t killer_msgid;
-
-	/* synchronization between monitor and pid 1 */
-	struct ut_process_sync sync;
-
-	char *base_workspace;
-	/* all 3 dirs must be subdirs of base_workspace dir */
-	char *ro_mount_point;
-	char *rw_dir;
-	char *union_mount_point;
-
-	/* foo is the external pts, bar will be passed to the pid 1 */
-	struct ptspair ptspair;
-	uv_poll_t ptspair_handle;
-
-	/* fields used for instance sha1 computation */
-	char *firmware_sha1;
-	time_t time;
-};
 
 #define to_instance(p) ut_container_of(p, struct instance, entity)
 
