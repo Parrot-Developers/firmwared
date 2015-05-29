@@ -539,7 +539,7 @@ int folder_register_property(const char *folder_name,
 	if (folder == NULL)
 		return -errno;
 
-	return rs_dll_push(&folder->properties, &property->node);
+	return rs_dll_enqueue(&folder->properties, &property->node);
 }
 
 int folder_entity_get_property(struct folder_entity *entity, const char *name,
