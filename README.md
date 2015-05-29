@@ -63,6 +63,9 @@ and "remote\_firmwares", entities types are named *folders*.
 * *GET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME  
   retrieves the value of the property PROPERTY for the entity whose name or sha1
   is ENTITY\_IDENTIFIER from the folder FOLDER.
+* *SET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
+  sets the value of the property PROPERTY to the value PROPERTY\_VALUE, for the
+  entity whose name or sha1 is ENTITY\_IDENTIFIER from the folder FOLDER.
 
 ### Notifications
 
@@ -103,6 +106,8 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   of the properties registered for the folder
 * *GET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
   answer to a *GET\_PROPERTY* command
+* *PROPERTY\_SET* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
+  answer to a *SET\_PROPERTY* command
 
 ### Instance states
 
