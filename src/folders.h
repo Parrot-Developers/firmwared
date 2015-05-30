@@ -32,13 +32,6 @@ struct folder_entity_ops {
 	int (*drop)(struct folder_entity *entity, bool only_unregister);
 };
 
-struct folder {
-	struct rs_dll entities;
-	char *name;
-	struct folder_entity_ops ops;
-	struct rs_dll properties;
-};
-
 struct folder_property {
 	struct rs_node node;
 	const char *name;
@@ -48,6 +41,15 @@ struct folder_property {
 	 */
 	int (*get)(struct folder_entity *entity, char **value);
 	int (*set)(struct folder_entity *entity, const char *value);
+};
+
+struct folder {
+	struct rs_dll entities;
+	char *name;
+	struct folder_entity_ops ops;
+	struct rs_dll properties;
+	struct folder_property name_property;
+	struct folder_property sha1_property;
 };
 
 int folders_init(void);

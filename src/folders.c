@@ -223,7 +223,7 @@ static int folder_entity_get_name(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static struct folder_property name_property = {
+static const struct folder_property name_property = {
 		.name = "name",
 		.get = folder_entity_get_name,
 };
@@ -244,7 +244,7 @@ static int get_sha1(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static struct folder_property sha1_property = {
+static const struct folder_property sha1_property = {
 		.name = "sha1",
 		.get = get_sha1,
 };
@@ -306,8 +306,10 @@ int folder_register(const struct folder *folder)
 	folders[i] = *folder;
 
 	rs_dll_init(&(folders[i].properties), NULL);
-	folder_register_property(folder->name, &name_property);
-	folder_register_property(folder->name, &sha1_property);
+	folders[i].name_property = name_property;
+	folders[i].sha1_property = sha1_property;
+	folder_register_property(folder->name, &folders[i].name_property);
+	folder_register_property(folder->name, &folders[i].sha1_property);
 
 	return rs_dll_init(&(folders[i].entities), NULL);
 }
