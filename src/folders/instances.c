@@ -840,7 +840,7 @@ int instances_init(void)
 		ULOGE("folder_register: %s", strerror(-ret));
 		return ret;
 	}
-	instance_properties_register(INSTANCES_FOLDER_NAME);
+	instance_properties_register();
 
 	return 0;
 }

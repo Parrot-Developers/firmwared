@@ -26,6 +26,7 @@ ULOG_DECLARE_TAG(firmwared_instance_properties);
 #include <ptspair.h>
 
 #include "instance_properties.h"
+#include "instances.h"
 #include "../instances-private.h"
 
 static int get_id(struct folder_entity *entity, char **value)
@@ -221,13 +222,13 @@ struct folder_property properties[] = {
 		},
 };
 
-int instance_properties_register(const char *folder_name)
+int instance_properties_register(void)
 {
 	int ret;
 	struct folder_property *property = properties;
 
 	for (property = properties; property->name != NULL; property++) {
-		ret = folder_register_property(folder_name, property);
+		ret = folder_register_property(INSTANCES_FOLDER_NAME, property);
 		if (ret < 0) {
 			ULOGE("folder_register_property: %s", strerror(-ret));
 			return ret;
