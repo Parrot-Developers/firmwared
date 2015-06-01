@@ -1,0 +1,45 @@
+.TH FIRMWARED.CONF 5
+.SH NAME
+firmwared.conf \- Configuration file for the firmwared program.
+.SH SYNOPSIS
+.B /etc/firmwared.conf
+.SH DESCRIPTION
+.B firmwared.conf
+is the configuration file for the
+.B firmwared
+daemon.
+It's syntax is that of the lua language.
+For most simple cases, it is sufficient to know that one can write key value
+pairs separated by an equal sign.
+.B Firmwared
+expects strings, which can be delimited by " characters.
+It is also possible to build values by using the
+.B ..
+concatenation operator.
+For more complex uses, please refer to the lua reference manual.
+
+The configuration keys
+.B firmwared
+accepts are all the environment variables
+documented in the
+.BR firmwared (1)
+man page and whose name starts with
+.BR FIRMWARED_ .
+
+The
+.I firmwared.conf
+file is not mandatory,
+.B firmwared
+will use some default values if absent, which should work as is.
+
+An documented
+.B firmwared.conf
+example is provided in the
+.I examples/firmwared.conf
+file, in the source distribution.
+
+.SH FILES
+.IR /etc/firmwared.conf ,
+.I examples/firmwared.conf
+.SH SEE ALSO
+.BR firmwared (1),
