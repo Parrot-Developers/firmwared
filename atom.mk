@@ -28,6 +28,8 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/src/folders
 
 LOCAL_COPY_FILES := \
+	man/firmwared.1:usr/share/man/man1/ \
+	man/firmwared.conf.5:usr/share/man/man5/ \
 	resources/adjectives:usr/share/$(LOCAL_MODULE)/ \
 	resources/names:usr/share/$(LOCAL_MODULE)/ \
 	resources/firmwared.apparmor.profile:usr/share/$(LOCAL_MODULE)/ \
@@ -56,6 +58,7 @@ LOCAL_REQUIRED_MODULES := firmwared \
 	pomp-cli
 
 LOCAL_COPY_FILES := \
+	man/fdc.1:usr/share/man/man1/ \
 	utils/fdc:usr/bin/fdc
 
 include $(BUILD_CUSTOM)
