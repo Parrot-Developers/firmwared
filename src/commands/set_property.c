@@ -70,7 +70,7 @@ static const struct command set_property_command = {
 				"PROPERTY_VALUE, for the entity whose name or "
 				"sha1 is ENTITY_IDENTIFIER from the folder "
 				"FOLDER.",
-		.synopsis = "FOLDER ENTITY_IDENTIFIER PROPERTY_NAME"
+		.synopsis = "FOLDER ENTITY_IDENTIFIER PROPERTY_NAME "
 				"PROPERTY_VALUE",
 		.handler = set_property_command_handler,
 };
