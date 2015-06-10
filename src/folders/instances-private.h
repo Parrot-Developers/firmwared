@@ -30,10 +30,11 @@ enum instance_state {
 };
 
 struct instance {
+	struct folder_entity entity;
+
 	/* runtime unique id */
 	uint8_t id;
 
-	struct folder_entity entity;
 	pid_t pid;
 	int pidfd;
 	uv_poll_t pidfd_handle;
