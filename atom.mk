@@ -52,7 +52,7 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 LOCAL_MODULE := fdc
 LOCAL_DESCRIPTION := Command line interface for firmwared
-LOCAL_CATEGORY_PATH := simulator/firmwared
+LOCAL_CATEGORY_PATH := sphinx/firmwared
 
 LOCAL_REQUIRED_MODULES := firmwared \
 	pomp-cli
