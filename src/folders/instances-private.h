@@ -63,6 +63,8 @@ struct instance {
 
 	/* run-time configurable properties */
 	char *interface;
+
+	char **command_line;
 };
 
 #define to_instance(p) ut_container_of(p, struct instance, entity)

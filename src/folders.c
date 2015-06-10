@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include <ut_utils.h>
 #include <ut_string.h>
@@ -204,14 +205,52 @@ static bool folder_can_drop(struct folder *folder, struct folder_entity *entity)
 	return folder->ops.can_drop(entity);
 }
 
+static bool folder_property_is_array(struct folder_property *property)
+{
+	return property->geti != NULL;
+}
+
 static bool folder_property_is_invalid(struct folder_property *property)
 {
 	return property == NULL || ut_string_is_invalid(property->name) ||
-			property->get == NULL;
+			/* at least one getter is mandatory */
+			(property->get == NULL && property->geti == NULL) ||
+			/*
+			 * if geti is defined, a get implementation is provided
+			 * based on it
+			 */
+			(property->get != NULL && property->geti != NULL) ||
+			/*
+			 * if a setter is defined, the corresponding getter
+			 * must be defined
+			 */
+			(property->set != NULL && property->get == NULL) ||
+			(property->seti != NULL && property->geti == NULL);
 }
 
 /* folder_property_match_str_name */
 static RS_NODE_MATCH_STR_MEMBER(folder_property, name, node)
+
+static int folder_property_match_str_array_name(struct rs_node *node,
+		const void *data)
+{
+	const char *name = (const char *)data;
+	struct folder_property *property = to_property(node);
+	if (name == NULL || property->name == NULL)
+		return 0;
+
+	if (ut_string_match(property->name, name))
+		return true;
+
+	/* test if the name could be an array access in the form name[...] */
+	if (ut_string_match_prefix(name, property->name)) {
+		if (name[strlen(property->name)] == '[' &&
+				name[strlen(name) - 1] == ']')
+			return true;
+	}
+
+	return false;
+}
 
 static int folder_entity_get_name(struct folder_entity *entity, char **value)
 {
@@ -416,6 +455,45 @@ int folder_store(const char *folder_name, struct folder_entity *entity)
 	return 0;
 }
 
+static int property_get(struct folder_property *property,
+		struct folder_entity *entity, char **value)
+{
+	char *suffix;
+	int i;
+	int ret;
+
+	if (!folder_property_is_array(property))
+		return property->get(entity, value);
+
+	for (i = 0; ; i++) {
+		ret = property->geti(entity, i, &suffix);
+		if (ret < 0) {
+			ut_string_free(value);
+			ULOGE("property->geti: %s", strerror(-ret));
+			return ret;
+		}
+		if (ut_string_match(suffix, "nil")) {
+			ut_string_free(&suffix);
+			break;
+		}
+		ret = ut_string_append(value, "%s ", suffix);
+		ut_string_free(&suffix);
+		if (ret < 0) {
+			ut_string_free(value);
+			ULOGE("ut_string_append: %s", strerror(-ret));
+			return ret;
+		}
+	}
+	if (*value == NULL) {
+		*value = strdup(" ");
+		if (*value == NULL)
+			return -errno;
+	}
+	(*value)[strlen(*value) - 1] = '\0';
+
+	return 0;
+}
+
 char *folder_get_info(const char *folder_name,
 		const char *entity_identifier)
 {
@@ -447,10 +525,10 @@ char *folder_get_info(const char *folder_name,
 
 	while ((node = rs_dll_next_from(&folder->properties, node)) != NULL) {
 		property = to_property(node);
-		ret = property->get(entity, &value);
+		ret = property_get(property, entity, &value);
 		if (ret < 0) {
 			ut_string_free(&info);
-			ULOGE("property->get: %s", strerror(-ret));
+			ULOGE("property_get: %s", strerror(-ret));
 			errno = -ret;
 			return NULL;
 		}
@@ -533,8 +611,12 @@ char *folder_list_properties(const char *folder_name)
 
 	while ((node = rs_dll_next_from(&folder->properties, node))) {
 		property = to_property(node);
-		ret = ut_string_append(&properties_list, "%s ",
-				property->name);
+		if (folder_property_is_array(property))
+			ret = ut_string_append(&properties_list, "%s[] ",
+					property->name);
+		else
+			ret = ut_string_append(&properties_list, "%s ",
+					property->name);
 		if (ret < 0) {
 			ULOGC("ut_string_append");
 			errno = -ret;
@@ -571,29 +653,78 @@ int folder_register_property(const char *folder_name,
 	return rs_dll_enqueue(&folder->properties, &property->node);
 }
 
+static int read_index(const char *name)
+{
+	long index;
+	char *bracket;
+	char *endptr;
+
+	bracket = strchr(name, '[');
+	if (bracket == NULL) {
+		ULOGE("access to an array must be performed with [...]");
+		return -1;
+	}
+
+	index = strtol(bracket + 1, &endptr, 0);
+	if (*endptr != ']') {
+		ULOGE("invalid array access near '%s'", bracket);
+		return -1;
+	}
+	if (index >= INT_MAX) {
+		ULOGE("index overflow: %ld", index);
+		return -1;
+	}
+
+	return index;
+}
+
 int folder_entity_get_property(struct folder_entity *entity, const char *name,
 		char **value)
 {
 	int ret = 0;
 	struct rs_node *property_node;
 	struct folder_property *property;
+	bool is_array_access;
+	int index;
 
 	if (entity == NULL || ut_string_is_invalid(name) || value == NULL)
 		return -EINVAL;
 
 	property_node = rs_dll_find_match(&entity->folder->properties,
-			folder_property_match_str_name, name);
+			folder_property_match_str_array_name, name);
 	if (property_node == NULL) {
 		ULOGE("property \"%s\" not found for folder %s", name,
 				entity->folder->name);
 		return -ESRCH;
 	}
 	property = to_property(property_node);
+	is_array_access = name[strlen(name) - 1] == ']';
+	if (is_array_access && !folder_property_is_array(property)) {
+		ULOGE("non-array property accessed as an array one");
+		return -EINVAL;
+	}
 
-	ret = property->get(entity, value);
-	if (ret < 0) {
-		ULOGE("property->set: %s", strerror(-ret));
-		return ret;
+
+	if (is_array_access) {
+		index = read_index(name);
+		if (index == -1)
+			return -EINVAL;
+		ret = property->geti(entity, index, value);
+		if (ret < 0) {
+			ULOGE("property->geti: %s", strerror(-ret));
+			return ret;
+		}
+		if (*value == NULL) {
+			*value = strdup("nil");
+			if (*value == NULL)
+				return -errno;
+		}
+	} else {
+		ret = property_get(property, entity, value);
+		if (ret < 0) {
+			ULOGE("property_get: %s", strerror(-ret));
+			return ret;
+		}
 	}
 
 	return *value == NULL ? -errno : 0;
@@ -603,6 +734,8 @@ int folder_entity_set_property(struct folder_entity *entity, const char *name,
 		const char *value)
 {
 	int ret = 0;
+	int index;
+	bool is_array_access;
 	struct rs_node *property_node;
 	struct folder_property *property;
 
@@ -611,23 +744,47 @@ int folder_entity_set_property(struct folder_entity *entity, const char *name,
 		return -EINVAL;
 
 	property_node = rs_dll_find_match(&entity->folder->properties,
-			folder_property_match_str_name, name);
+			folder_property_match_str_array_name, name);
 	if (property_node == NULL) {
 		ULOGE("property \"%s\" not found for folder %s", name,
 				entity->folder->name);
 		return -ESRCH;
 	}
 	property = to_property(property_node);
-	if (property->set == NULL) {
-		ULOGE("property %s.%s is read-only", entity->folder->name,
-				name);
-		return -EPERM;
+	is_array_access = name[strlen(name) - 1] == ']';
+	if (is_array_access != folder_property_is_array(property)) {
+		if (is_array_access)
+			ULOGE("non-array property accessed as an array one");
+		else
+			ULOGE("array property accessed as a non-array one");
+		return -EINVAL;
 	}
 
-	ret = property->set(entity, value);
-	if (ret < 0) {
-		ULOGE("property->set: %s", strerror(-ret));
-		return ret;
+	if (is_array_access) {
+		if (property->seti == NULL) {
+			ULOGE("property %s.%s[] is read-only",
+					entity->folder->name, name);
+			return -EPERM;
+		}
+		index = read_index(name);
+		if (index == -1)
+			return -EINVAL;
+		ret = property->seti(entity, index, value);
+		if (ret < 0) {
+			ULOGE("property->seti: %s", strerror(-ret));
+			return ret;
+		}
+	} else {
+		if (property->set == NULL) {
+			ULOGE("property %s.%s is read-only",
+					entity->folder->name, name);
+			return -EPERM;
+		}
+		ret = property->set(entity, value);
+		if (ret < 0) {
+			ULOGE("property->set: %s", strerror(-ret));
+			return ret;
+		}
 	}
 
 	return 0;

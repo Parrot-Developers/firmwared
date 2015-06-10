@@ -178,7 +178,66 @@ static int set_interface(struct folder_entity *entity, const char *value)
 	return instance->interface == NULL ? -errno : 0;
 }
 
-struct folder_property properties[] = {
+static int geti_cmdline(struct folder_entity *entity, int index, char **value)
+{
+	struct instance *instance;
+	int i;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+	for (i = 0; i < index; i++)
+		if (instance->command_line[i] == NULL)
+			return -ERANGE;
+
+	if (instance->command_line[index] == NULL)
+		*value = strdup("nil");
+	else
+		*value = strdup(instance->command_line[index]);
+
+	return *value == NULL ? -errno : 0;
+}
+
+static int seti_cmdline(struct folder_entity *entity, int index,
+		const char *value)
+{
+	int size;
+	int i;
+	struct instance *instance;
+
+	if (entity == NULL || ut_string_is_invalid(value))
+		return -EINVAL;
+	instance = to_instance(entity);
+	for (size = 0; instance->command_line[size] != NULL; size++);
+
+	ULOGD("array size is %d", size);
+
+	if (index > size) {
+		ULOGE("index %d above array size %d", index, size);
+		return -ERANGE;
+	}
+	if (instance->command_line[index] != NULL) {
+		ut_string_free(instance->command_line + index);
+		if (ut_string_match(value, "nil")) {
+			/* if NULL is stored, truncate the array after it */
+			for (i = index + 1; i < size; i++)
+				ut_string_free(instance->command_line + i);
+			instance->command_line = realloc(instance->command_line,
+					index + 1 *
+					sizeof(*(instance->command_line)));
+			instance->command_line[index] = NULL;
+
+			return 0;
+		}
+	}
+	instance->command_line[index] = strdup(value);
+	if (instance->command_line[index] == NULL)
+		return -errno;
+
+	return 0;
+}
+
+static struct folder_property properties[] = {
 		{
 				.name = "id",
 				.get = get_id,
@@ -216,9 +275,16 @@ struct folder_property properties[] = {
 				.get = get_interface,
 				.set = set_interface,
 		},
+		{
+				.name = "cmdline",
+				.geti = geti_cmdline,
+				.seti = seti_cmdline,
+		},
 		{ /* NULL guard */
 				.name = NULL,
 				.get = NULL,
+				.set = NULL,
+				.seti = NULL,
 		},
 };
 

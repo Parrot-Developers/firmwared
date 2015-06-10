@@ -409,69 +409,11 @@ static int setup_chroot(struct instance *instance)
 	return 0;
 }
 
-static int build_args(struct instance *instance, char ***argv)
-{
-	int ret;
-	const char *pts;
-	int i;
-
-	*argv= calloc(5, sizeof(**argv));
-	if (*argv == NULL)
-		return -errno;
-
-	// TODO load this from the firmware's config file
-	i = 0;
-	(*argv)[i++] = strdup("/sbin/boxinit");
-	if ((*argv)[0] == NULL)
-		goto err;
-
-	(*argv)[i++] = strdup("ro.hardware=mk3_sim_pc");
-	if ((*argv)[0] == NULL)
-		goto err;
-
-	(*argv)[i++] = strdup("ro.debuggable=1");
-	if ((*argv)[0] == NULL)
-		goto err;
-
-	pts = ptspair_get_path(&instance->ptspair, PTSPAIR_BAR);
-	ret = asprintf(*argv + i++, "ro.boot.console=%s", pts + 4);
-	if (ret < 0) {
-		errno = ENOMEM;
-		(*argv)[i] = 0;
-		goto err;
-	}
-
-	return 0;
-err:
-
-	*argv = NULL;
-
-	return -errno;
-}
-
-static void destroy_args(char ***argv)
-{
-	char **arg;
-
-	if (argv == NULL || *argv == NULL)
-		return;
-
-	arg = *argv;
-	while (*arg != NULL) {
-		ut_string_free(arg);
-		arg++;
-	}
-
-	free(*argv);
-	*argv = NULL;
-}
-
 static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 {
 	int ret;
 	int i;
 	const char *hostname;
-	char __attribute__((cleanup(destroy_args)))**argv = NULL;
 	const char *sha1;
 
 	sha1 = instance_get_sha1(instance);
@@ -482,11 +424,6 @@ static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 
 	ULOGI("%s", __func__);
 
-	ret = build_args(instance, &argv);
-	if (ret < 0) {
-		ULOGE("build_args: %s", strerror(-ret));
-		_exit(EXIT_FAILURE);
-	}
 	/* we need to be able to differentiate instances by hostnames */
 	hostname = instance_get_name(instance);
 	ret = sethostname(hostname, strlen(hostname));
@@ -518,7 +455,7 @@ static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 	for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
 		close(i);
 	/* from here, ulog doesn't work anymore */
-	ret = execv(argv[0], argv);
+	ret = execv(instance->command_line[0], instance->command_line);
 	if (ret < 0)
 		/*
 		 * if one want to search for potential failure of the execve
@@ -643,7 +580,7 @@ static void launch_instance(struct instance *instance)
 		ULOGE("waitpid: %m");
 	}
 	if (WIFEXITED(status))
-		ULOGC("program exited with status %d", WEXITSTATUS(status));
+		ULOGI("program exited with status %d", WEXITSTATUS(status));
 
 	/*
 	 * check that hostname hasn't changed, it could break some things like
@@ -805,6 +742,7 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 			goto err;
 		}
 	}
+	instance->command_line = calloc(1, sizeof(*instance->command_line));
 
 	return 0;
 err:
@@ -857,7 +795,7 @@ struct instance *instance_new(struct firmwared *firmwared, const char *path,
 
 	ret = init_instance(instance, firmwared, path, sha1);
 	if (ret < 0) {
-		ULOGE("instance_init: %s", strerror(-ret));
+		ULOGE("init_instance: %s", strerror(-ret));
 		goto err;
 	}
 

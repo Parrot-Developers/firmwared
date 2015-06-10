@@ -36,11 +36,17 @@ struct folder_property {
 	struct rs_node node;
 	const char *name;
 	/*
-	 * must return NULL on error and set errno, allocates the string stored
-	 * in value which must be freed after usage
+	 * allocates the string stored in value which must be freed after usage
 	 */
 	int (*get)(struct folder_entity *entity, char **value);
 	int (*set)(struct folder_entity *entity, const char *value);
+
+	/* array access functions */
+	/*
+	 * allocates the string stored in value which must be freed after usage
+	 */
+	int (*geti)(struct folder_entity *entity, int index, char **value);
+	int (*seti)(struct folder_entity *entity, int index, const char *value);
 };
 
 struct folder {
