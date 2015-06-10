@@ -164,10 +164,24 @@ static void clean_mount_points(struct instance *instance, bool only_unregister)
 	clean_paths(instance);
 }
 
+static void clean_command_line(struct instance *instance)
+{
+	int i;
+
+	if (instance->command_line == NULL)
+		return;
+
+	for (i = 0; instance->command_line[i] != NULL; i++)
+		ut_string_free(instance->command_line + i);
+
+	free(instance->command_line);
+}
+
 static void clean_instance(struct instance *i, bool only_unregister)
 {
 	struct pid_cb_data *data;
 
+	clean_command_line(i);
 	if (!config_get_bool(CONFIG_DISABLE_APPARMOR))
 		apparmor_remove_profile(instance_get_name(i));
 	ut_process_sync_clean(&i->sync);
@@ -646,6 +660,51 @@ static int setup_ptspair(struct ptspair *ptspair)
 	return setup_pts(ptspair, PTSPAIR_BAR);
 }
 
+/* load sane defaults to launch a boxinit product */
+static int init_command_line(struct instance *instance)
+{
+	char **argv;
+	int i;
+	int ret;
+	const char *pts;
+
+	argv = calloc(5, sizeof(*instance->command_line));
+	if (argv == NULL)
+		return -errno;
+	instance->command_line = argv;
+
+	i = 0;
+	argv[i] = strdup("/sbin/boxinit");
+	if (argv[i] == NULL)
+		goto err;
+	i++;
+
+	argv[i] = strdup("ro.hardware=mk3_sim_pc");
+	if (argv[i] == NULL)
+		goto err;
+	i++;
+
+	argv[i] = strdup("ro.debuggable=1");
+	if (argv[i] == NULL)
+		goto err;
+	i++;
+
+	pts = ptspair_get_path(&instance->ptspair, PTSPAIR_BAR);
+	ret = asprintf(argv + i, "ro.boot.console=%s", pts + 4);
+	if (ret < 0) {
+		errno = ENOMEM;
+		argv[i] = NULL;
+		goto err;
+	}
+
+	return 0;
+err:
+	ret = -errno;
+	clean_command_line(instance);
+
+	return ret;
+}
+
 static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		const char *path, const char *sha1)
 {
@@ -742,7 +801,11 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 			goto err;
 		}
 	}
-	instance->command_line = calloc(1, sizeof(*instance->command_line));
+	ret = init_command_line(instance);
+	if (ret < 0) {
+		ULOGE("init_command_line: %s", strerror(-ret));
+		goto err;
+	}
 
 	return 0;
 err:
