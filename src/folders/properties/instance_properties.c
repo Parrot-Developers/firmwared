@@ -209,6 +209,7 @@ static int seti_cmdline(struct folder_entity *entity, int index,
 		return -EINVAL;
 	instance = to_instance(entity);
 	for (size = 0; instance->command_line[size] != NULL; size++);
+	size++; /* room for the last NULL pointer */
 
 	ULOGD("array size is %d", size);
 
@@ -224,15 +225,22 @@ static int seti_cmdline(struct folder_entity *entity, int index,
 				ut_string_free(instance->command_line + i);
 			instance->command_line = realloc(instance->command_line,
 					index + 1 *
-					sizeof(*(instance->command_line)));
-			instance->command_line[index] = NULL;
+					sizeof(*(instance->command_line))); // TODO store the intermediate result to be able to free on error
+			// TODO check allocation failures
+			instance->command_line[index] = NULL; // TODO not needed, done by the ut_string_free call
 
 			return 0;
 		}
+	} else {
+		/* add at the end of the array */
+		instance->command_line = realloc(instance->command_line,
+				(size + 1) *
+				sizeof(*(instance->command_line))); // TODO store the intermediate result to be able to free on error
 	}
 	instance->command_line[index] = strdup(value);
 	if (instance->command_line[index] == NULL)
 		return -errno;
+	instance->command_line[index + 1] = NULL;
 
 	return 0;
 }
