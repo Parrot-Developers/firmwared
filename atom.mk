@@ -7,7 +7,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := firmwared
 LOCAL_DESCRIPTION := Firmware instance manager daemon
-LOCAL_CATEGORY_PATH := simulator/firmwared
+LOCAL_CATEGORY_PATH := sphinx/firmwared
 
 LOCAL_LIBRARIES := \
 	libulog \
