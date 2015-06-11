@@ -48,7 +48,7 @@ on_exit() {
 
 trap on_exit EXIT
 
-timeout=${FDC_TIMEOUT:-1}
+timeout=${FDC_TIMEOUT:-2}
 
 # the following trick checks if the variable is set. we can't test if it is
 # empty, because the set -u will trigger an error
