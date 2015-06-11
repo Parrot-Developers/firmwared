@@ -432,7 +432,7 @@ int folder_drop(const char *folder_name, struct folder_entity *entity)
 	node = rs_dll_remove_match(&folder->entities,
 			folder_entity_match_str_name, entity->name);
 	if (node == NULL)
-		return -EINVAL;
+		return -ESRCH;
 	entity = to_entity(node);
 	name = entity->name;
 
