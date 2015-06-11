@@ -176,7 +176,7 @@ static void clean_instance(struct instance *i, bool only_unregister)
 {
 	clean_command_line(i);
 	if (!config_get_bool(CONFIG_DISABLE_APPARMOR))
-		apparmor_remove_profile(instance_get_name(i));
+		apparmor_remove_profile(instance_get_sha1(i));
 	ut_process_sync_clean(&i->sync);
 	io_mon_remove_sources(firmwared_get_mon(i->firmwared),
 			io_src_pid_get_source(&i->pid_src), &i->ptspair_src,
@@ -506,7 +506,7 @@ static void launch_instance(struct instance *instance)
 		_exit(EXIT_FAILURE);
 	}
 	if (!config_get_bool(CONFIG_DISABLE_APPARMOR)) {
-		ret = apparmor_change_profile(instance_name);
+		ret = apparmor_change_profile(sha1);
 		if (ret < 0) {
 			ULOGE("apparmor_change_profile: %s", strerror(-ret));
 			_exit(EXIT_FAILURE);
@@ -753,7 +753,7 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 	}
 	if (!config_get_bool(CONFIG_DISABLE_APPARMOR)) {
 		ret = apparmor_load_profile(instance->base_workspace,
-				instance_get_name(instance));
+				instance_get_sha1(instance));
 		if (ret < 0) {
 			ULOGE("apparmor_load_profile: %s", strerror(-ret));
 			goto err;
