@@ -459,8 +459,11 @@ int folder_store(const char *folder_name, struct folder_entity *entity)
 	entity->folder = folder;
 
 	needle = find_entity(folder, folder_entity_get_sha1(entity));
-	if (needle != NULL)
+	if (needle != NULL) {
+		ULOGE("entity %s already exists",
+				folder_entity_get_sha1(entity));
 		return -EEXIST;
+	}
 
 	rs_dll_push(&folder->entities, &entity->node);
 
