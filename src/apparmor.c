@@ -27,11 +27,12 @@ ULOG_DECLARE_TAG(apparmor_config);
 #include "./apparmor.h"
 #include "config.h"
 
+#define PROFILE_NAME_PATTERN "firmwared_%s"
 #define APPARMOR_COMMAND "apparmor_parser --replace --quiet"
 #define APPARMOR_REMOVE_COMMAND "apparmor_parser --remove --quiet"
 #define APPARMOR_LOG "/tmp/fd.apparmor"
-#define STATIC_PROFILE_PATTERN "@{root}=%s\nprofile firmwared_%s %s "
-#define REMOVE_PROFILE_PATTERN "profile firmwared_%s {\n}\n"
+#define STATIC_PROFILE_PATTERN "@{root}=%s\nprofile "PROFILE_NAME_PATTERN" %s "
+#define REMOVE_PROFILE_PATTERN "profile "PROFILE_NAME_PATTERN" {\n}\n"
 
 #define APPARMOR_ENABLED_FILE "/sys/module/apparmor/parameters/enabled"
 
@@ -137,8 +138,14 @@ int apparmor_load_profile(const char *root, const char *name)
 int apparmor_change_profile(const char *name)
 {
 	int ret;
+	char __attribute__((cleanup(ut_string_free)))*profile_name = NULL;
 
-	ret = aa_change_profile(name);
+	ret = asprintf(&profile_name, PROFILE_NAME_PATTERN, name);
+	if (ret < 0) {
+		profile_name = NULL;
+		return -ENOMEM;
+	}
+	ret = aa_change_profile(profile_name);
 	if (ret < 0) {
 		ret = -errno;
 		ULOGE("aa_change_profile: %s", strerror(-ret));
