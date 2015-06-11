@@ -824,6 +824,15 @@ struct instance *instance_from_entity(struct folder_entity *entity)
 	return to_instance(entity);
 }
 
+struct folder_entity *instance_to_entity(struct instance *instance)
+{
+	errno = -EINVAL;
+	if (instance == NULL)
+		return NULL;
+
+	return &instance->entity;
+}
+
 int instance_start(struct instance *instance)
 {
 	int ret;

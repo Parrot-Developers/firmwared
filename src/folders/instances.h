@@ -24,6 +24,7 @@ int instances_init(void);
 struct instance *instance_new(struct firmwared *firmwared, const char *path,
 		const char *sha1);
 struct instance *instance_from_entity(struct folder_entity *entity);
+struct folder_entity *instance_to_entity(struct instance *instance);
 int instance_start(struct instance *instance);
 int instance_kill(struct instance *instance, uint32_t killer_msgid);
 const char *instance_get_sha1(struct instance *instance);
