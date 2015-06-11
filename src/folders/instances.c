@@ -865,6 +865,13 @@ int instance_start(struct instance *instance)
 	if (pid == 0)
 		launch_instance(instance); /* in child */
 	/* in parent */
+	/* the pid must be set before being used, e.g. in invoke_net_helper() */
+	ret = io_src_pid_set_pid(&instance->pid_src, pid);
+	if (ret < 0) {
+		kill(pid, SIGKILL);
+		ULOGE("io_src_pid_set_pid: %s", strerror(-ret));
+		return ret;
+	}
 	ret = ut_process_sync_parent_lock(&instance->sync);
 	if (ret < 0)
 		ULOGE("ut_process_sync_parent_lock: parent/child "
@@ -877,12 +884,6 @@ int instance_start(struct instance *instance)
 		ULOGE("ut_process_sync_parent_unlock: parent/child "
 				"synchronisation failed: %s", strerror(-ret));
 
-	ret = io_src_pid_set_pid(&instance->pid_src, pid);
-	if (ret < 0) {
-		kill(pid, SIGKILL);
-		ULOGE("io_src_pid_set_pid: %s", strerror(-ret));
-		return ret;
-	}
 
 	return 0;
 }
