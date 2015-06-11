@@ -489,7 +489,7 @@ static void launch_instance(struct instance *instance)
 				"synchronisation failed: %s", strerror(-ret));
 	ret = invoke_net_helper(instance, "config");
 	if (ret != 0) {
-		ULOGE("invoke_net_helper returned %d", ret);
+		ULOGE("invoke_net_helper config returned %d", ret);
 		_exit(EXIT_FAILURE);
 	}
 	if (!config_get_bool(CONFIG_DISABLE_APPARMOR)) {
@@ -850,7 +850,7 @@ int instance_start(struct instance *instance)
 	 */
 	ret = invoke_net_helper(instance, "create");
 	if (ret != 0) {
-		ULOGE("invoke_net_helper returned %d", ret);
+		ULOGE("invoke_net_helper create returned %d", ret);
 		return -EBUSY;
 	}
 
@@ -871,7 +871,7 @@ int instance_start(struct instance *instance)
 				"synchronisation failed: %s", strerror(-ret));
 	ret = invoke_net_helper(instance, "assign");
 	if (ret != 0)
-		ULOGE("invoke_net_helper returned %d", ret);
+		ULOGE("invoke_net_helper assign returned %d", ret);
 	ret = ut_process_sync_parent_unlock(&instance->sync);
 	if (ret < 0)
 		ULOGE("ut_process_sync_parent_unlock: parent/child "
