@@ -33,9 +33,6 @@ enum instance_state {
 struct instance {
 	struct folder_entity entity;
 
-	/* runtime unique id */
-	uint8_t id;
-
 	struct firmwared *firmwared;
 	struct io_src_pid pid_src;
 	enum instance_state state;
@@ -58,14 +55,17 @@ struct instance {
 	struct ptspair ptspair;
 	struct io_src ptspair_src;
 
-	/* fields used for instance sha1 computation */
-	char *firmware_sha1;
-	time_t time;
 
 	/* run-time configurable properties */
 	char *interface;
 
 	char **command_line;
+
+	/* all the remaining fields are used for instance sha1 computation */
+	char *firmware_sha1;
+	time_t time;
+	/* runtime unique id */
+	uint8_t id;
 };
 
 #define to_instance(p) ut_container_of(p, struct instance, entity)
