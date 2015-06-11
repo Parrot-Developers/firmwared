@@ -81,6 +81,7 @@ static int sha1(struct instance *instance,
 	SHA1_Update(&ctx, instance->firmware_sha1,
 			strlen(instance->firmware_sha1));
 	SHA1_Update(&ctx, &instance->time, sizeof(instance->time));
+	SHA1_Update(&ctx, &instance->id, sizeof(instance->id));
 	SHA1_Final(hash, &ctx);
 
 	return 0;
