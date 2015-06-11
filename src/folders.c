@@ -458,16 +458,17 @@ int folder_store(const char *folder_name, struct folder_entity *entity)
 		return -ENOENT;
 	entity->folder = folder;
 
-	ut_string_free(&entity->name);
-	entity->name = folder_request_friendly_name(folder);
-	if (entity->name == NULL)
-		return -errno;
-
 	needle = find_entity(folder, folder_entity_get_sha1(entity));
 	if (needle != NULL)
 		return -EEXIST;
 
 	rs_dll_push(&folder->entities, &entity->node);
+
+	/* must be done after stored, because it's _drop which frees it */
+	ut_string_free(&entity->name);
+	entity->name = folder_request_friendly_name(folder);
+	if (entity->name == NULL)
+		return -errno;
 
 	return 0;
 }
