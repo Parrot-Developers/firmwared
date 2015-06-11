@@ -91,6 +91,13 @@ static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		ULOGE("instance_new: %m");
 		return ret;
 	}
+	/* folder_store transfers the ownership of the entity to the folder */
+	ret = folder_store(INSTANCES_FOLDER_NAME, instance_to_entity(instance));
+	if (ret < 0) {
+		instance_delete(&instance, false);
+		ULOGE("folder_store: %s", strerror(-ret));
+		return ret;
+	}
 
 	return firmwared_notify(f, pomp_msg_get_id(msg), "%s%s%s%s%s",
 			"PREPARED", sha1,

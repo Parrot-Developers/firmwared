@@ -719,11 +719,6 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		goto err;
 	}
 
-	ret = folder_store(INSTANCES_FOLDER_NAME, &instance->entity);
-	if (ret < 0) {
-		ULOGE("folder_store: %s", strerror(-ret));
-		goto err;
-	}
 	ret = io_mon_add_sources(firmwared_get_mon(firmwared),
 			&instance->ptspair_src,
 			io_src_pid_get_source(&instance->pid_src),

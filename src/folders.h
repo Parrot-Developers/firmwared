@@ -65,6 +65,10 @@ struct folder_entity *folder_next(const struct folder *folder,
 		struct folder_entity *entity);
 unsigned folder_get_count(const char *folder);
 int folder_drop(const char *folder, struct folder_entity *entity);
+/*
+ * a folder_store call, transfers the ownership to the folder, except in case
+ * of error, thus if anything bad happens, the entity will _not_ be destroyed
+ */
 int folder_store(const char *folder, struct folder_entity *entity);
 
 char *folder_get_info(const char *folder, const char *entity_identifier);
