@@ -52,12 +52,14 @@ static int get_pid(struct folder_entity *entity, char **value)
 {
 	int ret;
 	struct instance *instance;
+	pid_t pid;
 
 	if (entity == NULL || value == NULL)
 		return -EINVAL;
 	instance = to_instance(entity);
 
-	ret = asprintf(value, "%jd", (intmax_t)instance->pid);
+	pid = io_src_pid_get_pid(&instance->pid_src);
+	ret = asprintf(value, "%jd", (intmax_t)pid);
 	if (ret < 0) {
 		*value = NULL;
 		ULOGE("asprintf error");

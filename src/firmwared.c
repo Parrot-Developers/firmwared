@@ -27,6 +27,7 @@ ULOG_DECLARE_TAG(firmwared);
 #include <libpomp.h>
 
 #include <ut_string.h>
+#include <ut_utils.h>
 
 #include "commands.h"
 #include "config.h"
@@ -105,9 +106,10 @@ static void change_sock_group_mode()
 	}
 }
 
-static void pomp_uv_poll_cb(uv_poll_t *handle, int status, int events)
+static void pomp_src_cb(struct io_src *src)
 {
-	struct pomp_ctx *pomp = handle->data;
+	struct firmwared *f = ut_container_of(src, typeof(*f), pomp_src);
+	struct pomp_ctx *pomp = f->pomp;
 	int ret;
 
 	ret = pomp_ctx_process_fd(pomp);
@@ -118,11 +120,11 @@ static void pomp_uv_poll_cb(uv_poll_t *handle, int status, int events)
 	}
 }
 
-static void sigint_handler(uv_signal_t *handle, int signum)
+static void sig_src_cb(struct io_src_sig *sig, struct signalfd_siginfo *si)
 {
-	struct firmwared *f = handle->data;
+	struct firmwared *f = ut_container_of(sig, typeof(*f), sig_src);
 
-	ULOGI("Caught signal %d, exiting", signum);
+	ULOGI("Caught signal %d, exiting", si->ssi_signo);
 
 	firmwared_stop(f);
 }
@@ -134,6 +136,7 @@ int firmwared_init(struct firmwared *ctx)
 	size_t s;
 
 	memset(ctx, 0, sizeof(*ctx));
+	ctx->loop = true;
 	ctx->pomp = pomp_ctx_new(&event_cb, ctx);
 	if (ctx->pomp == NULL) {
 		ULOGE("pomp_ctx_new failed");
@@ -148,35 +151,31 @@ int firmwared_init(struct firmwared *ctx)
 	}
 	change_sock_group_mode();
 
-	ret = uv_loop_init(&ctx->loop);
+	ret = io_mon_init(&ctx->mon);
 	if (ret < 0) {
 		ULOGE("uv_loop_init: %s", strerror(-ret));
 		goto err;
 	}
 
-	ret = uv_poll_init(&ctx->loop, &ctx->pomp_handle,
-			pomp_ctx_get_fd(ctx->pomp));
+	ret = io_src_init(&ctx->pomp_src, pomp_ctx_get_fd(ctx->pomp), IO_IN,
+			pomp_src_cb);
 	if (ret < 0) {
-		ULOGE("uv_poll_init: %s", strerror(-ret));
+		ULOGE("io_src_init: %s", strerror(-ret));
 		goto err;
 	}
-	ret = uv_poll_start(&ctx->pomp_handle, UV_READABLE, pomp_uv_poll_cb);
+	ret = io_src_sig_init(&ctx->sig_src, sig_src_cb, SIGINT, SIGTERM,
+			SIGQUIT, NULL /* guard */);
 	if (ret < 0) {
-		ULOGE("uv_poll_start: %s", strerror(-ret));
+		ULOGE("io_src_sig_init: %s", strerror(-ret));
 		goto err;
 	}
-	ctx->pomp_handle.data = ctx->pomp;
-	ret = uv_signal_init(&ctx->loop, &ctx->sigint);
+
+	ret = io_mon_add_sources(&ctx->mon, &ctx->pomp_src,
+			io_src_sig_get_source(&ctx->sig_src), NULL /* guard */);
 	if (ret < 0) {
-		ULOGE("uv_signal_init: %s", strerror(-ret));
+		ULOGE("io_mon_add_sources: %s", strerror(-ret));
 		goto err;
 	}
-	ret = uv_signal_start(&ctx->sigint, sigint_handler, SIGINT);
-	if (ret < 0) {
-		ULOGE("uv_signal_init: %s", strerror(-ret));
-		goto err;
-	}
-	ctx->sigint.data = ctx;
 
 	return 0;
 err:
@@ -187,12 +186,20 @@ err:
 
 void firmwared_run(struct firmwared *ctx)
 {
-	uv_run(&ctx->loop, UV_RUN_DEFAULT);
+	int ret;
+
+	while (ctx->loop) {
+		ret = io_mon_poll(&ctx->mon, -1);
+		if (ret < 0) {
+			ULOGE("io_mon_poll: %s", strerror(-ret));
+			return;
+		}
+	}
 }
 
 void firmwared_stop(struct firmwared *f)
 {
-	uv_stop(&f->loop);
+	f->loop = false;
 }
 
 int firmwared_notify(struct firmwared *ctx, uint32_t msgid, const char *fmt,
@@ -213,29 +220,11 @@ int firmwared_notify(struct firmwared *ctx, uint32_t msgid, const char *fmt,
 
 void firmwared_clean(struct firmwared *ctx)
 {
-	int ret;
-	void uv_close_cb(uv_handle_t *handle, void *arg)
-	{
-		uv_close(handle, NULL);
-	}
-
+	io_mon_remove_sources(&ctx->mon, io_src_sig_get_source(&ctx->sig_src),
+			&ctx->pomp_src, NULL /* guard */);
+	io_src_sig_clean(&ctx->sig_src);
+	io_src_clean(&ctx->pomp_src);
 	if (ctx->pomp != NULL) {
-		uv_signal_stop(&ctx->sigint);
-		uv_poll_stop(&ctx->pomp_handle);
-		/*
-		 * we need to ask libuv to close explicitly all the handles
-		 * registered, otherwise, the signal handle, implicitly
-		 * registered won't be closed
-		 */
-		uv_walk(&ctx->loop, uv_close_cb, NULL);
-		/*
-		 * after requiring the handles, we need the loop to run once
-		 * more to fullfil the close requests
-		 */
-		uv_run(&ctx->loop, UV_RUN_DEFAULT);
-		ret = uv_loop_close(&ctx->loop);
-		if (ret == -EBUSY)
-			ULOGE("ret == %d\n", ret);
 		pomp_ctx_stop(ctx->pomp);
 		pomp_ctx_destroy(ctx->pomp);
 		ctx->pomp = NULL;

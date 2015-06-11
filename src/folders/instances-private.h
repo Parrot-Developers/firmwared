@@ -15,7 +15,8 @@
 
 #include <openssl/sha.h>
 
-#include <uv.h>
+#include <io_src.h>
+#include <io_src_pid.h>
 
 #include <ut_process.h>
 
@@ -35,9 +36,8 @@ struct instance {
 	/* runtime unique id */
 	uint8_t id;
 
-	pid_t pid;
-	int pidfd;
-	uv_poll_t pidfd_handle;
+	struct firmwared *firmwared;
+	struct io_src_pid pid_src;
 	enum instance_state state;
 	char *firmware_path;
 	/* caching of sha1 computation */
@@ -56,7 +56,7 @@ struct instance {
 
 	/* foo is the external pts, bar will be passed to the pid 1 */
 	struct ptspair ptspair;
-	uv_poll_t ptspair_handle;
+	struct io_src ptspair_src;
 
 	/* fields used for instance sha1 computation */
 	char *firmware_sha1;

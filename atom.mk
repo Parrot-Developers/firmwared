@@ -18,7 +18,7 @@ LOCAL_LIBRARIES := \
 	libpidwatch \
 	libptspair \
 	liblua \
-	libuv
+	libioutils
 
 LOCAL_SRC_FILES := \
 	$(call all-c-files-under,src)

@@ -13,13 +13,14 @@
 #define _GNU_SOURCE
 #endif /* _GNU_SOURCE */
 #include <linux/limits.h>
+#include <sched.h>
 
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/prctl.h>
-#include <sys/signalfd.h>
+#include <sys/stat.h>
 
 #include <grp.h>
 #include <unistd.h>
@@ -37,13 +38,12 @@
 
 #include <openssl/sha.h>
 
-#include <uv.h>
-
 #define ULOG_TAG firmwared_instances
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_instances);
 
-#include <pidwatch.h>
+#include <io_mon.h>
+#include <io_src_pid.h>
 
 #include <ut_utils.h>
 #include <ut_string.h>
@@ -69,11 +69,6 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #define NET_BITS 24
 
 static ut_bit_field_t indices;
-
-struct pid_cb_data {
-	struct firmwared *firmwared;
-	struct instance *instance;
-};
 
 static struct folder instances_folder;
 
@@ -151,7 +146,7 @@ static int invoke_net_helper(struct instance *instance, const char *action)
 			instance->id,
 			config_get(CONFIG_NET_FIRST_TWO_BYTES),
 			NET_BITS,
-			(intmax_t)instance->pid);
+			(intmax_t)io_src_pid_get_pid(&instance->pid_src));
 }
 
 static void clean_mount_points(struct instance *instance, bool only_unregister)
@@ -179,20 +174,16 @@ static void clean_command_line(struct instance *instance)
 
 static void clean_instance(struct instance *i, bool only_unregister)
 {
-	struct pid_cb_data *data;
-
 	clean_command_line(i);
 	if (!config_get_bool(CONFIG_DISABLE_APPARMOR))
 		apparmor_remove_profile(instance_get_name(i));
 	ut_process_sync_clean(&i->sync);
-	data = i->pidfd_handle.data;
+	io_mon_remove_sources(firmwared_get_mon(i->firmwared),
+			io_src_pid_get_source(&i->pid_src), &i->ptspair_src,
+			NULL /* guard */);
+	io_src_pid_clean(&i->pid_src);
+	io_src_clean(&i->ptspair_src);
 
-	uv_poll_stop(&i->pidfd_handle);
-	uv_close((uv_handle_t *)&i->pidfd_handle, NULL);
-	/* uv_close is asynchronous and forces us to run the loop once */
-	uv_run(&data->firmwared->loop, UV_RUN_NOWAIT);
-	free(i->pidfd_handle.data);
-	ut_file_fd_close(&i->pidfd);
 	ptspair_clean(&i->ptspair);
 	clean_mount_points(i, only_unregister);
 
@@ -319,46 +310,35 @@ err:
 	return ret;
 }
 
-static void pidfd_uv_poll_cb(uv_poll_t *handle, int status, int events)
+static void pid_src_cb(struct io_src_pid *pid_src, pid_t pid, int status)
 {
 	int ret;
 	int program_status;
-	struct pid_cb_data *data = handle->data;
-	struct instance *instance = data->instance;
-	struct firmwared *firmwared = data->firmwared;
+	struct instance *i = ut_container_of(pid_src, typeof(*i), pid_src);
+	struct firmwared *firmwared = i->firmwared;
 
-	ret = pidwatch_wait(instance->pidfd, &program_status);
-	if (ret < 0) {
-		ULOGE("pidwatch_wait : err=%d(%s)", ret, strerror(-ret));
-		return;
-	}
-
-	pidwatch_set_pid(instance->pidfd, instance->pid);
-	ULOGD("process %jd exited with status %d", (intmax_t)instance->pid,
-			program_status);
-
-	ret = waitpid(instance->pid, &program_status, WNOHANG);
+	ret = waitpid(pid, &program_status, WNOHANG);
 	if (ret < 0) {
 		ULOGE("waitpid : err=%d(%s)", ret, strerror(-ret));
 		return;
 	}
 	ULOGD("waitpid said %d", program_status);
 
-	instance->state = INSTANCE_READY;
-	instance->pid = 0;
+	i->state = INSTANCE_READY;
 
-	ret = firmwared_notify(firmwared, instance->killer_msgid, "%s%s%s",
-			"DEAD", instance_get_sha1(instance),
-			instance_get_name(instance));
-	instance->killer_msgid = (uint32_t) -1;
+	ret = firmwared_notify(firmwared, i->killer_msgid, "%s%s%s",
+			"DEAD", instance_get_sha1(i),
+			instance_get_name(i));
+	i->killer_msgid = (uint32_t) -1;
 	if (ret < 0)
 		ULOGE("firmwared_notify : err=%d(%s)", ret, strerror(-ret));
 }
 
-static void ptspair_uv_poll_cb(uv_poll_t *handle, int status, int events)
+static void ptspair_src_cb(struct io_src *src)
 {
 	int ret;
-	struct ptspair *ptspair = handle->data;
+	struct instance *i = ut_container_of(src, typeof(*i), ptspair_src);
+	struct ptspair *ptspair = &i->ptspair;
 
 	ret = ptspair_process_events(ptspair);
 	if (ret < 0) {
@@ -709,22 +689,22 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		const char *path, const char *sha1)
 {
 	int ret;
-	struct pid_cb_data *data;
 
 	instance->id = ut_bit_field_claim_free_index(&indices);
 	if (instance->id == UT_BIT_FIELD_INVALID_INDEX) {
 		ULOGE("ut_bit_field_claim_free_index: No free index");
 		return -ENOMEM;
 	}
+	instance->firmwared = firmwared;
 	instance->time = time(NULL);
-	instance->pid = 0;
 	instance->state = INSTANCE_READY;
 	instance->killer_msgid = (uint32_t) -1;
 	instance->firmware_path = strdup(path);
 	instance->firmware_sha1 = strdup(sha1);
 	instance->interface = strdup(config_get(CONFIG_CONTAINER_INTERFACE));
 	if (instance->firmware_path == NULL ||
-			instance->firmware_sha1 == NULL) {
+			instance->firmware_sha1 == NULL ||
+			instance->interface == NULL) {
 		ret = -ENOMEM;
 		goto err;
 	}
@@ -739,18 +719,16 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 	ret = setup_ptspair(&instance->ptspair);
 	if (ret < 0)
 		ULOGE("init_ptspair: %s", strerror(-ret));
-	instance->ptspair_handle.data = &instance->ptspair;
-	ret = uv_poll_init(firmwared_get_uv_loop(firmwared),
-			&instance->ptspair_handle,
-			ptspair_get_fd(&instance->ptspair));
+	ret = io_src_init(&instance->ptspair_src,
+			ptspair_get_fd(&instance->ptspair), IO_IN,
+			ptspair_src_cb);
 	if (ret < 0) {
-		ULOGE("uv_poll_init: %s", strerror(-ret));
+		ULOGE("io_src_init: %s", strerror(-ret));
 		goto err;
 	}
-	ret = uv_poll_start(&instance->ptspair_handle, UV_READABLE,
-			ptspair_uv_poll_cb);
+	ret = io_src_pid_init(&instance->pid_src, pid_src_cb);
 	if (ret < 0) {
-		ULOGE("uv_poll_start: %s", strerror(-ret));
+		ULOGE("io_src_pid_init: %s", strerror(-ret));
 		goto err;
 	}
 
@@ -759,32 +737,12 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		ULOGE("folder_store: %s", strerror(-ret));
 		goto err;
 	}
-	instance->pidfd = pidwatch_create(SOCK_CLOEXEC | SOCK_NONBLOCK);
-	if (instance->pidfd == -1) {
-		ret = -errno;
-		ULOGE("pidwatch_create: %m");
-		goto err;
-	}
-
-	ret = uv_poll_init(firmwared_get_uv_loop(firmwared),
-			&instance->pidfd_handle, instance->pidfd);
+	ret = io_mon_add_sources(firmwared_get_mon(firmwared),
+			&instance->ptspair_src,
+			io_src_pid_get_source(&instance->pid_src),
+			NULL /* guard */);
 	if (ret < 0) {
-		ULOGE("uv_poll_init: %s", strerror(-ret));
-		goto err;
-	}
-	data = calloc(1, sizeof(*data));
-	if (data == NULL) {
-		ret = -errno;
-		ULOGE("calloc: %m");
-		goto err;
-	}
-	data->instance = instance;
-	data->firmwared = firmwared;
-	instance->pidfd_handle.data = data;
-	ret = uv_poll_start(&instance->pidfd_handle, UV_READABLE,
-			pidfd_uv_poll_cb);
-	if (ret < 0) {
-		ULOGE("uv_poll_start: %s", strerror(-ret));
+		ULOGE("io_mon_add_sources: %s", strerror(-ret));
 		goto err;
 	}
 
@@ -883,6 +841,7 @@ struct instance *instance_from_entity(struct folder_entity *entity)
 int instance_start(struct instance *instance)
 {
 	int ret;
+	pid_t pid;
 
 	if (instance == NULL)
 		return -EINVAL;
@@ -906,13 +865,13 @@ int instance_start(struct instance *instance)
 
 	instance->state = INSTANCE_STARTED;
 	ptspair_cooked(&instance->ptspair, PTSPAIR_BAR);
-	instance->pid = fork();
-	if (instance->pid == -1) {
+	pid = fork();
+	if (pid == -1) {
 		ret = -errno;
 		ULOGE("fork: %m");
 		return ret;
 	}
-	if (instance->pid == 0)
+	if (pid == 0)
 		launch_instance(instance); /* in child */
 	/* in parent */
 	ret = ut_process_sync_parent_lock(&instance->sync);
@@ -927,9 +886,10 @@ int instance_start(struct instance *instance)
 		ULOGE("ut_process_sync_parent_unlock: parent/child "
 				"synchronisation failed: %s", strerror(-ret));
 
-	ret = pidwatch_set_pid(instance->pidfd, instance->pid);
-	if (instance->pid == -1) {
-		ULOGE("pidwatch_set_pid: %s", strerror(-ret));
+	ret = io_src_pid_set_pid(&instance->pid_src, pid);
+	if (ret < 0) {
+		kill(pid, SIGKILL);
+		ULOGE("io_src_pid_set_pid: %s", strerror(-ret));
 		return ret;
 	}
 
@@ -948,7 +908,7 @@ int instance_kill(struct instance *instance, uint32_t killer_msgid)
 
 	instance->state = INSTANCE_STOPPING;
 	instance->killer_msgid = killer_msgid;
-	ret = kill(instance->pid, SIGUSR1);
+	ret = kill(io_src_pid_get_pid(&instance->pid_src), SIGUSR1);
 	if (ret < 0) {
 		ret = -errno;
 		ULOGE("kill: %m");
