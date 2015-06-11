@@ -69,6 +69,12 @@ static const struct command get_property_command = {
 		.help = "Retrieves the value of the property PROPERTY for the "
 				"entity whose name or sha1 is ENTITY_IDENTIFIER"
 				" from the folder FOLDER.",
+		.long_help = "If the property is an array, both indexed and "
+				"non-indexed accesses are allowed. "
+				"In the non indexed case, all the content of "
+				"the array will be retrieved, in the indexed "
+				"access case, one must suffix the property "
+				"name with [i] to retrieve the i-th value.",
 		.synopsis = "FOLDER ENTITY_IDENTIFIER PROPERTY_NAME",
 		.handler = get_property_command_handler,
 };

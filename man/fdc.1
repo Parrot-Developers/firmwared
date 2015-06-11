@@ -50,6 +50,7 @@ if the entity is an instance, it must be in the READY state. It's pid 1 will be 
 .TP
 .B GET_PROPERTY FOLDER ENTITY_IDENTIFIER PROPERTY_NAME
 - Retrieves the value of the property PROPERTY for the entity whose name or sha1 is ENTITY_IDENTIFIER from the folder FOLDER.
+If the property is an array, both indexed and non-indexed accesses are allowed. In the non indexed case, all the content of the array will be retrieved, in the indexed access case, one must suffix the property name with [i] to retrieve the i-th value.
 .TP
 .B HELP COMMAND
 - Sends back a little help on the command COMMAND.
@@ -76,8 +77,9 @@ If FIRMWARE_IDENTIFIER doesn't correspond to a registered firmware, then it is s
 .B QUIT
 - Asks firmwared to exit.
 .TP
-.B SET_PROPERTY FOLDER ENTITY_IDENTIFIER PROPERTY_NAMEPROPERTY_VALUE
+.B SET_PROPERTY FOLDER ENTITY_IDENTIFIER PROPERTY_NAME PROPERTY_VALUE
 - Sets the value of the property PROPERTY to the value PROPERTY_VALUE, for the entity whose name or sha1 is ENTITY_IDENTIFIER from the folder FOLDER.
+If the property is an array, append [i] to the property name to set the i-th item's value. If i is the index of a non nil element, it will be replaced, if i is the index after the last non-nil element, it will be stored in this position and the array will grow accordingly. If PROPERTY_VALUE is "nil", then the array will be truncated before the i-th index.
 .TP
 .B SHOW FOLDER IDENTIFIER
 - Asks for all the information on a given entity of a folder.

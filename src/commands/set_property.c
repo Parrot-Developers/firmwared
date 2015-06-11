@@ -70,6 +70,15 @@ static const struct command set_property_command = {
 				"PROPERTY_VALUE, for the entity whose name or "
 				"sha1 is ENTITY_IDENTIFIER from the folder "
 				"FOLDER.",
+		.long_help = "If the property is an array, append [i] to the "
+				"property name to set the i-th item's value. "
+				"If i is the index of a non nil element, it "
+				"will be replaced, if i is the index after the "
+				"last non-nil element, it will be stored in "
+				"this position and the array will grow "
+				"accordingly. If PROPERTY_VALUE is \"nil\", "
+				"then the array will be truncated before the "
+				"i-th index.",
 		.synopsis = "FOLDER ENTITY_IDENTIFIER PROPERTY_NAME "
 				"PROPERTY_VALUE",
 		.handler = set_property_command_handler,
