@@ -418,6 +418,8 @@ int folder_drop(const char *folder_name, struct folder_entity *entity)
 	struct rs_node *node;
 	char *name;
 
+	ULOGD("%s(%s, %p)", __func__, folder_name, entity);
+
 	/* folder_name is checked in folder_find */
 	if (entity == NULL)
 		return -EINVAL;
@@ -448,6 +450,8 @@ int folder_store(const char *folder_name, struct folder_entity *entity)
 {
 	struct folder_entity *needle;
 	struct folder *folder;
+
+	ULOGD("%s(%s, %p)", __func__, folder_name, entity);
 
 	folder = folder_find(folder_name);
 	if (folder == NULL)
