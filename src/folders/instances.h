@@ -28,6 +28,7 @@ int instance_start(struct instance *instance);
 int instance_kill(struct instance *instance, uint32_t killer_msgid);
 const char *instance_get_sha1(struct instance *instance);
 const char *instance_get_name(const struct instance *instance);
+void instance_delete(struct instance **instance, bool only_unregister);
 void instances_cleanup(void);
 
 #endif /* INSTANCES_H_ */

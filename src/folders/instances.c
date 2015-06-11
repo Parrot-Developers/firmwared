@@ -194,20 +194,6 @@ static void clean_instance(struct instance *i, bool only_unregister)
 	memset(i, 0, sizeof(*i));
 }
 
-static void instance_delete(struct instance **instance, bool only_unregister)
-{
-	struct instance *i;
-
-	if (instance == NULL || *instance == NULL)
-		return;
-	i = *instance;
-
-	clean_instance(i, only_unregister);
-
-	free(i);
-	*instance = NULL;
-}
-
 static bool instance_is_running(struct instance *instance)
 {
 	return instance == NULL ? false : instance->state != INSTANCE_READY;
@@ -934,6 +920,24 @@ const char *instance_get_name(const struct instance *instance)
 		return NULL;
 
 	return instance->entity.name;
+}
+
+/*
+ * normally, an instance doesn't have to be destroyed manually, except when it
+ * has been created successfully, but it's storage in the folder has failed
+ */
+void instance_delete(struct instance **instance, bool only_unregister)
+{
+	struct instance *i;
+
+	if (instance == NULL || *instance == NULL)
+		return;
+	i = *instance;
+
+	clean_instance(i, only_unregister);
+
+	free(i);
+	*instance = NULL;
 }
 
 void instances_cleanup(void)
