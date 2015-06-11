@@ -321,6 +321,19 @@ err:
 	return ret;
 }
 
+static void print_folder_entities(struct rs_node *node)
+{
+	struct folder_entity *e = ut_container_of(node, typeof(*e), node);
+	char __attribute__((cleanup(ut_string_free)))*info = NULL;
+
+	info = folder_get_info(e->folder->name, folder_entity_get_sha1(e));
+	ULOGN("%s", info);
+}
+
+static const struct rs_dll_vtable folder_vtable = {
+	.print = print_folder_entities,
+};
+
 int folder_register(const struct folder *folder)
 {
 	const struct folder *needle;
@@ -350,7 +363,7 @@ int folder_register(const struct folder *folder)
 	folder_register_property(folder->name, &folders[i].name_property);
 	folder_register_property(folder->name, &folders[i].sha1_property);
 
-	return rs_dll_init(&(folders[i].entities), NULL);
+	return rs_dll_init(&(folders[i].entities), &folder_vtable);
 }
 
 struct folder_entity *folder_next(const struct folder *folder,
