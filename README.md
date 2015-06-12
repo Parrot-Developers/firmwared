@@ -6,6 +6,27 @@ Daemon responsible of spawning drone firmware instances in containers.
 This document is in markdown format and is best read with a markdown viewer. In
 command line, one can use `pandoc README.md | lynx -stdin`.
 
+## Quick start
+
+Instructions start from the root of a sphinx workspace. First unzip the example
+firmware.
+
+        $ tar xf packages/firmwared/examples/example_firmware.ext2.tar.bz2
+
+Move it to the firmware repository path, *firmwared* is configured to use:
+
+        $ mv example_firmware.ext2 firmwares/example_firmware.ext2.firmware
+
+Start firmwared :
+
+        # ULOG_LEVEL=D ULOG_STDERR=y ULOG_STDERR_COLOR=y firmwared packages/firmwared/examples/firmwared.conf
+
+Use the example startup script :
+
+        # ./packages/firmwared/examples/launch_instance.sh
+
+An xterm should popup, with a console opened on the running instance's console.
+
 ## Protocol
 
 ### Vocabulary
