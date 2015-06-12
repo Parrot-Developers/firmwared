@@ -168,8 +168,9 @@ static void clean_command_line(struct instance *instance)
 		return;
 
 	for (i = 0; instance->command_line[i] != NULL; i++)
-		ut_string_free(instance->command_line + i);
+		free(instance->command_line[i]);
 
+	memset(instance->command_line, 0, sizeof(*instance->command_line) * i);
 	free(instance->command_line);
 }
 
