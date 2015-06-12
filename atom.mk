@@ -43,6 +43,9 @@ LOCAL_LDFLAGS := -fopenmp
 
 LOCAL_LDLIBS := -lapparmor
 
+LOCAL_REQUIRED_MODULES := \
+	ulogger
+
 include $(BUILD_EXECUTABLE)
 
 ################################################################################

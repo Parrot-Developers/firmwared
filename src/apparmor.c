@@ -30,7 +30,6 @@ ULOG_DECLARE_TAG(apparmor_config);
 #define PROFILE_NAME_PATTERN "firmwared_%s"
 #define APPARMOR_COMMAND "apparmor_parser --replace --quiet"
 #define APPARMOR_REMOVE_COMMAND "apparmor_parser --remove --quiet"
-#define APPARMOR_LOG "/tmp/fd.apparmor"
 #define STATIC_PROFILE_PATTERN "@{root}=%s\nprofile "PROFILE_NAME_PATTERN" %s "
 #define REMOVE_PROFILE_PATTERN "profile "PROFILE_NAME_PATTERN" {\n}\n"
 
@@ -90,8 +89,7 @@ static int vload_profile(const char *command, const char *fmt, ...)
 	FILE *aa_parser_stdin;
 	va_list args;
 
-	aa_parser_stdin = ut_process_vpopen("date >> "APPARMOR_LOG"; %s >> "
-			APPARMOR_LOG" 2>&1", "we",
+	aa_parser_stdin = ut_process_vpopen(" %s 2>&1  | ulogger -p E", "we",
 			command);
 	if (aa_parser_stdin == NULL) {
 		ret = -errno;
@@ -120,7 +118,6 @@ out:
 		ULOGE("pclose: %s", strerror(-ret));
 	} else if (WIFEXITED(ret) && WEXITSTATUS(ret) != 0) {
 		ULOGE("%s returned %d", command, WEXITSTATUS(ret));
-		ULOGE("one can try to check "APPARMOR_LOG" for errors");
 		ret = -EIO;
 	}
 
