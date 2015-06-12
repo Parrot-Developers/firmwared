@@ -217,6 +217,7 @@ static int seti_cmdline(struct folder_entity *entity, int index,
 	int size;
 	int i;
 	struct instance *instance;
+	char **cmdline;
 
 	if (entity == NULL || ut_string_is_invalid(value))
 		return -EINVAL;
@@ -236,19 +237,23 @@ static int seti_cmdline(struct folder_entity *entity, int index,
 			/* if NULL is stored, truncate the array after it */
 			for (i = index + 1; i < size; i++)
 				ut_string_free(instance->command_line + i);
-			instance->command_line = realloc(instance->command_line,
+			cmdline = realloc(instance->command_line,
 					index + 1 *
-					sizeof(*(instance->command_line))); // TODO store the intermediate result to be able to free on error
-			// TODO check allocation failures
-			instance->command_line[index] = NULL; // TODO not needed, done by the ut_string_free call
+					sizeof(*(instance->command_line)));
+			if (cmdline == NULL)
+				return -errno;
+			instance->command_line = cmdline;
 
 			return 0;
 		}
 	} else {
-		/* add at the end of the array */
-		instance->command_line = realloc(instance->command_line,
+		/* augment the size to add at the end of the array */
+		cmdline = realloc(instance->command_line,
 				(size + 1) *
-				sizeof(*(instance->command_line))); // TODO store the intermediate result to be able to free on error
+				sizeof(*(instance->command_line)));
+		if (cmdline == NULL)
+			return -errno;
+		instance->command_line = cmdline;
 	}
 	instance->command_line[index] = strdup(value);
 	if (instance->command_line[index] == NULL)
