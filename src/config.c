@@ -443,6 +443,17 @@ out:
 	return ret;
 }
 
+enum config_key config_key_from_string(const char *key)
+{
+	enum config_key i;
+
+	for (i = CONFIG_FIRST; i < CONFIG_NB; i++)
+		if (strcasecmp(configs[i].env, key) == 0)
+			return i;
+
+	return (enum config_key)-1;
+}
+
 const char *config_get(enum config_key key)
 {
 	const char *value;

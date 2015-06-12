@@ -31,6 +31,7 @@ enum config_key {
 };
 
 int config_init(const char *path);
+enum config_key config_key_from_string(const char *key);
 const char *config_get(enum config_key);
 bool config_get_bool(enum config_key);
 void config_cleanup(void);
