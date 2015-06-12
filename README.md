@@ -66,6 +66,8 @@ and "remote\_firmwares", entities types are named *folders*.
 * *SET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
   sets the value of the property PROPERTY to the value PROPERTY\_VALUE, for the
   entity whose name or sha1 is ENTITY\_IDENTIFIER from the folder FOLDER.
+* *GET_CONFIG* CONFIG_KEY  
+  retrieves the value of the CONFIG_KEY configuration key.
 
 ### Notifications
 

@@ -158,6 +158,12 @@ case "${command}" in
 		args="${folder} ${entity_identifier} ${property_name} ${property_value}"
 		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
 		;;
+	GET_CONFIG)
+		format="%s%s"
+		config_key=$2
+		args="${config_key}"
+		sed_command="s#.*STR:'[^']*', STR:'\([^']*\)', STR:'\([^']*\)'.*#\1=\2#g"
+		;;
 	*)
 		exit ${ERROR_INVALID_COMMAND}
 		;;
