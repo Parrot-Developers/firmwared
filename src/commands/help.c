@@ -31,6 +31,7 @@ static int help_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	int ret;
 	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *command_name = NULL;
+	const char *help;
 
 	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &command_name);
 	if (ret < 0) {
@@ -39,8 +40,15 @@ static int help_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		return ret;
 	}
 
+	help = command_get_help(command_name);
+	if (help == NULL) {
+		ret = -errno;
+		ULOGE("command_get_help(%s): %m", command_name);
+		return -EINVAL;
+	}
+
 	return firmwared_answer(conn, msg, "%s%s%s", "HELP", command_name,
-			command_get_help(command_name));
+			help);
 }
 
 static const struct command help_command = {

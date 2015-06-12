@@ -90,14 +90,14 @@ static int command_build_help_message(struct command *command)
 					command->long_help : "");
 	if (ret < 0) {
 		ULOGE("asprintf error");
-		errno = ENOMEM;
-		return -errno;
+		return -ENOMEM;
 	}
 
 	return 0;
 }
 const char *command_get_help(const char *name)
 {
+	int ret;
 	struct command *command;
 
 	errno = EINVAL;
@@ -107,12 +107,15 @@ const char *command_get_help(const char *name)
 	command = command_find(name);
 	if (command == NULL) {
 		ULOGE("command_find: %s not found", name);
-		errno = -ESRCH;
+		errno = ESRCH;
 		return NULL;
 	}
 
-	if (command->help_msg == NULL)
-		command_build_help_message(command);
+	if (command->help_msg == NULL) {
+		ret = command_build_help_message(command);
+		if (ret < 0)
+			errno = -ret;
+	}
 
 	return command->help_msg;
 }
