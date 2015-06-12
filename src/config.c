@@ -474,6 +474,25 @@ bool config_get_bool(enum config_key key)
 	return value == NULL ? false : is_yes(value);
 }
 
+char *config_list_keys(void)
+{
+	int ret;
+	char *keys_list = NULL;
+	enum config_key i;
+
+	for (i = CONFIG_FIRST; i < CONFIG_NB; i++) {
+		ret = ut_string_append(&keys_list, "%s ", configs[i].env);
+		if (ret < 0) {
+			ULOGC("ut_string_append");
+			errno = -ret;
+			return NULL;
+		}
+	}
+	if (keys_list[0] != '\0')
+		keys_list[strlen(keys_list) - 1] = '\0';
+
+	return keys_list;
+}
 
 void config_cleanup(void)
 {
