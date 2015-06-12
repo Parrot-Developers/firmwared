@@ -108,7 +108,8 @@ static int get_base_workspace(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static int get_pts(struct folder_entity *entity, char **value)
+static int get_pts(struct folder_entity *entity, char **value,
+		enum pts_index pts_index)
 {
 	struct instance *instance;
 
@@ -116,9 +117,19 @@ static int get_pts(struct folder_entity *entity, char **value)
 		return -EINVAL;
 	instance = to_instance(entity);
 
-	*value = strdup(ptspair_get_path(&instance->ptspair, PTSPAIR_FOO));
+	*value = strdup(ptspair_get_path(&instance->ptspair, pts_index));
 
 	return *value == NULL ? -errno : 0;
+}
+
+static int get_inner_pts(struct folder_entity *entity, char **value)
+{
+	return get_pts(entity, value, PTSPAIR_BAR);
+}
+
+static int get_outer_pts(struct folder_entity *entity, char **value)
+{
+	return get_pts(entity, value, PTSPAIR_FOO);
 }
 
 static int get_firmware_sha1(struct folder_entity *entity, char **value)
@@ -269,8 +280,12 @@ static struct folder_property properties[] = {
 				.get = get_base_workspace,
 		},
 		{
-				.name = "pts",
-				.get = get_pts,
+				.name = "inner_pts",
+				.get = get_inner_pts,
+		},
+		{
+				.name = "outer_pts",
+				.get = get_outer_pts,
 		},
 		{
 				.name = "firmware_sha1",
