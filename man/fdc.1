@@ -41,12 +41,19 @@ folder they must apply to.
 .B COMMANDS
 - List the different commands registered so far.
 .TP
+.B CONFIG_KEYS
+- Lists all the config keys available.
+.TP
 .B DROP FOLDER IDENTIFIER
 - Removes an entity from a folder.
 if the entity is an instance, it must be in the READY state. It's pid 1 will be killed and it's run artifacts will be removed if FIRMWARED_PREVENT_REMOVAL isn't set to "y".
 .TP
 .B FOLDERS
 - Asks the server to list the currently registered folders.
+.TP
+.B GET_CONFIG CONFIG_KEY
+- Retrieves the value of the CONFIG_KEY configuration key.
+The CONFIG_KEY is case insensitive. Use the CONFIG_KEYS command to list the available config keys to query.
 .TP
 .B GET_PROPERTY FOLDER ENTITY_IDENTIFIER PROPERTY_NAME
 - Retrieves the value of the property PROPERTY for the entity whose name or sha1 is ENTITY_IDENTIFIER from the folder FOLDER.
