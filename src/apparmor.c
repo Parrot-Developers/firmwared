@@ -89,8 +89,8 @@ static int vload_profile(const char *command, const char *fmt, ...)
 	FILE *aa_parser_stdin;
 	va_list args;
 
-	aa_parser_stdin = ut_process_vpopen(" %s 2>&1  | ulogger -p E", "we",
-			command);
+	aa_parser_stdin = ut_process_vpopen(" %s 2>&1  | ulogger -p E -t fd-aa",
+			"we", command);
 	if (aa_parser_stdin == NULL) {
 		ret = -errno;
 		ULOGE("popen(%s, \"we\"): %s", command, strerror(-ret));

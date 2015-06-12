@@ -123,7 +123,7 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 {
 	return ut_process_vsystem("\"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" "
 				"\"%s\" \"%s\" \"%s\" \"%s\" \"%s\" 2>&1 "
-				"| ulogger -p D",
+				"| ulogger -p D -t fd-mount",
 			config_get(CONFIG_MOUNT_HOOK),
 			action,
 			instance->base_workspace,
@@ -140,7 +140,7 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 static int invoke_net_helper(struct instance *instance, const char *action)
 {
 	return ut_process_vsystem("\"%s\" \"%s\" \"%s\" \"%s\" \"%"PRIu8"\" "
-			"\"%s\" \"%d\" \"%jd\" 2>&1 | ulogger -p D",
+			"\"%s\" \"%d\" \"%jd\" 2>&1 | ulogger -p D -t fd-net",
 			config_get(CONFIG_NET_HOOK),
 			action,
 			instance->interface,
