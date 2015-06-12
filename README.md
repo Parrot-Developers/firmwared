@@ -68,6 +68,8 @@ and "remote\_firmwares", entities types are named *folders*.
   entity whose name or sha1 is ENTITY\_IDENTIFIER from the folder FOLDER.
 * *GET_CONFIG* CONFIG_KEY  
   retrieves the value of the CONFIG_KEY configuration key.
+* *CONFIG_KEYS*  
+  lists all the available configuration keys.
 
 ### Notifications
 

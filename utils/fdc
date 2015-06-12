@@ -164,6 +164,11 @@ case "${command}" in
 		args="${config_key}"
 		sed_command="s#.*STR:'[^']*', STR:'\([^']*\)', STR:'\([^']*\)'.*#\1=\2#g"
 		;;
+	CONFIG_KEYS)
+		format="%s"
+		args=""
+		sed_command="s/.*STR:'CONFIG_KEYS', STR:'\([^']*\)'.*/\1/g"
+		;;
 	*)
 		exit ${ERROR_INVALID_COMMAND}
 		;;
