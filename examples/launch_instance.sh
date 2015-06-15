@@ -38,7 +38,7 @@ fdc set_property instances $instance cmdline[3] nil
 fdc show instances $instance
 
 # watch what's going on the "simulated uart" console
-x-terminal-emulator -e "screen $(fdc get_property instances $instance outer_pts)" &
+x-terminal-emulator -e "microcom -p $(fdc get_property instances $instance outer_pts)" &
 
 # libpomp doesn't like multiple parallel connections
 sleep .1
