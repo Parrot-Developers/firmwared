@@ -29,7 +29,7 @@ console_pts=${console_pts#/dev}
 # pass it as an argument to boxinit
 fdc set_property instances $instance cmdline[1] ro.boot.console=${console_pts}
 # set the ro.hardware, boxinit will use it to load the corresponding .rc
-fdc set_property instances $instance cmdline[2] ro.hardware=mk3_sim_pc
+fdc set_property instances $instance cmdline[2] ro.hardware=mykonos3board
 # the first nil command-line argument ends the array, it is needed to get rid of
 # the parameters which were already registered in the command-line
 fdc set_property instances $instance cmdline[3] nil

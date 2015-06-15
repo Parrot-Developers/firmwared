@@ -648,7 +648,7 @@ static int init_command_line(struct instance *instance)
 		goto err;
 	i++;
 
-	argv[i] = strdup("ro.hardware=mk3_sim_pc");
+	argv[i] = strdup("ro.hardware=mykonos3board");
 	if (argv[i] == NULL)
 		goto err;
 	i++;
