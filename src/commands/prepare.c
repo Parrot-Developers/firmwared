@@ -7,11 +7,9 @@
  * @copyright Copyright (C) 2015 Parrot S.A.
  */
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 #include <errno.h>
-#include <string.h>
 #include <inttypes.h>
 
 #include <openssl/sha.h>
@@ -29,23 +27,9 @@ ULOG_DECLARE_TAG(firmwared_command_prepare);
 #include "firmwares.h"
 #include "instances.h"
 #include "folders.h"
+#include "utils.h"
 
 #define COMMAND_NAME "PREPARE"
-
-static bool is_directory(const char *path)
-{
-	int ret;
-	struct stat buf;
-
-	memset(&buf, 0, sizeof(buf));
-	ret = stat(path, &buf);
-	if (ret < 0) {
-		ULOGE("stat: %m");
-		return false;
-	}
-
-	return S_ISDIR(buf.st_mode);
-}
 
 static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		const struct pomp_msg *msg)

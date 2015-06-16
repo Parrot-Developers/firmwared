@@ -6,6 +6,14 @@
  * @author nicolas.carrier@parrot.com
  * @copyright Copyright (C) 2015 Parrot S.A.
  */
+#include <sys/stat.h>
+
+#include <string.h>
+
+#define ULOG_TAG firmwared_utils
+#include <ulog.h>
+ULOG_DECLARE_TAG(firmwared_utils);
+
 #include "utils.h"
 
 char *buffer_to_string(const unsigned char *src, size_t len, char *dst)
@@ -22,5 +30,21 @@ char *buffer_to_string(const unsigned char *src, size_t len, char *dst)
 	}
 
 	return dst;
+}
+
+// TODO move to ut_file
+bool is_directory(const char *path)
+{
+	int ret;
+	struct stat buf;
+
+	memset(&buf, 0, sizeof(buf));
+	ret = stat(path, &buf);
+	if (ret < 0) {
+		ULOGE("stat: %m");
+		return false;
+	}
+
+	return S_ISDIR(buf.st_mode);
 }
 
