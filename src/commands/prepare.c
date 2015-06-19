@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include <errno.h>
+#include <string.h>
 #include <inttypes.h>
 
 #include <openssl/sha.h>
