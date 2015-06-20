@@ -1,0 +1,62 @@
+_fdc()
+{
+	local names='s/\[[^ ]*\]//g'
+	local tolower="tr '[:upper:]' '[:lower:]'"
+	local cur=${COMP_WORDS[COMP_CWORD]}
+	case "$COMP_CWORD" in
+	1)
+		COMPREPLY=( $( compgen -W "$(fdc commands | ${tolower})" -- $cur ) )
+		return 0
+		;;
+	2)
+		local command=${COMP_WORDS[COMP_CWORD - 1]}
+		case ${command} in
+		list|properties|set_property|get_property|show|drop|prepare)
+			local folders=$(fdc folders)
+			COMPREPLY=( $( compgen -W "${folders}" -- $cur ) )
+			return 0
+			;;
+		help)
+			local commands=$(fdc commands | ${tolower})
+			COMPREPLY=( $( compgen -W "${commands}" -- $cur ) )
+			return 0
+			;;
+		start|kill)
+			local instances=$(fdc list instances | sed "${names}")
+			COMPREPLY=( $( compgen -W "${instances}" -- $cur ) )
+			return 0
+			;;
+		get_config)
+			local keys=$(fdc config_keys | ${tolower})
+			COMPREPLY=( $( compgen -W "${keys}" -- $cur ) )
+			return 0
+			;;
+		esac
+		;;
+	3)
+		local command=${COMP_WORDS[COMP_CWORD - 2]}
+		case ${command} in
+		set_property|get_property|show|drop|prepare)
+			local folder=${COMP_WORDS[COMP_CWORD - 1]}
+			local idents=$(fdc list ${folder} | sed "${names}")
+
+			COMPREPLY=( $( compgen -W "${idents}" -- $cur ) )
+			return 0
+			;;
+		esac
+		;;
+	4)
+		local command=${COMP_WORDS[COMP_CWORD - 3]}
+		case ${command} in
+		set_property|get_property)
+			local folder=${COMP_WORDS[COMP_CWORD - 2]}
+			local props=$(fdc properties ${folder})
+
+			COMPREPLY=( $( compgen -W "${props}" -- $cur ) )
+			return 0
+			;;
+		esac
+		;;
+	esac
+}
+complete -F _fdc fdc
