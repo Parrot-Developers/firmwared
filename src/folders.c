@@ -21,6 +21,7 @@
 #include <ut_string.h>
 #include <ut_file.h>
 
+#include "preparation.h"
 #include "folders.h"
 #include "config.h"
 
@@ -127,7 +128,9 @@ static int destroy_word(struct rs_node *node)
 
 static bool folder_entity_ops_are_invalid(const struct folder_entity_ops *ops)
 {
-	return ops->drop == NULL || ops->sha1 == NULL || ops->can_drop == NULL;
+	return ops->drop == NULL || ops->sha1 == NULL || ops->can_drop == NULL
+			|| ops->destroy_preparation == NULL ||
+			ops->get_preparation == NULL;
 }
 
 static bool folder_is_invalid(const struct folder *folder)
@@ -228,9 +231,6 @@ static bool folder_property_is_invalid(struct folder_property *property)
 			(property->seti != NULL && property->geti == NULL);
 }
 
-/* folder_property_match_str_name */
-static RS_NODE_MATCH_STR_MEMBER(folder_property, name, node)
-
 static int folder_property_match_str_array_name(struct rs_node *node,
 		const void *data)
 {
@@ -288,6 +288,82 @@ static const struct folder_property sha1_property = {
 		.get = get_sha1,
 };
 
+static void print_folder_entities(struct rs_node *node)
+{
+	struct folder_entity *e = ut_container_of(node, typeof(*e), node);
+	char __attribute__((cleanup(ut_string_free)))*info = NULL;
+
+	info = folder_get_info(e->folder->name, folder_entity_get_sha1(e));
+	ULOGN("%s", info);
+}
+
+static const struct rs_dll_vtable folder_vtable = {
+	.print = print_folder_entities,
+};
+
+static int entity_completion(struct preparation *preparation,
+			struct folder_entity *entity)
+{
+	int ret;
+	struct folder *folder;
+
+	folder = folder_find(preparation->folder);
+	if (folder == NULL) {
+		ret = -ENOENT;
+		goto out;
+	}
+
+	if (entity == NULL) {
+		ULOGW("%*s creation failed for identification string %s",
+				(int)strlen(preparation->folder) - 1,
+				preparation->folder,
+				preparation->identification_string);
+		ret = -EINVAL;
+		goto out;
+	}
+	/* folder_store transfers the ownership of the entity to the folder */
+	ret = folder_store(preparation->folder, entity);
+	if (ret < 0) {
+		folder->ops.drop(entity, false);
+		ULOGE("folder_store: %s", strerror(-ret));
+		goto out;
+	}
+
+	ret = 0;
+out:
+	if (ret >= 0)
+		firmwared_notify(preparation->msgid, "%s%s%s%s", "PREPARED",
+				preparation->folder,
+				folder_entity_get_sha1(entity),
+				entity->name);
+
+	preparation->has_ended = true;
+
+	return ret;
+}
+
+static RS_NODE_MATCH_MEMBER(preparation, has_ended, node);
+
+static int folder_reap_preparations_of_folder(struct folder *folder)
+{
+	struct rs_node *node = NULL;
+	struct preparation *preparation;
+	const bool has_ended = true;
+
+	node = rs_dll_remove_match(&folder->preparations,
+			preparation_match_has_ended, &has_ended);
+	if (node == NULL)
+		return 0;
+
+	preparation = to_preparation(node);
+
+	preparation_clean(preparation);
+
+	folder->ops.destroy_preparation(&preparation);
+
+	return 0;
+}
+
 int folders_init(void)
 {
 	int ret;
@@ -321,19 +397,6 @@ err:
 	return ret;
 }
 
-static void print_folder_entities(struct rs_node *node)
-{
-	struct folder_entity *e = ut_container_of(node, typeof(*e), node);
-	char __attribute__((cleanup(ut_string_free)))*info = NULL;
-
-	info = folder_get_info(e->folder->name, folder_entity_get_sha1(e));
-	ULOGN("%s", info);
-}
-
-static const struct rs_dll_vtable folder_vtable = {
-	.print = print_folder_entities,
-};
-
 int folder_register(const struct folder *folder)
 {
 	const struct folder *needle;
@@ -358,6 +421,7 @@ int folder_register(const struct folder *folder)
 	folders[i] = *folder;
 
 	rs_dll_init(&(folders[i].properties), NULL);
+	rs_dll_init(&(folders[i].preparations ), NULL);
 	folders[i].name_property = name_property;
 	folders[i].sha1_property = sha1_property;
 	folder_register_property(folder->name, &folders[i].name_property);
@@ -409,6 +473,81 @@ unsigned folder_get_count(const char *folder_name)
 		return -ENOENT;
 
 	return rs_dll_get_count(&folder->entities);
+}
+
+int folder_prepare(const char *folder_name, const char *identification_string,
+		uint32_t msgid)
+{
+	int ret;
+	struct folder *folder;
+	struct preparation *preparation;
+
+	folder = folder_find(folder_name);
+	if (folder == NULL)
+		return -ENOENT;
+
+	preparation = folder->ops.get_preparation();
+	if (preparation == NULL)
+		return -errno;
+	ret = preparation_init(preparation, identification_string, msgid,
+			entity_completion);
+	if (ret < 0)
+		goto err;
+	ret = preparation->start(preparation);
+	if (ret < 0)
+		goto err;
+
+	rs_dll_push(&folder->preparations, &preparation->node);
+
+	return 0;
+err:
+	folder->ops.destroy_preparation(&preparation);
+
+	return ret;
+}
+
+int folders_reap_preparations(void)
+{
+	int ret;
+	struct folder *folder;
+	int i;
+
+	for (i = 0; i < FOLDERS_MAX; i++) {
+		folder = folders + i;
+		if (folder->name == NULL)
+			continue;
+		if (rs_dll_get_count(&folder->preparations) == 0)
+			continue;
+		ret = folder_reap_preparations_of_folder(folder);
+		if (ret < 0)
+			ULOGW("folder_reap_preparations_of_folder: %s",
+					strerror(-ret));
+	}
+
+	return 0;
+}
+
+int folder_preparation_abort(const char *folder_name,
+		const char *identification_string)
+{
+	struct folder *folder;
+	struct rs_node *node;
+	struct preparation *preparation;
+
+	folder = folder_find(folder_name);
+	if (folder == NULL)
+		return -ENOENT;
+
+	node = rs_dll_find_match(&folder->preparations,
+			preparation_match_str_identification_string,
+			identification_string);
+	if (folder == NULL)
+		return -ENOENT;
+
+	preparation = to_preparation(node);
+	preparation->abort(preparation);
+
+	return 0;
 }
 
 int folder_drop(const char *folder_name, struct folder_entity *entity)
@@ -829,11 +968,21 @@ int folder_unregister(const char *folder_name)
 
 		return 0;
 	}
+	int destroy_preparation(struct rs_node *node)
+	{
+		struct preparation *preparation = to_preparation(node);
+
+		/* TODO unregister sources from the monitor */
+		folder->ops.destroy_preparation(&preparation);
+
+		return 0;
+	}
 
 	folder = folder_find(folder_name);
 	if (folder == NULL)
 		return -ENOENT;
 
+	rs_dll_remove_all_cb(&folder->preparations, destroy_preparation);
 	rs_dll_remove_all_cb(&folder->entities, destroy_entity);
 	rs_dll_remove_all(&folder->properties);
 

@@ -30,6 +30,9 @@ ULOG_DECLARE_TAG(firmwared);
 #include <ut_utils.h>
 
 #include "commands.h"
+#include "folders.h"
+#include "instances.h"
+#include "firmwares.h"
 #include "config.h"
 
 struct firmwared {
@@ -203,6 +206,7 @@ void firmwared_run(void)
 			ULOGE("io_mon_poll: %s", strerror(-ret));
 			return;
 		}
+		folders_reap_preparations();
 	}
 }
 

@@ -9,6 +9,7 @@
 #ifndef FOLDERS_H_
 #define FOLDERS_H_
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <rs_dll.h>
 
@@ -30,6 +31,8 @@ struct folder_entity_ops {
 	const char *(*sha1)(struct folder_entity *entity);
 	bool (*can_drop)(struct folder_entity *entity);
 	int (*drop)(struct folder_entity *entity, bool only_unregister);
+	struct preparation *(*get_preparation)(void);
+	void (*destroy_preparation)(struct preparation **preparation);
 };
 
 struct folder_property {
@@ -56,6 +59,7 @@ struct folder {
 	struct rs_dll properties;
 	struct folder_property name_property;
 	struct folder_property sha1_property;
+	struct rs_dll preparations;
 };
 
 int folders_init(void);
@@ -64,6 +68,11 @@ struct folder *folder_find(const char *folder_name);
 struct folder_entity *folder_next(const struct folder *folder,
 		struct folder_entity *entity);
 unsigned folder_get_count(const char *folder);
+int folder_prepare(const char *folder, const char *identification_string,
+		uint32_t msgid);
+int folders_reap_preparations(void);
+int folder_preparation_abort(const char *folder,
+		const char *identification_string);
 int folder_drop(const char *folder, struct folder_entity *entity);
 /*
  * a folder_store call, transfers the ownership to the folder, except in case
