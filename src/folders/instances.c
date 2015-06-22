@@ -131,7 +131,7 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 			instance->rw_dir,
 			instance->union_mount_point,
 			instance->firmware_path,
-			instance->firmware_sha1,
+			instance_get_sha1(instance),
 			only_unregister ? "true" : "false",
 			config_get(CONFIG_PREVENT_REMOVAL),
 			config_get(CONFIG_USE_AUFS));
