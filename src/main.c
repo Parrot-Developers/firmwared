@@ -117,14 +117,14 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	ret = init_subsystems();
-	if (ret < 0) {
-		ULOGE("init_subsystems: %s", strerror(-ret));
-		goto out;
-	}
 	ret = firmwared_init();
 	if (ret < 0) {
 		ULOGE("firmwared_init: err=%d(%s)", ret, strerror(-ret));
+		goto out;
+	}
+	ret = init_subsystems();
+	if (ret < 0) {
+		ULOGE("init_subsystems: %s", strerror(-ret));
 		goto out;
 	}
 
@@ -140,8 +140,8 @@ int main(int argc, char *argv[])
 	status = EXIT_SUCCESS;
 out:
 	clean_subsystems();
-	config_cleanup();
 	firmwared_clean();
+	config_cleanup();
 
 	ULOGI("%s[%jd] exiting", basename(argv[0]), (intmax_t)getpid());
 
