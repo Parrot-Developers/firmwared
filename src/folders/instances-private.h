@@ -35,7 +35,6 @@ struct instance {
 
 	struct io_src_pid pid_src;
 	enum instance_state state;
-	char *firmware_path;
 	/* caching of sha1 computation */
 	char sha1[2 * SHA_DIGEST_LENGTH + 1];
 	char *info;
@@ -61,7 +60,7 @@ struct instance {
 	char **command_line;
 
 	/* all the remaining fields are used for instance sha1 computation */
-	char *firmware_sha1;
+	char *firmware_path;
 	time_t time;
 	/* runtime unique id */
 	uint8_t id;

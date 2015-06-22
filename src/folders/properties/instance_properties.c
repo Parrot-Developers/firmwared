@@ -132,19 +132,6 @@ static int get_outer_pts(struct folder_entity *entity, char **value)
 	return get_pts(entity, value, PTSPAIR_FOO);
 }
 
-static int get_firmware_sha1(struct folder_entity *entity, char **value)
-{
-	struct instance *instance;
-
-	if (entity == NULL || value == NULL)
-		return -EINVAL;
-	instance = to_instance(entity);
-
-	*value = strdup(instance->firmware_sha1);
-
-	return *value == NULL ? -errno : 0;
-}
-
 static int get_time(struct folder_entity *entity, char **value)
 {
 	struct instance *instance;
@@ -291,10 +278,6 @@ static struct folder_property properties[] = {
 		{
 				.name = "outer_pts",
 				.get = get_outer_pts,
-		},
-		{
-				.name = "firmware_sha1",
-				.get = get_firmware_sha1,
 		},
 		{
 				.name = "time",

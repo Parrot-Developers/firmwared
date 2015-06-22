@@ -78,8 +78,8 @@ static int sha1(struct instance *instance,
 	SHA_CTX ctx;
 
 	SHA1_Init(&ctx);
-	SHA1_Update(&ctx, instance->firmware_sha1,
-			strlen(instance->firmware_sha1));
+	SHA1_Update(&ctx, instance->firmware_path,
+			strlen(instance->firmware_path));
 	SHA1_Update(&ctx, &instance->time, sizeof(instance->time));
 	SHA1_Update(&ctx, &instance->id, sizeof(instance->id));
 	SHA1_Final(hash, &ctx);
@@ -191,7 +191,6 @@ static void clean_instance(struct instance *i, bool only_unregister)
 	clean_mount_points(i, only_unregister);
 
 	ut_string_free(&i->interface);
-	ut_string_free(&i->firmware_sha1);
 	ut_string_free(&i->firmware_path);
 	ut_bit_field_release_index(&indices, i->id);
 	memset(i, 0, sizeof(*i));
@@ -686,10 +685,8 @@ static int init_instance(struct instance *instance, const char *path,
 	instance->state = INSTANCE_READY;
 	instance->killer_msgid = (uint32_t) -1;
 	instance->firmware_path = strdup(path);
-	instance->firmware_sha1 = strdup(sha1);
 	instance->interface = strdup(config_get(CONFIG_CONTAINER_INTERFACE));
 	if (instance->firmware_path == NULL ||
-			instance->firmware_sha1 == NULL ||
 			instance->interface == NULL) {
 		ret = -ENOMEM;
 		goto err;
