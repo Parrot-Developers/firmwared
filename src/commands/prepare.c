@@ -38,13 +38,7 @@ static int prepare_command_handler(struct pomp_conn *conn,
 	int ret;
 	char __attribute__((cleanup(ut_string_free)))*cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *identifier = NULL;
-	struct folder_entity *entity;
-	struct firmware *firmware;
 	struct instance *instance;
-	const char *path;
-	const char *sha1;
-	char sha1_buf[2 * SHA_DIGEST_LENGTH + 1];
-	unsigned char hash[SHA_DIGEST_LENGTH];
 
 	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &identifier);
 	if (ret < 0) {
@@ -53,24 +47,7 @@ static int prepare_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
-	entity = folder_find_entity(FIRMWARES_FOLDER_NAME, identifier);
-	if (entity == NULL) {
-		if (!is_directory(identifier))
-			return -errno;
-		path = identifier;
-		/*
-		 * one has to explain me why this function doesn't use a void *
-		 * ... sorry for the ugly cast
-		 */
-		SHA1((unsigned char *)path, strlen(path), hash);
-		buffer_to_string(hash, SHA_DIGEST_LENGTH, sha1_buf);
-		sha1 = sha1_buf;
-	} else {
-		firmware = firmware_from_entity(entity);
-		path = firmware_get_path(firmware);
-		sha1 = firmware_get_sha1(firmware);
-	}
-	instance = instance_new(path, sha1);
+	instance = instance_new(identifier);
 	if (instance == NULL) {
 		ret = -errno;
 		ULOGE("instance_new: %m");
@@ -85,8 +62,8 @@ static int prepare_command_handler(struct pomp_conn *conn,
 	}
 
 	return firmwared_notify(pomp_msg_get_id(msg), "%s%s%s%s%s",
-			"PREPARED", sha1,
-			path,
+			"PREPARED", "placeholder",
+			"placeholder",
 			instance_get_sha1(instance),
 			instance_get_name(instance));
 }

@@ -671,10 +671,18 @@ err:
 	return ret;
 }
 
-static int init_instance(struct instance *instance, const char *path,
-		const char *sha1)
+static int init_instance(struct instance *instance,
+		const char *firmware_identifier)
 {
 	int ret;
+	struct folder_entity *firmware_entity;
+	struct firmware *firmware;
+
+	firmware_entity = folder_find_entity(FIRMWARES_FOLDER_NAME,
+			firmware_identifier);
+	if (firmware_entity == NULL)
+		return -ESRCH;
+	firmware = firmware_from_entity(firmware_entity);
 
 	instance->id = ut_bit_field_claim_free_index(&indices);
 	if (instance->id == UT_BIT_FIELD_INVALID_INDEX) {
@@ -684,10 +692,9 @@ static int init_instance(struct instance *instance, const char *path,
 	instance->time = time(NULL);
 	instance->state = INSTANCE_READY;
 	instance->killer_msgid = (uint32_t) -1;
-	instance->firmware_path = strdup(path);
+	instance->firmware_path = strdup(firmware_get_path(firmware));
 	instance->interface = strdup(config_get(CONFIG_CONTAINER_INTERFACE));
-	if (instance->firmware_path == NULL ||
-			instance->interface == NULL) {
+	if (instance->firmware_path == NULL || instance->interface == NULL) {
 		ret = -ENOMEM;
 		goto err;
 	}
@@ -782,7 +789,7 @@ int instances_init(void)
 	return 0;
 }
 
-struct instance *instance_new(const char *path, const char *sha1)
+struct instance *instance_new(const char *firmware_identifier)
 {
 	int ret;
 	struct instance *instance;
@@ -791,7 +798,7 @@ struct instance *instance_new(const char *path, const char *sha1)
 	if (instance == NULL)
 		return NULL;
 
-	ret = init_instance(instance, path, sha1);
+	ret = init_instance(instance, firmware_identifier);
 	if (ret < 0) {
 		ULOGE("init_instance: %s", strerror(-ret));
 		goto err;
