@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -e
+set -x
+set -u
+
+url=$1
+firmware_repository=$2
+
+# accept path without the file:// prefix /!\ it must be an absolute path
+if [ -f "${url}" ]; then
+	url="file://${url}"
+fi
+
+export LANG=C
+
+# retrieve the size of the file with HEAD
+# curl --head could have been used, but it keeps \r and is a PITA with redirects
+size=$(HEAD ${url})
+size=${size##*Content-Length: }
+size=${size%%[[:space:]]*}
+
+file=${url##*/}
+dest=${firmware_repository}/${file}.firmware
+if [ -e "${dest}" ]; then
+	echo "Destination file ${dest} already exist. Aborting" 1>&2
+	# if we don't do that, the io_process context will be cleaned before
+	# the hook's logs are processed
+	sleep .1
+	exit 1
+fi
+curl_command="curl --location --silent"
+
+${curl_command} ${url} --output - | pv --numeric --size ${size} 2>&1 > ${dest}
+
+exit 0

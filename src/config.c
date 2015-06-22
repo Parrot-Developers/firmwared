@@ -62,6 +62,10 @@ ULOG_DECLARE_TAG(firmwared_config);
 #define CONTAINER_INTERFACE "eth0"
 #endif /* CONTAINER_INTERFACE */
 
+#ifndef CURL_HOOK
+#define CURL_HOOK "/opt/sphinx/usr/libexec/firmwared/curl.hook"
+#endif /* CURL_HOOK */
+
 #ifndef HOST_INTERFACE_PREFIX
 #define HOST_INTERFACE_PREFIX "fd_veth"
 #endif /* HOST_INTERFACE_PREFIX */
@@ -245,6 +249,11 @@ static struct config configs[CONFIG_NB] = {
 				.env = "FIRMWARED_CONTAINER_INTERFACE",
 				.default_value = CONTAINER_INTERFACE,
 				.valid = valid_interface,
+		},
+		[CONFIG_CURL_HOOK] = {
+				.env = "FIRMWARED_CURL_HOOK",
+				.default_value = CURL_HOOK,
+				.valid = valid_executable,
 		},
 		[CONFIG_DISABLE_APPARMOR] = {
 				.env = "FIRMWARED_DISABLE_APPARMOR",

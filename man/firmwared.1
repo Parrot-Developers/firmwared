@@ -34,6 +34,13 @@ instances to communicate with the host, defaults to
 .BR eth0 ,
 must be less than 15 characters long.
 .TP
+.B FIRMWARED_CURL_HOOK
+If
+.RB $ FIRMWARED_CURL_HOOK
+is set, it's value is used as the path to the helper executable responsible of
+copying the firmwares to the firmware repository, defaults to
+.BR /opt/sphinx/usr/libexec/firmwared/curl.hook .
+.TP
 .B FIRMWARED_DISABLE_APPARMOR
 If
 .RB $ FIRMWARED_DISABLE_APPARMOR
