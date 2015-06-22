@@ -32,7 +32,7 @@ ULOG_DECLARE_TAG(firmwared_command_set_property);
 
 #define COMMAND_NAME "SET_PROPERTY"
 
-static int set_property_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int set_property_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;
@@ -60,7 +60,7 @@ static int set_property_command_handler(struct firmwared *f, struct pomp_conn *c
 		return ret;
 	}
 
-	return firmwared_notify(f, pomp_msg_get_id(msg), "%s%s%s%s%s",
+	return firmwared_notify(pomp_msg_get_id(msg), "%s%s%s%s%s",
 			"PROPERTY_SET", folder, identifier, name, value);
 }
 

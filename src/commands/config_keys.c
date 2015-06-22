@@ -23,8 +23,8 @@ ULOG_DECLARE_TAG(firmwared_command_config_keys);
 
 #define COMMAND_NAME "CONFIG_KEYS"
 
-static int config_keys_command_handler(struct firmwared *f,
-		struct pomp_conn *conn, const struct pomp_msg *msg)
+static int config_keys_command_handler(struct pomp_conn *conn,
+		const struct pomp_msg *msg)
 {
 	int ret;
 	char __attribute__((cleanup(ut_string_free))) *list = NULL;

@@ -32,7 +32,7 @@ ULOG_DECLARE_TAG(firmwared_command_prepare);
 
 #define COMMAND_NAME "PREPARE"
 
-static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int prepare_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;
@@ -70,7 +70,7 @@ static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		path = firmware_get_path(firmware);
 		sha1 = firmware_get_sha1(firmware);
 	}
-	instance = instance_new(f, path, sha1);
+	instance = instance_new(path, sha1);
 	if (instance == NULL) {
 		ret = -errno;
 		ULOGE("instance_new: %m");
@@ -84,7 +84,7 @@ static int prepare_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		return ret;
 	}
 
-	return firmwared_notify(f, pomp_msg_get_id(msg), "%s%s%s%s%s",
+	return firmwared_notify(pomp_msg_get_id(msg), "%s%s%s%s%s",
 			"PREPARED", sha1,
 			path,
 			instance_get_sha1(instance),

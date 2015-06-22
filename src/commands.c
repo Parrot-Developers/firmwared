@@ -54,7 +54,7 @@ static void command_dump(const struct command *cmd)
 	ULOGD("\t%s: \"%s\"", cmd->name, cmd->help);
 }
 
-static int command_process(struct firmwared *f, struct pomp_conn *conn,
+static int command_process(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;
@@ -76,7 +76,7 @@ static int command_process(struct firmwared *f, struct pomp_conn *conn,
 
 	ULOGD("execute command %s", name);
 
-	return cmd->handler(f, conn, msg);
+	return cmd->handler(conn, msg);
 }
 
 static int command_build_help_message(struct command *command)
@@ -120,12 +120,12 @@ const char *command_get_help(const char *name)
 	return command->help_msg;
 }
 
-int command_invoke(struct firmwared *f, struct pomp_conn *conn,
+int command_invoke(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;
 
-	ret = command_process(f, conn, msg);
+	ret = command_process(conn, msg);
 	if (ret < 0) {
 		ULOGE("command_process: %s", strerror(-ret));
 		return firmwared_answer(conn, msg, "%s%d%s", "ERROR", -ret,

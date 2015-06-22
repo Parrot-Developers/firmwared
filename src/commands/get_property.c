@@ -32,7 +32,7 @@ ULOG_DECLARE_TAG(firmwared_command_get_property);
 
 #define COMMAND_NAME "GET_PROPERTY"
 
-static int get_property_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int get_property_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;
@@ -60,7 +60,7 @@ static int get_property_command_handler(struct firmwared *f, struct pomp_conn *c
 		return ret;
 	}
 
-	return firmwared_notify(f, pomp_msg_get_id(msg), "%s%s%s%s%s",
+	return firmwared_notify(pomp_msg_get_id(msg), "%s%s%s%s%s",
 			COMMAND_NAME, folder, identifier, property_name, value);
 }
 

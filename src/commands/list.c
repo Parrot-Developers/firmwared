@@ -59,7 +59,7 @@ static int build_list(char **list, const struct folder *folder, unsigned *count)
 	return 0;
 }
 
-static int list_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int list_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;

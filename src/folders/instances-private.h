@@ -33,7 +33,6 @@ enum instance_state {
 struct instance {
 	struct folder_entity entity;
 
-	struct firmwared *firmwared;
 	struct io_src_pid pid_src;
 	enum instance_state state;
 	char *firmware_path;

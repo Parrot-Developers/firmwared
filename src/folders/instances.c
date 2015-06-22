@@ -181,7 +181,7 @@ static void clean_instance(struct instance *i, bool only_unregister)
 	if (!config_get_bool(CONFIG_DISABLE_APPARMOR))
 		apparmor_remove_profile(instance_get_sha1(i));
 	ut_process_sync_clean(&i->sync);
-	io_mon_remove_sources(firmwared_get_mon(i->firmwared),
+	io_mon_remove_sources(firmwared_get_mon(),
 			io_src_pid_get_source(&i->pid_src), &i->ptspair_src,
 			NULL /* guard */);
 	io_src_pid_clean(&i->pid_src);
@@ -304,7 +304,6 @@ static void pid_src_cb(struct io_src_pid *pid_src, pid_t pid, int status)
 	int ret;
 	int program_status;
 	struct instance *i = ut_container_of(pid_src, typeof(*i), pid_src);
-	struct firmwared *firmwared = i->firmwared;
 
 	ret = waitpid(pid, &program_status, WNOHANG);
 	if (ret < 0) {
@@ -315,9 +314,8 @@ static void pid_src_cb(struct io_src_pid *pid_src, pid_t pid, int status)
 
 	i->state = INSTANCE_READY;
 
-	ret = firmwared_notify(firmwared, i->killer_msgid, "%s%s%s",
-			"DEAD", instance_get_sha1(i),
-			instance_get_name(i));
+	ret = firmwared_notify(i->killer_msgid, "%s%s%s", "DEAD",
+			instance_get_sha1(i), instance_get_name(i));
 	i->killer_msgid = (uint32_t) -1;
 	if (ret < 0)
 		ULOGE("firmwared_notify : err=%d(%s)", ret, strerror(-ret));
@@ -674,8 +672,8 @@ err:
 	return ret;
 }
 
-static int init_instance(struct instance *instance, struct firmwared *firmwared,
-		const char *path, const char *sha1)
+static int init_instance(struct instance *instance, const char *path,
+		const char *sha1)
 {
 	int ret;
 
@@ -684,7 +682,6 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		ULOGE("ut_bit_field_claim_free_index: No free index");
 		return -ENOMEM;
 	}
-	instance->firmwared = firmwared;
 	instance->time = time(NULL);
 	instance->state = INSTANCE_READY;
 	instance->killer_msgid = (uint32_t) -1;
@@ -721,7 +718,7 @@ static int init_instance(struct instance *instance, struct firmwared *firmwared,
 		goto err;
 	}
 
-	ret = io_mon_add_sources(firmwared_get_mon(firmwared),
+	ret = io_mon_add_sources(firmwared_get_mon(),
 			&instance->ptspair_src,
 			io_src_pid_get_source(&instance->pid_src),
 			NULL /* guard */);
@@ -788,8 +785,7 @@ int instances_init(void)
 	return 0;
 }
 
-struct instance *instance_new(struct firmwared *firmwared, const char *path,
-		const char *sha1)
+struct instance *instance_new(const char *path, const char *sha1)
 {
 	int ret;
 	struct instance *instance;
@@ -798,7 +794,7 @@ struct instance *instance_new(struct firmwared *firmwared, const char *path,
 	if (instance == NULL)
 		return NULL;
 
-	ret = init_instance(instance, firmwared, path, sha1);
+	ret = init_instance(instance, path, sha1);
 	if (ret < 0) {
 		ULOGE("init_instance: %s", strerror(-ret));
 		goto err;

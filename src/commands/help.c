@@ -25,7 +25,7 @@ ULOG_DECLARE_TAG(firmwared_command_help);
 
 #define COMMAND_NAME "HELP"
 
-static int help_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int help_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;

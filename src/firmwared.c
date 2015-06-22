@@ -32,6 +32,17 @@ ULOG_DECLARE_TAG(firmwared);
 #include "commands.h"
 #include "config.h"
 
+struct firmwared {
+	struct io_mon mon;
+	struct io_src pomp_src;
+	struct pomp_ctx *pomp;
+	struct io_src_sig sig_src;
+	bool loop;
+	bool initialized;
+};
+
+static struct firmwared ctx;
+
 static size_t setup_address(struct sockaddr_storage *addr_storage)
 {
 	struct sockaddr *addr = (struct sockaddr *)addr_storage;
@@ -48,16 +59,10 @@ static void event_cb(struct pomp_ctx *pomp, enum pomp_event event,
 		struct pomp_conn *conn, const struct pomp_msg *msg,
 		void *userdata)
 {
-	struct firmwared *ctx = userdata;
 	int ret;
 
 	ULOGD("%s : event=%d(%s) conn=%p msg=%p", __func__,
 			event, pomp_event_str(event), conn, msg);
-
-	if (ctx == NULL) {
-		ULOGC("%s : invalid userdata parameter", __func__);
-		return;
-	}
 
 	switch (event) {
 	case POMP_EVENT_CONNECTED:
@@ -67,7 +72,7 @@ static void event_cb(struct pomp_ctx *pomp, enum pomp_event event,
 		break;
 
 	case POMP_EVENT_MSG:
-		ret = command_invoke(ctx, conn, msg);
+		ret = command_invoke(conn, msg);
 		if (ret < 0) {
 			ULOGE("command_invoke: %s", strerror(-ret));
 			return;
@@ -126,70 +131,74 @@ static void sig_src_cb(struct io_src_sig *sig, struct signalfd_siginfo *si)
 
 	ULOGI("Caught signal %d, exiting", si->ssi_signo);
 
-	firmwared_stop(f);
+	firmwared_stop();
 }
 
-int firmwared_init(struct firmwared *ctx)
+int firmwared_init(void)
 {
 	int ret;
 	struct sockaddr_storage addr_storage;
 	size_t s;
 
-	memset(ctx, 0, sizeof(*ctx));
-	ctx->loop = true;
-	ctx->pomp = pomp_ctx_new(&event_cb, ctx);
-	if (ctx->pomp == NULL) {
+	if (ctx.initialized != 0)
+		return 0;
+
+	ctx.loop = true;
+	ctx.pomp = pomp_ctx_new(&event_cb, NULL);
+	if (ctx.pomp == NULL) {
+		ret = -errno;
 		ULOGE("pomp_ctx_new failed");
-		return -ENOMEM;
+		return ret;
 	}
 
 	s = setup_address(&addr_storage);
-	ret = pomp_ctx_listen(ctx->pomp, (struct sockaddr *)&addr_storage, s);
+	ret = pomp_ctx_listen(ctx.pomp, (struct sockaddr *)&addr_storage, s);
 	if (ret < 0) {
 		ULOGE("pomp_ctx_listen : err=%d(%s)", ret, strerror(-ret));
 		goto err;
 	}
 	change_sock_group_mode();
 
-	ret = io_mon_init(&ctx->mon);
+	ret = io_mon_init(&ctx.mon);
 	if (ret < 0) {
 		ULOGE("uv_loop_init: %s", strerror(-ret));
 		goto err;
 	}
 
-	ret = io_src_init(&ctx->pomp_src, pomp_ctx_get_fd(ctx->pomp), IO_IN,
+	ret = io_src_init(&ctx.pomp_src, pomp_ctx_get_fd(ctx.pomp), IO_IN,
 			pomp_src_cb);
 	if (ret < 0) {
 		ULOGE("io_src_init: %s", strerror(-ret));
 		goto err;
 	}
-	ret = io_src_sig_init(&ctx->sig_src, sig_src_cb, SIGINT, SIGTERM,
+	ret = io_src_sig_init(&ctx.sig_src, sig_src_cb, SIGINT, SIGTERM,
 			SIGQUIT, NULL /* guard */);
 	if (ret < 0) {
 		ULOGE("io_src_sig_init: %s", strerror(-ret));
 		goto err;
 	}
 
-	ret = io_mon_add_sources(&ctx->mon, &ctx->pomp_src,
-			io_src_sig_get_source(&ctx->sig_src), NULL /* guard */);
+	ret = io_mon_add_sources(&ctx.mon, &ctx.pomp_src,
+			io_src_sig_get_source(&ctx.sig_src), NULL /* guard */);
 	if (ret < 0) {
 		ULOGE("io_mon_add_sources: %s", strerror(-ret));
 		goto err;
 	}
+	ctx.initialized = true;
 
 	return 0;
 err:
-	firmwared_clean(ctx);
+	firmwared_clean();
 
 	return ret;
 }
 
-void firmwared_run(struct firmwared *ctx)
+void firmwared_run(void)
 {
 	int ret;
 
-	while (ctx->loop) {
-		ret = io_mon_poll(&ctx->mon, -1);
+	while (ctx.loop) {
+		ret = io_mon_poll(&ctx.mon, -1);
 		if (ret < 0) {
 			ULOGE("io_mon_poll: %s", strerror(-ret));
 			return;
@@ -197,39 +206,43 @@ void firmwared_run(struct firmwared *ctx)
 	}
 }
 
-void firmwared_stop(struct firmwared *f)
+void firmwared_stop(void)
 {
-	f->loop = false;
+	ctx.loop = false;
 }
 
-int firmwared_notify(struct firmwared *ctx, uint32_t msgid, const char *fmt,
-		...)
+int firmwared_notify(uint32_t msgid, const char *fmt, ...)
 {
 	int ret;
 	va_list args;
 
-	if (ctx == NULL || ut_string_is_invalid(fmt))
+	if (ut_string_is_invalid(fmt))
 		return -EINVAL;
 
 	va_start(args, fmt);
-	ret = pomp_ctx_sendv(ctx->pomp, msgid, fmt, args);
+	ret = pomp_ctx_sendv(ctx.pomp, msgid, fmt, args);
 	va_end(args);
 
 	return ret;
 }
 
-void firmwared_clean(struct firmwared *ctx)
+struct io_mon *firmwared_get_mon(void)
 {
-	io_mon_remove_sources(&ctx->mon, io_src_sig_get_source(&ctx->sig_src),
-			&ctx->pomp_src, NULL /* guard */);
-	io_src_sig_clean(&ctx->sig_src);
-	io_src_clean(&ctx->pomp_src);
-	if (ctx->pomp != NULL) {
-		pomp_ctx_stop(ctx->pomp);
-		pomp_ctx_destroy(ctx->pomp);
-		ctx->pomp = NULL;
+	return &ctx.mon;
+}
+
+void firmwared_clean(void)
+{
+	io_mon_remove_sources(&ctx.mon, io_src_sig_get_source(&ctx.sig_src),
+			&ctx.pomp_src, NULL /* guard */);
+	io_src_sig_clean(&ctx.sig_src);
+	io_src_clean(&ctx.pomp_src);
+	if (ctx.pomp != NULL) {
+		pomp_ctx_stop(ctx.pomp);
+		pomp_ctx_destroy(ctx.pomp);
+		ctx.pomp = NULL;
 	}
-	memset(ctx, 0, sizeof(*ctx));
+	memset(&ctx, 0, sizeof(ctx));
 
 	unlink(config_get(CONFIG_SOCKET_PATH));
 }

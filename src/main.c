@@ -95,7 +95,6 @@ int main(int argc, char *argv[])
 {
 	int status = EXIT_FAILURE;
 	int ret;
-	struct firmwared ctx;
 	sighandler_t sret;
 	const char *commands_list;
 	const char *config_file;
@@ -123,7 +122,7 @@ int main(int argc, char *argv[])
 		ULOGE("init_subsystems: %s", strerror(-ret));
 		goto out;
 	}
-	ret = firmwared_init(&ctx);
+	ret = firmwared_init();
 	if (ret < 0) {
 		ULOGE("firmwared_init: err=%d(%s)", ret, strerror(-ret));
 		goto out;
@@ -136,13 +135,13 @@ int main(int argc, char *argv[])
 	if (sret == SIG_ERR)
 		ULOGW("signal: %m");
 
-	firmwared_run(&ctx);
+	firmwared_run();
 
 	status = EXIT_SUCCESS;
 out:
 	clean_subsystems();
 	config_cleanup();
-	firmwared_clean(&ctx);
+	firmwared_clean();
 
 	ULOGI("%s[%jd] exiting", basename(argv[0]), (intmax_t)getpid());
 

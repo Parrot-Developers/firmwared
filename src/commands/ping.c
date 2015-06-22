@@ -20,7 +20,7 @@ ULOG_DECLARE_TAG(firmwared_command_ping);
 
 #define COMMAND_NAME "PING"
 
-static int ping_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int ping_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	return firmwared_answer(conn, msg, "%s", "PONG");

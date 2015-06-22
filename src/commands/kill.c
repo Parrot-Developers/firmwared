@@ -25,7 +25,7 @@ ULOG_DECLARE_TAG(firmwared_command_kill);
 
 #define COMMAND_NAME "KILL"
 
-static int kill_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int kill_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;

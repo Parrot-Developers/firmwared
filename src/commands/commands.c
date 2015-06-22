@@ -20,7 +20,7 @@ ULOG_DECLARE_TAG(firmwared_command_commands);
 
 #define COMMAND_NAME "COMMANDS"
 
-static int commands_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int commands_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	const char *list;

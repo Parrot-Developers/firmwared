@@ -20,10 +20,10 @@ ULOG_DECLARE_TAG(firmwared_command_quit);
 
 #define COMMAND_NAME "QUIT"
 
-static int quit_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int quit_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
-	firmwared_stop(f);
+	firmwared_stop();
 
 	return firmwared_answer(conn, msg, "%s", "BYEBYE");
 }

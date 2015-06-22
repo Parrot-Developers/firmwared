@@ -25,7 +25,7 @@ ULOG_DECLARE_TAG(firmwared_command_drop);
 
 #define COMMAND_NAME "DROP"
 
-static int drop_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int drop_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;
@@ -59,7 +59,7 @@ static int drop_command_handler(struct firmwared *f, struct pomp_conn *conn,
 		return ret;
 	}
 
-	return firmwared_notify(f, pomp_msg_get_id(msg), "%s%s%s%s", "DROPPED",
+	return firmwared_notify(pomp_msg_get_id(msg), "%s%s%s%s", "DROPPED",
 			folder, sha1, name);
 }
 

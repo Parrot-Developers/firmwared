@@ -28,7 +28,7 @@ ULOG_DECLARE_TAG(firmwared_command_version);
 
 #define COMMAND_NAME "VERSION"
 
-static int version_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int version_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;

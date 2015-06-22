@@ -23,8 +23,8 @@ ULOG_DECLARE_TAG(firmwared_command_properties);
 
 #define COMMAND_NAME "PROPERTIES"
 
-static int properties_command_handler(struct firmwared *f,
-		struct pomp_conn *conn, const struct pomp_msg *msg)
+static int properties_command_handler(struct pomp_conn *conn,
+		const struct pomp_msg *msg)
 {
 	int ret;
 	char __attribute__((cleanup(ut_string_free))) *list = NULL;

@@ -25,7 +25,7 @@ ULOG_DECLARE_TAG(firmwared_command_start);
 
 #define COMMAND_NAME "START"
 
-static int start_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int start_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	int ret;
@@ -49,7 +49,7 @@ static int start_command_handler(struct firmwared *f, struct pomp_conn *conn,
 	if (ret < 0)
 		return ret;
 
-	return firmwared_notify(f, pomp_msg_get_id(msg), "%s%s%s", "STARTED",
+	return firmwared_notify(pomp_msg_get_id(msg), "%s%s%s", "STARTED",
 			instance_get_sha1(instance),
 			instance_get_name(instance));
 }

@@ -23,8 +23,8 @@ ULOG_DECLARE_TAG(firmwared_command_get_config);
 
 #define COMMAND_NAME "GET_CONFIG"
 
-static int get_config_command_handler(struct firmwared *f,
-		struct pomp_conn *conn, const struct pomp_msg *msg)
+static int get_config_command_handler(struct pomp_conn *conn,
+		const struct pomp_msg *msg)
 {
 	int ret;
 	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;

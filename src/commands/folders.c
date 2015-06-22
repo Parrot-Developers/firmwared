@@ -21,7 +21,7 @@ ULOG_DECLARE_TAG(firmwared_command_folders);
 
 #define COMMAND_NAME "FOLDERS"
 
-static int folders_command_handler(struct firmwared *f, struct pomp_conn *conn,
+static int folders_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg)
 {
 	const char *list;
