@@ -23,20 +23,41 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_firmwares);
 
+#include <io_process.h>
+
 #include <ut_utils.h>
 #include <ut_string.h>
 #include <ut_file.h>
 
+#include "preparation.h"
 #include "folders.h"
 #include "firmwares.h"
+#include "log.h"
 #include "utils.h"
 #include "config.h"
 
-#ifndef FIRMWARE_MATCHING_PATTERN
-#define FIRMWARE_MATCHING_PATTERN "*.firmware"
+#ifndef FIRMWARE_SUFFIX
+#define FIRMWARE_SUFFIX ".firmware"
 #endif
 
+#ifndef FIRMWARE_MATCHING_PATTERN
+#define FIRMWARE_MATCHING_PATTERN "*"FIRMWARE_SUFFIX
+#endif
+
+#ifndef PREPARATION_TIMEOUT
+#define PREPARATION_TIMEOUT 10000
+#endif /* PREPARATION_TIMEOUT */
+
+#ifndef PREPARATION_TIMEOUT_SIGNAL
+#define PREPARATION_TIMEOUT_SIGNAL SIGKILL
+#endif /* PREPARATION_TIMEOUT_SIGNAL */
+
 #define BUF_SIZE 0x200
+
+struct firmware_preparation {
+	struct preparation preparation;
+	struct io_process process;
+};
 
 struct firmware {
 	struct folder_entity entity;
@@ -57,24 +78,29 @@ static int sha1(struct firmware *firmware,
 	FILE __attribute__((cleanup(ut_file_close))) *f = NULL;
 	char buf[BUF_SIZE] = {0};
 
-	f = fopen(firmware->path, "rbe");
-	if (f == NULL) {
-		ret = -errno;
-		ULOGE("%s: fopen : %m", __func__);
-		return ret;
-	}
-
 	SHA1_Init(&ctx);
-	do {
-		count = fread(buf, 1, BUF_SIZE, f);
-		if (count != 0)
-			SHA1_Update(&ctx, buf, count);
-	} while (count == BUF_SIZE);
-	SHA1_Final(hash, &ctx);
-	if (ferror(f)) {
-		ULOGE("error reading %s for sha1 computation", firmware->path);
-		return -EIO;
+	if (ut_file_is_dir(firmware->path)) {
+		SHA1_Update(&ctx, firmware->path, strlen(firmware->path));
+	} else {
+		f = fopen(firmware->path, "rbe");
+		if (f == NULL) {
+			ret = -errno;
+			ULOGE("%s: fopen(%s) : %m", firmware->path, __func__);
+			return ret;
+		}
+
+		do {
+			count = fread(buf, 1, BUF_SIZE, f);
+			if (count != 0)
+				SHA1_Update(&ctx, buf, count);
+		} while (count == BUF_SIZE);
+		if (ferror(f)) {
+			ULOGE("error reading %s for sha1 computation",
+					firmware->path);
+			return -EIO;
+		}
 	}
+	SHA1_Final(hash, &ctx);
 
 	return 0;
 }
@@ -135,19 +161,45 @@ static int firmware_drop(struct folder_entity *entity, bool only_unregister)
 	return 0;
 }
 
-struct folder_entity_ops firmware_ops = {
-		.sha1 = firmware_sha1,
-		.can_drop = firmware_can_drop,
-		.drop = firmware_drop,
-};
-
-static int pattern_filter(const struct dirent *d)
+static void preparation_progress_sep_cb(struct io_src_sep *sep, char *chunk,
+		unsigned len)
 {
-	return fnmatch(FIRMWARE_MATCHING_PATTERN, d->d_name, 0) == 0;
+	int ret;
+	struct firmware_preparation *firmware_preparation;
+	struct preparation *preparation;
+	struct io_process *process;
+
+	if (len == 0)
+		return;
+
+	process = ut_container_of(sep, struct io_process, stdout_src);
+	firmware_preparation = ut_container_of(process,
+			struct firmware_preparation, process);
+	preparation = &firmware_preparation->preparation;
+
+	chunk[len] = '\0';
+	ut_string_rstrip(chunk);
+	ULOGD("%s "FIRMWARES_FOLDER_NAME" preparation %s",
+			preparation->identification_string, chunk);
+
+	/*
+	 * rearm the "watch dog", we don't want to abort a working dl because it
+	 * took too long
+	 */
+	ret = io_process_set_timeout(process, PREPARATION_TIMEOUT,
+			PREPARATION_TIMEOUT_SIGNAL);
+	if (ret < 0)
+		ULOGW("resetting firmware preparation timeout failed: %s",
+				strerror(-ret));
+
+	ret = firmwared_notify((uint32_t)-1, "%s%s%s%s",
+			"PREPARATION_PROGRESS", preparation->folder,
+			preparation->identification_string, chunk);
+	if (ret < 0)
+		ULOGE("firmwared_notify: %s", strerror(-ret));
 }
 
-static struct firmware *firmware_new(const char *repository_path,
-		const char *path)
+static struct firmware *firmware_new(const char *path)
 {
 	int ret;
 	const char *sha1;
@@ -161,12 +213,21 @@ static struct firmware *firmware_new(const char *repository_path,
 	if (firmware == NULL)
 		return NULL;
 
-	ret = asprintf(&firmware->path, "%s/%s", firmware_repository_path,
-			path);
-	if (ret == -1) {
-		ULOGE("asprintf error");
-		errno = -ENOMEM;
-		goto err;
+	if (ut_file_is_dir(path)) {
+		firmware->path = strdup(path);
+		if (path == NULL) {
+			ret = -errno;
+			ULOGE("strdup: %m");
+			goto err;
+		}
+	} else {
+		ret = asprintf(&firmware->path, "%s/%s",
+				firmware_repository_path, path);
+		if (ret == -1) {
+			ULOGE("asprintf error");
+			errno = -ENOMEM;
+			goto err;
+		}
 	}
 
 	/* force sha1 computation while in parallel section */
@@ -181,6 +242,142 @@ err:
 	firmware_delete(&firmware);
 
 	return NULL;
+}
+
+static void firmware_preparation_termination(struct io_src_pid *pid_src,
+		pid_t pid, int status)
+{
+	int ret;
+	struct firmware_preparation *firmware_preparation;
+	struct preparation *preparation;
+	struct io_process *process;
+	struct firmware *firmware;
+	char __attribute__((cleanup(ut_string_free)))*file_path = NULL;
+
+	process = ut_container_of(pid_src, struct io_process, pid_src);
+	firmware_preparation = ut_container_of(process,
+			struct firmware_preparation, process);
+	io_mon_remove_source(firmwared_get_mon(),
+		io_process_get_src(&firmware_preparation->process));
+
+	preparation = &firmware_preparation->preparation;
+
+	if (status != 0) {
+		ULOGE("curl hook execution status is non-zero");
+		ret = -EINVAL;
+		goto err;
+	}
+
+	ret = asprintf(&file_path, "%s"FIRMWARE_SUFFIX,
+			basename(preparation->identification_string));
+	if (ret < 0) {
+		file_path = NULL;
+		ULOGC("asprintf failure");
+		ret = -ENOMEM;
+		goto err;
+	}
+	// TODO the following may block a long time
+	firmware = firmware_new(file_path);
+
+	preparation->completion(preparation, &firmware->entity);
+
+	return;
+err:
+	firmwared_notify(preparation->msgid, "%s%d%s", "ERROR", -ret,
+			strerror(-ret));
+
+	preparation->completion(preparation, NULL);
+}
+
+static int firmware_preparation_start(struct preparation *preparation)
+{
+	int ret;
+	struct firmware_preparation *firmware_preparation;
+	struct firmware *firmware;
+
+	if (ut_file_is_dir(preparation->identification_string)) {
+		firmware = firmware_new(preparation->identification_string);
+		return preparation->completion(preparation, &firmware->entity);
+	}
+
+	firmware_preparation = ut_container_of(preparation,
+			struct firmware_preparation, preparation);
+
+	ret = io_process_init_prepare_and_launch(&firmware_preparation->process,
+			&(struct io_process_parameters){
+				.stdout_sep_cb = preparation_progress_sep_cb,
+				.out_sep1 = '\n',
+				.out_sep2 = IO_SRC_SEP_NO_SEP2,
+				.stderr_sep_cb = log_dbg_src_sep_cb,
+				.err_sep1 = '\n',
+				.err_sep2 = IO_SRC_SEP_NO_SEP2,
+				.timeout = PREPARATION_TIMEOUT,
+				.signum = PREPARATION_TIMEOUT_SIGNAL,
+			},
+			firmware_preparation_termination,
+			config_get(CONFIG_CURL_HOOK),
+			preparation->identification_string,
+			config_get(CONFIG_REPOSITORY_PATH), NULL);
+	if (ret < 0)
+		return ret;
+
+	return io_mon_add_source(firmwared_get_mon(),
+			io_process_get_src(&firmware_preparation->process));
+}
+
+static void firmware_preparation_abort(struct preparation *preparation)
+{
+	struct firmware_preparation *firmware_preparation;
+	struct io_process *process;
+
+	firmware_preparation = ut_container_of(preparation,
+			struct firmware_preparation, preparation);
+	process = &firmware_preparation->process;
+
+	ULOGE("[%s] abort preparation of '%s'", preparation->folder,
+			preparation->identification_string);
+
+	io_process_kill(process);
+}
+
+static struct preparation *firmware_get_preparation(void)
+{
+	struct firmware_preparation *firmware_preparation;
+
+	firmware_preparation = calloc(1, sizeof(*firmware_preparation));
+	if (firmware_preparation == NULL)
+		return NULL;
+
+	firmware_preparation->preparation.start = firmware_preparation_start;
+	firmware_preparation->preparation.abort = firmware_preparation_abort;
+	firmware_preparation->preparation.folder = FIRMWARES_FOLDER_NAME;
+
+	return &firmware_preparation->preparation;
+}
+
+static void firmware_destroy_preparation(struct preparation **preparation)
+{
+	struct firmware_preparation *firmware_preparation;
+
+	firmware_preparation = ut_container_of(*preparation,
+			struct firmware_preparation, preparation);
+
+	memset(firmware_preparation, 0, sizeof(*firmware_preparation));
+	free(firmware_preparation);
+	*preparation = NULL;
+}
+
+struct folder_entity_ops firmware_ops = {
+		.sha1 = firmware_sha1,
+		.can_drop = firmware_can_drop,
+		.drop = firmware_drop,
+		.get_preparation = firmware_get_preparation,
+		.destroy_preparation = firmware_destroy_preparation,
+};
+
+static int pattern_filter(const struct dirent *d)
+{
+	return fnmatch(FIRMWARE_MATCHING_PATTERN, d->d_name, 0) == 0;
 }
 
 static void free_namelist(struct dirent ***namelist)
@@ -224,8 +421,7 @@ static int index_firmwares(void)
 	{
 #pragma omp parallel for
 		for (i = 0; i < n; i++) {
-			firmwares[i] = firmware_new(repository,
-					namelist[i]->d_name);
+			firmwares[i] = firmware_new(namelist[i]->d_name);
 			free(namelist[i]);
 		}
 	}
