@@ -31,11 +31,11 @@ An xterm should popup, with a console opened on the running instance's console.
 
 ### Vocabulary
 
-*Commands* are sent by clients. No acknowledgement is sent by the server. The
-server sends *notifications*, which can be in reaction to a client *command*.  
+*Commands* are sent by clients.  The server sends *notifications*, which can be
+in reaction to a client *command*.  
 An *identifier* is either the sha1 of the entity or it's friendly random name.
-As the time of writing, there is 3 types of entities, "instances", "firmwares"
-and "remote\_firmwares", entities types are named *folders*.
+As the time of writing, there is 2 types of entities, "instances", "firmwares",
+entities types are named *folders*.
 
 ### Commands
 
@@ -48,19 +48,30 @@ and "remote\_firmwares", entities types are named *folders*.
   FOLDER is one of folders listed in an answer to a *FOLDERS* command
 * *SHOW* FOLDER IDENTIFIER  
   asks for all the information on a given entity of a folder
-* *PULL* REMOTE\_FIRMWARE_IDENTIFIER  
-  installs locally a firmware present on the remote firmwares pool
 * *DROP* FOLDER IDENTIFIER  
   removes an entity from a folder  
   if the entity is an instance, it must be in the *READY* state. It's pid 1 will
   be killed and it's run artifacts will be removed if
   FIRMWARED\_PREVENT\_REMOVAL isn't set to "y"
-* *PREPARE* FIRMWARE\_IDENTIFIER  
-  creates an instance of the given firmware, in the *READY* state  
-  if FIRMWARE\_IDENTIFIER doesn't correspond to a registered firmware, then it
-  is supposed to be a path to a directory which will be mounted as the read-only
-  layer for the prepared instance, this allows to create instances from the
-  final directory of a firmware's workspace and is intended for development.
+* *PREPARE* FOLDER IDENTIFICATION\_STRING  
+  prepares either a firmware or an instance.  
+  If FOLDER is equal to "firmwares", then a firmware will be prepared.
+  In this case, IDENTIFICATION\_STRING can be either:
+   1. a path to an ext2 file system image:  
+     in this case, the file will be copied in the firmware repository, indexed
+     by firmwared and listed as a usable firmware
+   1. an URL:  
+     in this case, the file corresponding to the URL will be downloaded locally
+     in the firmware repository, indexed by firmwared and listed as a usable
+     firmware.
+   1. a path to a directory:
+     in this case, the path will be considered to correspond to a final
+     directory and will be indexed by firmwared and listed as a usable
+     firmware.  
+  If FOLDER is equal to "instances", then an instance will be created for the 
+  firmware of identifier IDENTIFICATION\_STRING, in the *READY* state  
+  IDENTIFICATION\_STRING must correspond to an identifier of a registered
+  firmware.
 * *START* INSTANCE\_IDENTIFIER  
   launches an instance, which switches to the *STARTED* state and must be in the
   READY state
@@ -107,12 +118,13 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
 * *SHOW* FOLDER ID NAME INFORMATION\_STRING  
   answer to a *SHOW* command. The actual content of the INFORMATION\_STRING is
   dependent on the FOLDER queried and is for display purpose
-* *PULLED* FIRMWARE\_ID FIRMWARE\_NAME  
-  notification in reaction to a *PULL* command
 * *DROPPED* FOLDER ENTITY\_ID ENTITY\_NAME  
   notification in reaction to a *DROP* command
-* *PREPARED* FIRMWARE\_ID FIRMWARE\_PATH INSTANCE\_ID INSTANCE\_NAME  
+* *PREPARED* FOLDER ENTITY\_ID ENTITY\_NAME  
   notification in reaction to a *PREPARE* command
+* *PREPARE\_PROGRESS* FOLDER IDENTIFICATION\_STRING PROGRESS  
+  notification in reaction to a *PREPARE* command, indicating the progression of
+  the preparation. PROGRESS is a percentage.
 * *STARTED* INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *START* command
 * *DEAD* INSTANCE\_ID INSTANCE\_NAME  
