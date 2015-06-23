@@ -1,13 +1,12 @@
+bug in error cases, instance sha1 isn't yet computed but used.
+   one solution could be to use the id instead
+use a temporary file for firmware downloads
 create a input_validation module
-
 pass a pointer to command handlers for retrieving an error message
-implement the PULL command, with libcurl
 allow to associate a "product type" to a firmware
-add a inotify watch on firmwares in the repository
 implement all the TODOs in the source
 only keep base_workspace, don't allow to change the others
 Add an automated way to test the config and the AppArmor profile
 automated cleanup mechanism in case of crash
-bash completion
-
+install bash completion to /etc/bash_completion.d/
 code cleanup / refactoring in instances.c
