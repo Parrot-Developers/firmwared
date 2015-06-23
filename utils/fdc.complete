@@ -38,6 +38,16 @@ _fdc()
 		case ${command} in
 		set_property|get_property|show|drop|prepare)
 			local folder=${COMP_WORDS[COMP_CWORD - 1]}
+			if [ "${command}" = "prepare" ]; then
+				if [ "$folder" = "firmwares" ]; then
+					compopt -o filenames -o nospace
+					COMPREPLY=( $(compgen -f "$cur") )
+				else #folder == instances
+					local firmwares=$(fdc list firmwares | sed "${names}")
+					COMPREPLY=( $( compgen -W "${firmwares}" -- $cur ) )
+				fi
+				return 0
+			fi
 			local idents=$(fdc list ${folder} | sed "${names}")
 
 			COMPREPLY=( $( compgen -W "${idents}" -- $cur ) )
