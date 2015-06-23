@@ -28,6 +28,7 @@ ULOG_DECLARE_TAG(firmwared);
 
 #include <ut_string.h>
 #include <ut_utils.h>
+#include <ut_process.h>
 
 #include "commands.h"
 #include "folders.h"
@@ -174,8 +175,18 @@ int firmwared_init(void)
 		ULOGE("io_src_init: %s", strerror(-ret));
 		goto err;
 	}
-	ret = io_src_sig_init(&ctx.sig_src, sig_src_cb, SIGINT, SIGTERM,
-			SIGQUIT, NULL /* guard */);
+	/*
+	 * best effort to avoid interfering too much with gdb, but please note
+	 * that a debugger is susceptible to start ptracing after these lines
+	 */
+	if (ut_process_is_being_ptraced()) {
+		ret = io_src_sig_init(&ctx.sig_src, sig_src_cb, SIGTERM,
+				SIGQUIT, NULL /* guard */);
+		ULOGN("is being ptraced, SIGINT handling disabled");
+	} else {
+		ret = io_src_sig_init(&ctx.sig_src, sig_src_cb, SIGTERM,
+				SIGQUIT, SIGINT, NULL /* guard */);
+	}
 	if (ret < 0) {
 		ULOGE("io_src_sig_init: %s", strerror(-ret));
 		goto err;
