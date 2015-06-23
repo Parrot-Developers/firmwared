@@ -53,8 +53,10 @@ ULOG_DECLARE_TAG(firmwared_instances);
 
 #include <ptspair.h>
 
+#include "log.h"
 #include "folders.h"
 #include "instances.h"
+#include "preparation.h"
 #include "utils.h"
 #include "config.h"
 #include "firmwared.h"
@@ -72,10 +74,17 @@ static ut_bit_field_t indices;
 
 static struct folder instances_folder;
 
+struct instance_preparation {
+	struct preparation preparation;
+};
+
 static int sha1(struct instance *instance,
 		unsigned char hash[SHA_DIGEST_LENGTH])
 {
 	SHA_CTX ctx;
+
+	if (ut_string_is_invalid(instance->firmware_path))
+		return -EINVAL;
 
 	SHA1_Init(&ctx);
 	SHA1_Update(&ctx, instance->firmware_path,
@@ -224,12 +233,6 @@ static int instance_drop(struct folder_entity *entity, bool only_unregister)
 
 	return 0;
 }
-
-struct folder_entity_ops instance_ops = {
-		.sha1 = instance_sha1,
-		.can_drop = instance_can_drop,
-		.drop = instance_drop,
-};
 
 static int init_paths(struct instance *instance)
 {
@@ -757,6 +760,81 @@ err:
 	return ret;
 }
 
+static struct instance *instance_new(const char *firmware_identifier)
+{
+	int ret;
+	struct instance *instance;
+
+	instance = calloc(1, sizeof(*instance));
+	if (instance == NULL)
+		return NULL;
+
+	ret = init_instance(instance, firmware_identifier);
+	if (ret < 0) {
+		ULOGE("init_instance: %s", strerror(-ret));
+		goto err;
+	}
+
+	return instance;
+err:
+	instance_delete(&instance, false);
+
+	errno = -ret;
+
+	return NULL;
+}
+
+static int instance_preparation_start(struct preparation *preparation)
+{
+	int ret;
+	struct instance *instance;
+
+	instance = instance_new(preparation->identification_string);
+	if (instance == NULL) {
+		ret = -errno;
+		ULOGE("instance_new(%s): %m",
+				preparation->identification_string);
+		return ret;
+	}
+
+	return preparation->completion(preparation,
+			instance_to_entity(instance));
+}
+
+static struct preparation *instance_get_preparation(void)
+{
+	struct instance_preparation *instance_preparation;
+
+	instance_preparation = calloc(1, sizeof(*instance_preparation));
+	if (instance_preparation == NULL)
+		return NULL;
+
+	instance_preparation->preparation.start = instance_preparation_start;
+	instance_preparation->preparation.folder = INSTANCES_FOLDER_NAME;
+
+	return &instance_preparation->preparation;
+}
+
+static void instance_destroy_preparation(struct preparation **preparation)
+{
+	struct instance_preparation *instance_preparation;
+
+	instance_preparation = ut_container_of(*preparation,
+			struct instance_preparation, preparation);
+
+	memset(instance_preparation, 0, sizeof(*instance_preparation));
+	free(instance_preparation);
+	*preparation = NULL;
+}
+
+struct folder_entity_ops instance_ops = {
+		.sha1 = instance_sha1,
+		.can_drop = instance_can_drop,
+		.drop = instance_drop,
+		.get_preparation = instance_get_preparation,
+		.destroy_preparation = instance_destroy_preparation,
+};
+
 char *instance_state_to_str(enum instance_state state)
 {
 	switch (state) {
@@ -787,30 +865,6 @@ int instances_init(void)
 	instance_properties_register();
 
 	return 0;
-}
-
-struct instance *instance_new(const char *firmware_identifier)
-{
-	int ret;
-	struct instance *instance;
-
-	instance = calloc(1, sizeof(*instance));
-	if (instance == NULL)
-		return NULL;
-
-	ret = init_instance(instance, firmware_identifier);
-	if (ret < 0) {
-		ULOGE("init_instance: %s", strerror(-ret));
-		goto err;
-	}
-
-	return instance;
-err:
-	instance_delete(&instance, false);
-
-	errno = -ret;
-
-	return NULL;
 }
 
 struct instance *instance_from_entity(struct folder_entity *entity)

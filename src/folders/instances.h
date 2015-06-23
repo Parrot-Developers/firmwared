@@ -17,11 +17,6 @@ struct instance;
 #define INSTANCES_FOLDER_NAME "instances"
 
 int instances_init(void);
-/*
- * a newly created instance is automatically stored in the instance folder and
- * will be destroyed automatically on a drop operation
- */
-struct instance *instance_new(const char *firmware_identifier);
 struct instance *instance_from_entity(struct folder_entity *entity);
 struct folder_entity *instance_to_entity(struct instance *instance);
 int instance_start(struct instance *instance);
