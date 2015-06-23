@@ -8,6 +8,7 @@
  */
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <ut_string.h>
 
@@ -29,7 +30,9 @@ static int get_config_command_handler(struct pomp_conn *conn,
 	int ret;
 	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *config_key = NULL;
+	char *prefixed_config_key = NULL;
 	enum config_key key;
+	size_t len;
 
 	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &config_key);
 	if (ret < 0) {
@@ -37,7 +40,10 @@ static int get_config_command_handler(struct pomp_conn *conn,
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}
-	key = config_key_from_string(config_key);
+	len = UT_ARRAY_SIZE(CONFIG_KEYS_PREFIX) + strlen(config_key);
+	prefixed_config_key = alloca(len);
+	snprintf(prefixed_config_key, len, CONFIG_KEYS_PREFIX"%s", config_key);
+	key = config_key_from_string(prefixed_config_key);
 	if (key == (enum config_key)-1)
 		return -ESRCH;
 

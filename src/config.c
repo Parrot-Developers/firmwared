@@ -12,6 +12,7 @@
 #include <libgen.h>
 
 #include <errno.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -487,10 +488,13 @@ char *config_list_keys(void)
 {
 	int ret;
 	char *keys_list = NULL;
-	enum config_key i;
+	enum config_key k;
+	size_t offset = UT_ARRAY_SIZE(CONFIG_KEYS_PREFIX) - 1;
+	char *p;
 
-	for (i = CONFIG_FIRST; i < CONFIG_NB; i++) {
-		ret = ut_string_append(&keys_list, "%s ", configs[i].env);
+	for (k = CONFIG_FIRST; k < CONFIG_NB; k++) {
+		ret = ut_string_append(&keys_list, "%s ", configs[k].env +
+				offset);
 		if (ret < 0) {
 			ULOGC("ut_string_append");
 			errno = -ret;
@@ -499,6 +503,8 @@ char *config_list_keys(void)
 	}
 	if (keys_list[0] != '\0')
 		keys_list[strlen(keys_list) - 1] = '\0';
+	for (p = keys_list; *p != '\0'; p++)
+		*p = tolower(*p);
 
 	return keys_list;
 }
