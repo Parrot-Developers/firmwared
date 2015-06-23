@@ -10,6 +10,10 @@
 #define CONFIG_H_
 #include <stdbool.h>
 
+#ifndef CONFIG_KEYS_PREFIX
+#define CONFIG_KEYS_PREFIX "FIRMWARED_"
+#endif /* CONFIG_KEYS_PREFIX */
+
 enum config_key {
 	CONFIG_FIRST,
 

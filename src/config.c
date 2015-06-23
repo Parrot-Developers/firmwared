@@ -246,72 +246,72 @@ static bool valid_net_first_two_bytes(const char *value)
 
 static struct config configs[CONFIG_NB] = {
 		[CONFIG_CONTAINER_INTERFACE] = {
-				.env = "FIRMWARED_CONTAINER_INTERFACE",
+				.env = CONFIG_KEYS_PREFIX"CONTAINER_INTERFACE",
 				.default_value = CONTAINER_INTERFACE,
 				.valid = valid_interface,
 		},
 		[CONFIG_CURL_HOOK] = {
-				.env = "FIRMWARED_CURL_HOOK",
+				.env = CONFIG_KEYS_PREFIX"CURL_HOOK",
 				.default_value = CURL_HOOK,
 				.valid = valid_executable,
 		},
 		[CONFIG_DISABLE_APPARMOR] = {
-				.env = "FIRMWARED_DISABLE_APPARMOR",
+				.env = CONFIG_KEYS_PREFIX"DISABLE_APPARMOR",
 				.default_value = DISABLE_APPARMOR,
 				.valid = valid_yes_no,
 		},
 		[CONFIG_DUMP_PROFILE] = {
-				.env = "FIRMWARED_DUMP_PROFILE",
+				.env = CONFIG_KEYS_PREFIX"DUMP_PROFILE",
 				.default_value = DUMP_PROFILE,
 				.valid = valid_yes_no,
 		},
 		[CONFIG_HOST_INTERFACE_PREFIX] = {
-				.env = "FIRMWARED_HOST_INTERFACE_PREFIX",
+				.env = CONFIG_KEYS_PREFIX"HOST_INTERFACE_PREFIX",
 				.default_value = HOST_INTERFACE_PREFIX,
 				.valid = valid_interface_prefix,
 		},
 		[CONFIG_MOUNT_HOOK] = {
-				.env = "FIRMWARED_MOUNT_HOOK",
+				.env = CONFIG_KEYS_PREFIX"MOUNT_HOOK",
 				.default_value = MOUNT_HOOK_DEFAULT,
 				.valid = valid_executable,
 		},
 		[CONFIG_MOUNT_PATH] = {
-				.env = "FIRMWARED_MOUNT_PATH",
+				.env = CONFIG_KEYS_PREFIX"MOUNT_PATH",
 				.default_value = INSTANCES_MOUNT_PATH_DEFAULT,
 				.valid = valid_path,
 		},
 		[CONFIG_NET_FIRST_TWO_BYTES] = {
-				.env = "FIRMWARED_NET_FIRST_TWO_BYTES",
+				.env = CONFIG_KEYS_PREFIX"NET_FIRST_TWO_BYTES",
 				.default_value = NET_FIRST_TWO_BYTES,
 				.valid = valid_net_first_two_bytes,
 		},
 		[CONFIG_NET_HOOK] = {
-				.env = "FIRMWARED_NET_HOOK",
+				.env = CONFIG_KEYS_PREFIX"NET_HOOK",
 				.default_value = NET_HOOK_DEFAULT,
 				.valid = valid_executable,
 		},
 		[CONFIG_PREVENT_REMOVAL] = {
-				.env = "FIRMWARED_PREVENT_REMOVAL",
+				.env = CONFIG_KEYS_PREFIX"PREVENT_REMOVAL",
 				.default_value = PREVENT_REMOVAL,
 				.valid = valid_yes_no,
 		},
 		[CONFIG_RESOURCES_DIR] = {
-				.env = "FIRMWARED_RESOURCES_DIR",
+				.env = CONFIG_KEYS_PREFIX"RESOURCES_DIR",
 				.default_value = FOLDERS_RESOURCES_DIR_DEFAULT,
 				.valid = valid_path,
 		},
 		[CONFIG_REPOSITORY_PATH] = {
-				.env = "FIRMWARED_REPOSITORY_PATH",
+				.env = CONFIG_KEYS_PREFIX"REPOSITORY_PATH",
 				.default_value = FIRMWARE_REPOSITORY_DEFAULT,
 				.valid = valid_path,
 		},
 		[CONFIG_SOCKET_PATH] = {
-				.env = "FIRMWARED_SOCKET_PATH",
+				.env = CONFIG_KEYS_PREFIX"SOCKET_PATH",
 				.default_value = SOCKET_PATH_DEFAULT,
 				.valid = valid_accessible,
 		},
 		[CONFIG_USE_AUFS] = {
-				.env = "FIRMWARED_USE_AUFS",
+				.env = CONFIG_KEYS_PREFIX"USE_AUFS",
 				.default_value = USE_AUFS,
 				.valid = valid_yes_no,
 		},
