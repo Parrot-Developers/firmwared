@@ -79,6 +79,11 @@ sleep .1
 # launch the instance
 fdc start $instance
 
+# connect adb
+id=$(fdc get_property instances ${instance} id)
+net_first_two_bytes=$(fdc get_config net_first_two_bytes)
+adb connect ${net_first_two_bytes}${id}.1:9050
+
 # wait for user input
 read -p "Press enter to end the session ..."
 
