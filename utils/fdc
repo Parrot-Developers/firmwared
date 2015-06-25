@@ -164,7 +164,7 @@ case "${command}" in
 		format="%s%s"
 		config_key=$2
 		args="${config_key}"
-		sed_command="s#.*STR:'[^']*', STR:'\([^']*\)', STR:'\([^']*\)'.*#\1=\2#g"
+		sed_command="s#.*STR:'[^']*', STR:'\([^']*\)', STR:'\([^']*\)'.*#\2#g"
 		;;
 	CONFIG_KEYS)
 		format="%s"
