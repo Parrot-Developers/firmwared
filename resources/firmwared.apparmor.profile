@@ -51,9 +51,9 @@
    capability syslog,
 
 # first we allow all filesystem accesses ...
-   /** rwix,
-   /* rwix,
-   / rwix,
+   /** rwixk,
+   /* rwixk,
+   / rwixk,
 
 # ... then we restrict what is suspected (or known) to be harmful
    audit deny @{root}/union/proc/sysrq-trigger rwx,
