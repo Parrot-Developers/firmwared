@@ -224,7 +224,7 @@ static int instance_drop(struct folder_entity *entity, bool only_unregister)
 	ULOGD("%s", __func__);
 
 	if (instance_is_running(instance)) {
-		ULOGW("instance %s still running, try to kill an wait for it",
+		ULOGW("instance %s still running, try to kill and wait for it",
 				instance_get_name(instance));
 		instance_kill(instance, (uint32_t)-1);
 		sleep(1);
