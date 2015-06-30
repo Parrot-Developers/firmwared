@@ -16,6 +16,8 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <argz.h>
+#include <envz.h>
 
 #include <openssl/sha.h>
 
@@ -28,6 +30,7 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 #include <ut_utils.h>
 #include <ut_string.h>
 #include <ut_file.h>
+#include <ut_process.h>
 
 #include "preparation.h"
 #include "folders.h"
@@ -133,6 +136,7 @@ static void firmware_delete(struct firmware **firmware)
 	f = *firmware;
 
 	ut_string_free(&f->path);
+	ut_string_free(&f->product);
 	free(f);
 	*firmware = NULL;
 }
@@ -193,6 +197,86 @@ static void preparation_progress_sep_cb(struct io_src_sep *sep, char *chunk,
 		ULOGE("firmwared_notify: %s", strerror(-ret));
 }
 
+static int extract_firmware_info(struct firmware *firmware, char *props)
+{
+	int ret;
+	char __attribute__((cleanup(ut_string_free)))*argz = NULL;
+	size_t argz_len = 0;
+
+	ret = argz_create_sep(props, '\n', &argz, &argz_len);
+	if (ret != 0) {
+		argz = NULL;
+		return ret;
+	}
+
+	firmware->product = envz_get(argz, argz_len, "ro.build.alchemy.product");
+	if (firmware->product == NULL) {
+		ULOGE("property \"ro.build.alchemy.product\" not found");
+		return -ENOENT;
+	}
+	firmware->product = strdup(firmware->product);
+	if (firmware->product == NULL)
+		return -errno;
+	ULOGD("product read from build.prop : %s", firmware->product);
+
+	return 0;
+}
+
+/* mounts the firmware to read some informations it contains */
+static int read_firmware_info(struct firmware *firmware)
+{
+	int ret;
+	struct io_process process;
+	int status;
+	char mount_dir[] = "/tmp/firmwared_firmwareXXXXXX";
+	char __attribute__((cleanup(ut_string_free)))*props = NULL;
+	// TODO check constness of struct parameters in io_process
+	struct io_process_parameters parameters = {
+		.stdout_sep_cb = log_dbg_src_sep_cb,
+		.stderr_sep_cb = log_warn_src_sep_cb,
+		.timeout = 1000,
+		.signum = SIGKILL,
+	};
+	void termination_cb(struct io_src_pid *pid_src, pid_t pid, int s)
+	{
+		status = s;
+	};
+
+	if (mkdtemp(mount_dir) == NULL)
+		return -errno;
+
+	if (ut_file_is_dir(firmware->path)) {
+		ret = io_process_init_prepare_launch_and_wait(&process,
+				&parameters, termination_cb, "/bin/mount", "-o",
+				"ro", "--bind", firmware->path, mount_dir,
+				NULL);
+	} else  {
+		ret = io_process_init_prepare_launch_and_wait(&process,
+				&parameters, termination_cb, "/bin/mount", "-o",
+				"ro,loop", firmware->path, mount_dir, NULL);
+	}
+	if (ret < 0) {
+		ULOGE("io_process_init_prepare_launch_and_wait:%s",
+				strerror(-ret));
+		goto out;
+	}
+
+	ret = ut_file_to_vstring(&props, "%s/etc/build.prop", mount_dir);
+	if (ret < 0) {
+		props = NULL;
+		ULOGE("ut_file_to_vstring: %s", strerror(-ret));
+		goto out;
+	}
+
+	ret = extract_firmware_info(firmware, props);
+out:
+	io_process_init_prepare_launch_and_wait(&process, &parameters,
+			termination_cb, "/bin/umount", mount_dir, NULL);
+	rmdir(mount_dir);
+
+	return ret;
+}
+
 static struct firmware *firmware_new(const char *path)
 {
 	int ret;
@@ -228,6 +312,10 @@ static struct firmware *firmware_new(const char *path)
 	sha1 = compute_sha1(firmware);
 	if (sha1 == NULL)
 		goto err;
+
+	ret = read_firmware_info(firmware);
+	if (ret < 0)
+		ULOGW("read_firmware_info failed: %s\n", strerror(-ret));
 
 	ULOGD("indexing firmware %s done", path);
 
