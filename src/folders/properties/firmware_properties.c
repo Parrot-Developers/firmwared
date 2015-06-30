@@ -32,10 +32,27 @@ static int get_path(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
+static int get_product(struct folder_entity *entity, char **value)
+{
+	struct firmware *firmware;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	firmware = to_firmware(entity);
+
+	*value = strdup(firmware->product);
+
+	return *value == NULL ? -errno : 0;
+}
+
 struct folder_property firmware_properties[] = {
 		{
 				.name = "path",
 				.get = get_path,
+		},
+		{
+				.name = "product",
+				.get = get_product,
 		},
 		{ /* NULL guard */
 				.name = NULL,
