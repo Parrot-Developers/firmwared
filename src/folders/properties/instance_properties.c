@@ -109,6 +109,19 @@ static int get_base_workspace(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
+static int get_root(struct folder_entity *entity, char **value)
+{
+	struct instance *instance;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	*value = strdup(instance->union_mount_point);
+
+	return *value == NULL ? -errno : 0;
+}
+
 static int get_pts(struct folder_entity *entity, char **value,
 		enum pts_index pts_index)
 {
@@ -275,6 +288,10 @@ static struct folder_property properties[] = {
 		{
 				.name = "base_workspace",
 				.get = get_base_workspace,
+		},
+		{
+				.name = "root",
+				.get = get_root,
 		},
 		{
 				.name = "inner_pts",
