@@ -73,8 +73,9 @@ fdc show instances $instance
 # watch what's going on the "simulated uart" console
 x-terminal-emulator -e "microcom -p $(fdc get_property instances $instance outer_pts)" &
 
-# libpomp doesn't like multiple parallel connections
-sleep .1
+# if the terminal doesn't have the time to launch before the instance starts,
+# some outputs can be garbage
+sleep .5
 
 # launch the instance
 fdc start $instance
