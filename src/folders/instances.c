@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <signal.h>
 
+#include <argz.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <time.h>
@@ -172,16 +173,13 @@ static void clean_mount_points(struct instance *instance, bool only_unregister)
 
 static void clean_command_line(struct instance *instance)
 {
-	int i;
-
 	if (instance->command_line == NULL)
 		return;
 
-	for (i = 0; instance->command_line[i] != NULL; i++)
-		free(instance->command_line[i]);
-
-	memset(instance->command_line, 0, sizeof(*instance->command_line) * i);
+	memset(instance->command_line, 0, instance->command_line_len);
 	free(instance->command_line);
+	instance->command_line = NULL;
+	instance->command_line_len = 0;
 }
 
 static void clean_instance(struct instance *i, bool only_unregister)
@@ -398,6 +396,8 @@ static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 	int i;
 	const char *hostname;
 	const char *sha1;
+	char **argv = NULL;
+	size_t argc;
 
 	sha1 = instance_get_sha1(instance);
 	ret = ut_process_change_name("pid-1-%s", sha1);
@@ -406,6 +406,16 @@ static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 				strerror(-ret));
 
 	ULOGI("%s", __func__);
+
+	/* prepare the command-line */
+	argc = argz_count(instance->command_line, instance->command_line_len);
+	argv = calloc(argc + 1,  sizeof (*argv));
+	if (argv == NULL) {
+		ULOGE("calloc: %m");
+		_exit(EXIT_FAILURE);
+	}
+
+	argz_extract(instance->command_line, instance->command_line_len, argv);
 
 	/* we need to be able to differentiate instances by hostnames */
 	hostname = instance_get_name(instance);
@@ -438,7 +448,7 @@ static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 	for (i = sysconf(_SC_OPEN_MAX) - 1; i > 2; i--)
 		close(i);
 	/* from here, ulog doesn't work anymore */
-	ret = execv(instance->command_line[0], instance->command_line);
+	ret = execv(argv[0], argv);
 	if (ret < 0)
 		/*
 		 * if one want to search for potential failure of the execve
@@ -632,46 +642,31 @@ static int setup_ptspair(struct ptspair *ptspair)
 /* load sane defaults to launch a boxinit product */
 static int init_command_line(struct instance *instance)
 {
-	char **argv;
-	int i;
+#define RO_BOOT_CONSOLE "ro.boot.console"
 	int ret;
 	const char *pts;
-
-	argv = calloc(5, sizeof(*instance->command_line));
-	if (argv == NULL)
-		return -errno;
-	instance->command_line = argv;
-
-	i = 0;
-	argv[i] = strdup("/sbin/boxinit");
-	if (argv[i] == NULL)
-		goto err;
-	i++;
-
-	argv[i] = strdup("ro.hardware=mykonos3board");
-	if (argv[i] == NULL)
-		goto err;
-	i++;
-
-	argv[i] = strdup("ro.debuggable=1");
-	if (argv[i] == NULL)
-		goto err;
-	i++;
+	char ro_boot_console[] = RO_BOOT_CONSOLE "=XXXXXXXXXXXXXXX";
+	char *argv[] = {
+		"/sbin/boxinit",
+		"ro.hardware=mykonos3board",
+		"ro.debuggable=1",
+		ro_boot_console,
+		NULL,
+	};
 
 	pts = ptspair_get_path(&instance->ptspair, PTSPAIR_BAR);
-	ret = asprintf(argv + i, "ro.boot.console=%s", pts + 4);
-	if (ret < 0) {
-		errno = ENOMEM;
-		argv[i] = NULL;
-		goto err;
+	snprintf(ro_boot_console, UT_ARRAY_SIZE(ro_boot_console),
+			RO_BOOT_CONSOLE "=%s", pts + 4);
+
+	ret = argz_create(argv, &instance->command_line,
+			&instance->command_line_len);
+	if (ret != 0) {
+		ULOGE("argz_create: %s", strerror(ret));
+		return -ret;
 	}
 
 	return 0;
-err:
-	ret = -errno;
-	clean_command_line(instance);
-
-	return ret;
+#undef RO_BOOT_CONSOLE
 }
 
 static int init_instance(struct instance *instance,

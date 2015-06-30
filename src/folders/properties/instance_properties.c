@@ -11,6 +11,7 @@
 #endif /* _GNU_SOURCE */
 #include <inttypes.h>
 
+#include <argz.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -178,22 +179,35 @@ static int set_interface(struct folder_entity *entity, const char *value)
 	return instance->interface == NULL ? -errno : 0;
 }
 
+static char *get_argz_i(char *argz, size_t argz_len, int i)
+{
+	char *entry = NULL;
+
+	for (entry = argz_next(argz, argz_len, entry); entry != NULL && i != 0;
+			entry = argz_next(argz, argz_len, entry), i--);
+
+	return entry;
+}
+
 static int geti_cmdline(struct folder_entity *entity, int index, char **value)
 {
-	struct instance *instance;
-	int i;
+	struct instance *i;
+	size_t count;
+	unsigned uindex;
 
-	if (entity == NULL || value == NULL)
+	if (entity == NULL || value == NULL || index < 0)
 		return -EINVAL;
-	instance = to_instance(entity);
-	for (i = 0; i < index; i++)
-		if (instance->command_line[i] == NULL)
+	uindex = index; /* the cast is ok, we know now index is unsigned */
+	i = to_instance(entity);
+	count = argz_count(i->command_line, i->command_line_len);
+	if (uindex > count)
 			return -ERANGE;
 
-	if (instance->command_line[index] == NULL)
+	if (uindex == count)
 		*value = strdup("nil");
 	else
-		*value = strdup(instance->command_line[index]);
+		*value = strdup(get_argz_i(i->command_line, i->command_line_len,
+				index));
 
 	return *value == NULL ? -errno : 0;
 }
@@ -201,53 +215,48 @@ static int geti_cmdline(struct folder_entity *entity, int index, char **value)
 static int seti_cmdline(struct folder_entity *entity, int index,
 		const char *value)
 {
-	int size;
-	int i;
-	struct instance *instance;
-	char **cmdline;
+	struct instance *i;
+	size_t count;
+	unsigned uindex;
+	char *entry;
+	char *before;
 
-	if (entity == NULL || ut_string_is_invalid(value))
+	// TODO change index for an unsigned
+	if (entity == NULL || ut_string_is_invalid(value) || index < 0)
 		return -EINVAL;
-	instance = to_instance(entity);
-	for (size = 0; instance->command_line[size] != NULL; size++);
-	size++; /* room for the last NULL pointer */
+	uindex = index;
+	i = to_instance(entity);
+	count = argz_count(i->command_line, i->command_line_len);
 
-	ULOGD("array size is %d", size);
-
-	if (index > size) {
-		ULOGE("index %d above array size %d", index, size);
+	if (uindex > count) {
+		ULOGE("index %u above array size %ju", index, (uintmax_t)count);
 		return -ERANGE;
 	}
-	if (instance->command_line[index] != NULL) {
-		ut_string_free(instance->command_line + index);
-		if (ut_string_match(value, "nil")) {
-			/* if NULL is stored, truncate the array after it */
-			for (i = index + 1; i < size; i++)
-				ut_string_free(instance->command_line + i);
-			cmdline = realloc(instance->command_line,
-					index + 1 *
-					sizeof(*(instance->command_line)));
-			if (cmdline == NULL)
-				return -errno;
-			instance->command_line = cmdline;
 
+	if (uindex == count) {
+		/* truncation required at the same size the cmdline has */
+		if (strcmp(value, "nil") == 0)
 			return 0;
-		}
-	} else {
-		/* augment the size to add at the end of the array */
-		cmdline = realloc(instance->command_line,
-				(size + 1) *
-				sizeof(*(instance->command_line)));
-		if (cmdline == NULL)
-			return -errno;
-		instance->command_line = cmdline;
-	}
-	instance->command_line[index] = strdup(value);
-	if (instance->command_line[index] == NULL)
-		return -errno;
-	instance->command_line[index + 1] = NULL;
 
-	return 0;
+		/* append */
+		return -argz_add(&i->command_line, &i->command_line_len, value);
+	}
+
+	/* truncate */
+	entry = get_argz_i(i->command_line, i->command_line_len, index);
+	if (strcmp(value, "nil") == 0) {
+		/* changing the size suffices */
+		i->command_line_len = entry - i->command_line;
+		return 0;
+	}
+
+	/* delete and insert */
+	argz_delete(&i->command_line, &i->command_line_len, entry);
+	entry = NULL; /* /!\ entry is now invalid */
+	before = get_argz_i(i->command_line, i->command_line_len, index);
+
+	return argz_insert(&i->command_line, &i->command_line_len, before,
+			value);
 }
 
 static struct folder_property properties[] = {

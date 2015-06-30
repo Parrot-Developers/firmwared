@@ -57,7 +57,8 @@ struct instance {
 	/* run-time configurable properties */
 	char *interface;
 
-	char **command_line;
+	char *command_line;
+	size_t command_line_len;
 
 	/* all the remaining fields are used for instance sha1 computation */
 	char *firmware_path;
