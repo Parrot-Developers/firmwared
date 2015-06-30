@@ -56,6 +56,7 @@ struct instance {
 
 	/* run-time configurable properties */
 	char *interface;
+	char *stolen_interface;
 
 	char *command_line;
 	size_t command_line_len;

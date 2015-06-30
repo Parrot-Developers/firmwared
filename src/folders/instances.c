@@ -147,18 +147,19 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 			config_get(CONFIG_USE_AUFS));
 }
 
-static int invoke_net_helper(struct instance *instance, const char *action)
+static int invoke_net_helper(struct instance *i, const char *action)
 {
-	return ut_process_vsystem("\"%s\" \"%s\" \"%s\" \"%s\" \"%"PRIu8"\" "
-			"\"%s\" \"%d\" \"%jd\" 2>&1 | ulogger -p D -t fd-net",
+	return ut_process_vsystem("\"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%"PRIu8
+			"\" \"%s\" \"%d\" \"%jd\" 2>&1 | ulogger -p D -t fd-net",
 			config_get(CONFIG_NET_HOOK),
 			action,
-			instance->interface,
+			i->interface,
+			i->stolen_interface == NULL ? "" : i->stolen_interface,
 			config_get(CONFIG_HOST_INTERFACE_PREFIX),
-			instance->id,
+			i->id,
 			config_get(CONFIG_NET_FIRST_TWO_BYTES),
 			NET_BITS,
-			(intmax_t)io_src_pid_get_pid(&instance->pid_src));
+			(intmax_t)io_src_pid_get_pid(&i->pid_src));
 }
 
 static void clean_mount_points(struct instance *instance, bool only_unregister)
@@ -197,6 +198,7 @@ static void clean_instance(struct instance *i, bool only_unregister)
 	ptspair_clean(&i->ptspair);
 	clean_mount_points(i, only_unregister);
 
+	ut_string_free(&i->stolen_interface);
 	ut_string_free(&i->interface);
 	ut_string_free(&i->firmware_path);
 	ut_bit_field_release_index(&indices, i->id);
