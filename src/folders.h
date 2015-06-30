@@ -48,8 +48,9 @@ struct folder_property {
 	/*
 	 * allocates the string stored in value which must be freed after usage
 	 */
-	int (*geti)(struct folder_entity *entity, int index, char **value);
-	int (*seti)(struct folder_entity *entity, int index, const char *value);
+	int (*geti)(struct folder_entity *entity, unsigned index, char **value);
+	int (*seti)(struct folder_entity *entity, unsigned index,
+			const char *value);
 };
 
 struct folder {

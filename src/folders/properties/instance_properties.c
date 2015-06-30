@@ -189,21 +189,20 @@ static char *get_argz_i(char *argz, size_t argz_len, int i)
 	return entry;
 }
 
-static int geti_cmdline(struct folder_entity *entity, int index, char **value)
+static int geti_cmdline(struct folder_entity *entity, unsigned index,
+		char **value)
 {
 	struct instance *i;
 	size_t count;
-	unsigned uindex;
 
-	if (entity == NULL || value == NULL || index < 0)
+	if (entity == NULL || value == NULL)
 		return -EINVAL;
-	uindex = index; /* the cast is ok, we know now index is unsigned */
 	i = to_instance(entity);
 	count = argz_count(i->command_line, i->command_line_len);
-	if (uindex > count)
+	if (index > count)
 			return -ERANGE;
 
-	if (uindex == count)
+	if (index == count)
 		*value = strdup("nil");
 	else
 		*value = strdup(get_argz_i(i->command_line, i->command_line_len,
@@ -212,28 +211,25 @@ static int geti_cmdline(struct folder_entity *entity, int index, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static int seti_cmdline(struct folder_entity *entity, int index,
+static int seti_cmdline(struct folder_entity *entity, unsigned index,
 		const char *value)
 {
 	struct instance *i;
 	size_t count;
-	unsigned uindex;
 	char *entry;
 	char *before;
 
-	// TODO change index for an unsigned
-	if (entity == NULL || ut_string_is_invalid(value) || index < 0)
+	if (entity == NULL || ut_string_is_invalid(value))
 		return -EINVAL;
-	uindex = index;
 	i = to_instance(entity);
 	count = argz_count(i->command_line, i->command_line_len);
 
-	if (uindex > count) {
+	if (index > count) {
 		ULOGE("index %u above array size %ju", index, (uintmax_t)count);
 		return -ERANGE;
 	}
 
-	if (uindex == count) {
+	if (index == count) {
 		/* truncation required at the same size the cmdline has */
 		if (strcmp(value, "nil") == 0)
 			return 0;
