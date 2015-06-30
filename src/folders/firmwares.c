@@ -35,6 +35,8 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 #include "log.h"
 #include "utils.h"
 #include "config.h"
+#include "firmwares-private.h"
+#include "properties/firmware_properties.h"
 
 #ifndef FIRMWARE_SUFFIX
 #define FIRMWARE_SUFFIX ".firmware"
@@ -58,14 +60,6 @@ struct firmware_preparation {
 	struct preparation preparation;
 	struct io_process process;
 };
-
-struct firmware {
-	struct folder_entity entity;
-	char *path;
-	char sha1[2 * SHA_DIGEST_LENGTH + 1];
-};
-
-#define to_firmware(p) ut_container_of(p, struct firmware, entity)
 
 static struct folder firmware_folder;
 
@@ -449,24 +443,6 @@ static int index_firmwares(void)
 	return res;
 }
 
-static int get_path(struct folder_entity *entity, char **value)
-{
-	struct firmware *firmware;
-
-	if (entity == NULL || value == NULL)
-		return -EINVAL;
-	firmware = to_firmware(entity);
-
-	*value = strdup(firmware->path);
-
-	return *value == NULL ? -errno : 0;
-}
-
-static struct folder_property path_property = {
-		.name = "path",
-		.get = get_path,
-};
-
 int firmwares_init(void)
 {
 	int ret;
@@ -480,7 +456,7 @@ int firmwares_init(void)
 		ULOGE("folder_register: %s", strerror(-ret));
 		return ret;
 	}
-	folder_register_property(FIRMWARES_FOLDER_NAME, &path_property);
+	firmware_properties_register();
 
 	ret = index_firmwares();
 	if (ret < 0) {
