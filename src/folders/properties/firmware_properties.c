@@ -32,7 +32,7 @@ static int get_path(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static struct folder_property properties[] = {
+struct folder_property firmware_properties[] = {
 		{
 				.name = "path",
 				.get = get_path,
@@ -45,18 +45,3 @@ static struct folder_property properties[] = {
 		},
 };
 
-int firmware_properties_register(void)
-{
-	int ret;
-	struct folder_property *property = properties;
-
-	for (property = properties; property->name != NULL; property++) {
-		ret = folder_register_property(FIRMWARES_FOLDER_NAME, property);
-		if (ret < 0) {
-			ULOGE("folder_register_property: %s", strerror(-ret));
-			return ret;
-		}
-	}
-
-	return 0;
-}

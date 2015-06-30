@@ -10,6 +10,6 @@
 #define FIRMWARE_PROPERTIES_H_
 #include "../../folders.h"
 
-int firmware_properties_register(void);
+extern struct folder_property firmware_properties[];
 
 #endif /* FIRMWARE_PROPERTIES_H_ */

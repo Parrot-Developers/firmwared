@@ -87,9 +87,8 @@ struct folder_entity *folder_find_entity(const char *folder,
 char *folder_list_properties(const char *folder_name);
 const char *folders_list(void);
 const char *folder_entity_get_sha1(struct folder_entity *entity);
-/* only setter can be NULL */
-int folder_register_property(const char *folder,
-		struct folder_property *property);
+int folder_register_properties(const char *folder,
+		struct folder_property *properties);
 /* string stored in value in output must be freed after usage */
 int folder_entity_get_property(struct folder_entity *entity, const char *name,
 		char **value);

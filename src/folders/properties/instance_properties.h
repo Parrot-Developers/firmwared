@@ -10,6 +10,6 @@
 #define INSTANCE_PROPERTIES_H_
 #include "../../folders.h"
 
-int instance_properties_register(void);
+extern struct folder_property instance_properties[];
 
 #endif /* INSTANCE_PROPERTIES_H_ */

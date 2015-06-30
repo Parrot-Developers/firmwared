@@ -304,7 +304,7 @@ static int seti_cmdline(struct folder_entity *entity, unsigned index,
 			value);
 }
 
-static struct folder_property properties[] = {
+struct folder_property instance_properties[] = {
 		{
 				.name = "id",
 				.get = get_id,
@@ -364,18 +364,3 @@ static struct folder_property properties[] = {
 		},
 };
 
-int instance_properties_register(void)
-{
-	int ret;
-	struct folder_property *property = properties;
-
-	for (property = properties; property->name != NULL; property++) {
-		ret = folder_register_property(INSTANCES_FOLDER_NAME, property);
-		if (ret < 0) {
-			ULOGE("folder_register_property: %s", strerror(-ret));
-			return ret;
-		}
-	}
-
-	return 0;
-}

@@ -364,6 +364,21 @@ static int folder_reap_preparations_of_folder(struct folder *folder)
 	return 0;
 }
 
+static int folder_register_property(const char *folder_name,
+		struct folder_property *property)
+{
+	struct folder *folder;
+
+	if (ut_string_is_invalid(folder_name) ||
+			folder_property_is_invalid(property))
+		return -EINVAL;
+	folder = folder_find(folder_name);
+	if (folder == NULL)
+		return -errno;
+
+	return rs_dll_enqueue(&folder->properties, &property->node);
+}
+
 int folders_init(void)
 {
 	int ret;
@@ -798,21 +813,22 @@ const char *folder_entity_get_sha1(struct folder_entity *entity)
 	return entity->folder->ops.sha1(entity);
 }
 
-int folder_register_property(const char *folder_name,
-		struct folder_property *property)
+int folder_register_properties(const char *folder,
+		struct folder_property *properties)
 {
-	struct folder *folder;
+	int ret;
+	struct folder_property *property = properties;
 
-	if (ut_string_is_invalid(folder_name) ||
-			folder_property_is_invalid(property))
-		return -EINVAL;
-	folder = folder_find(folder_name);
-	if (folder == NULL)
-		return -errno;
+	for (property = properties; property->name != NULL; property++) {
+		ret = folder_register_property(folder, property);
+		if (ret < 0) {
+			ULOGE("folder_register_property: %s", strerror(-ret));
+			return ret;
+		}
+	}
 
-	return rs_dll_enqueue(&folder->properties, &property->node);
+	return 0;
 }
-
 static int read_index(const char *name)
 {
 	long index;

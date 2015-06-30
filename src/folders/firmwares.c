@@ -456,7 +456,7 @@ int firmwares_init(void)
 		ULOGE("folder_register: %s", strerror(-ret));
 		return ret;
 	}
-	firmware_properties_register();
+	folder_register_properties(FIRMWARES_FOLDER_NAME, firmware_properties);
 
 	ret = index_firmwares();
 	if (ret < 0) {
