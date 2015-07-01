@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 set -x
@@ -32,7 +32,15 @@ elif [ "${action}" = "assign" ];
 then
 	ip link set ${cont_temp_iface} netns ${netns}
 	if [ -n "${stolen_interface}" ]; then
-		ip link set ${stolen_interface} netns ${netns}
+		phy=$(iw ${stolen_interface} info)
+		if [ -z "${phy}" ]; then
+			# non wifi interface
+			ip link set ${stolen_interface} netns ${netns}
+		else
+			# wifi interface
+			phy=${phy/#* /}
+			iw phy#${phy} set netns ${netns}
+		fi
 	fi
 elif [ "${action}" = "config" ];
 then
