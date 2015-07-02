@@ -261,7 +261,7 @@ static int read_firmware_info(struct firmware *firmware)
 		goto out;
 	}
 
-	ret = ut_file_to_vstring(&props, "%s/etc/build.prop", mount_dir);
+	ret = ut_file_to_string("%s/etc/build.prop", &props, mount_dir);
 	if (ret < 0) {
 		props = NULL;
 		ULOGE("ut_file_to_vstring: %s", strerror(-ret));

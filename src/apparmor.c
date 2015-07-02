@@ -73,7 +73,7 @@ int apparmor_init(void)
 		ULOGE("asprintf error");
 		return -EINVAL;
 	}
-	ret = ut_file_to_string(path, &static_apparmor_profile);
+	ret = ut_file_to_string("%s", &static_apparmor_profile, path);
 	if (ret < 0) {
 		ULOGE("ut_file_to_string: %s", strerror(-ret));
 		return ret;
