@@ -31,7 +31,7 @@ host_addr=${ip_base}${instance_id}.254/${net_bits}
 cont_temp_iface=fd_veth_peer${instance_id}
 cont_addr=${ip_base}${instance_id}.1/${net_bits}
 
-stolen_interface=${stolen_interface_configuration[0]}
+stolen_interface=${stolen_interface_configuration[0]:-}
 target_name=${stolen_interface_configuration[1]:-}
 stolen_interface_ip=${stolen_interface_configuration[2]:-}
 
@@ -44,14 +44,17 @@ elif [ "${action}" = "assign" ];
 then
 	ip link set ${cont_temp_iface} netns ${netns}
 	if [ -n "${stolen_interface}" ]; then
-		phy=$(iw ${stolen_interface} info)
-		if [ -z "${phy}" ]; then
+		phy80211_dir=/sys/class/net/${stolen_interface}/phy80211/
+		phy_file=${phy80211_dir}index
+		if [ -e "${phy_file}" ]; then
+			# wifi interface
+			mapfile < ${phy_file} phy
+			# attempt to enable if rfkilled
+			echo 0 > ${phy80211_dir}/rfkill*/soft || true
+			iw phy#${phy} set netns ${netns}
+		else
 			# non wifi interface
 			ip link set ${stolen_interface} netns ${netns}
-		else
-			# wifi interface
-			phy=${phy/#* /}
-			iw phy#${phy} set netns ${netns}
 		fi
 	fi
 elif [ "${action}" = "config" ];
