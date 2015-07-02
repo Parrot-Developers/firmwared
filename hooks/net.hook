@@ -5,10 +5,15 @@ set -x
 
 action=$1		# one of create, assign or config
 instance_interface=$2	# e.g. eth0, interface seen in the container
-# another optional interface to assign to the container's netns. if it contains
-# a ':', the part before is the name of the interface to steal, the part after
-# is the name which will be given to the interface after being moved to the ns
-stolen_interface=$3
+# another optional interface to assign to the container's netns. It can contain
+# up to 3 values, the first one is the name of the interface to steal, the
+# second is the name it must after being assigned to the instance's netns and
+# the last one is the IP address it must have before the instance is started
+OLDIFS=${IFS}
+IFS=:
+stolen_interface_configuration=($3)
+IFS=$OLDIFS
+
 host_interface_base=$4	# e.g. fd_veth_peer, base for building host's end name
 instance_id=$5		# e.g. 0, 1, ...
 ip_base=$6		# e.g. 172.30., ~ first two bytes of IP
@@ -26,8 +31,9 @@ host_addr=${ip_base}${instance_id}.254/${net_bits}
 cont_temp_iface=fd_veth_peer${instance_id}
 cont_addr=${ip_base}${instance_id}.1/${net_bits}
 
-target_name=${stolen_interface/#*:/}
-stolen_interface=${stolen_interface/%:*/}
+stolen_interface=${stolen_interface_configuration[0]}
+target_name=${stolen_interface_configuration[1]:-}
+stolen_interface_ip=${stolen_interface_configuration[2]:-}
 
 if [ "${action}" = "create" ];
 then
@@ -56,6 +62,10 @@ then
 	if [ -n "${stolen_interface}" ]; then
 		if [ "${target_name}" != "${stolen_interface}" ]; then
 			ip link set ${stolen_interface} name ${target_name}
+		fi
+		if [ -n "${stolen_interface_ip}" ]; then
+			ip address add ${stolen_interface_ip} dev \
+					${target_name}
 		fi
 	fi
 else
