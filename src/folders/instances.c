@@ -71,7 +71,7 @@ ULOG_DECLARE_TAG(firmwared_instances);
  */
 #define NET_BITS 24
 
-static ut_bit_field_t indices;
+static ut_bit_field indices;
 
 static struct folder instances_folder;
 
