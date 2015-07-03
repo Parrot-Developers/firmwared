@@ -74,9 +74,10 @@ FOLDER is one of folders listed in an answer to a FOLDERS command.
 .B PING
 - Asks for the server to answer with a PONG notification.
 .TP
-.B PREPARE FIRMWARE_IDENTIFIER
-- Creates an instance of the given firmware, in the READY state.
-If FIRMWARE_IDENTIFIER doesn't correspond to a registered firmware, then it is supposed to be a path to a directory which will be mounted as the read-only layer for the prepared instance, this allows to create instances from the final directory of a firmware's workspace and is intended for development.
+.B PREPARE FOLDER IDENTIFICATION_STRING
+- Creates an instance from a firmware, in the READY state, of create a firmware from an URL, a path to a final directory or a path to an ext2 image of a firmware.
+If FOLDER equals to firmware, then IDENTIFICATION_STRING can be a path or an url in this case, the corresponding firmware will be retrieved using curl. It can also be a path to a final folder, a firmware will then be registered from this directory.
+If FOLDER equals to instance, then IDENTIFICATION_STRING must be either a sha1 or a friendly name of a previously registered firmware. A new instance will then be created and registered from this firmware.
 .TP
 .B PROPERTIES FOLDER
 - Asks the server to list the currently registered properties for the folder FOLDER.
