@@ -2,12 +2,24 @@
 
 if [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "-?" ];
 then
-	echo "Ask firmwared to prepare and launch a firmware instance."
-	echo "If the \"firmware\" environment variable is set, it will be used "
-	echo "as the firmware, otherwise, the first firmware found in the "
-	echo "firmwared firmwares repository will be used."
+	cat <<EndOfUsage
+Asks firmwared to prepare and launch a firmware instance.
+If the "firmware" environment variable is set, it will be used as the firmware,
+otherwise, the first firmware found in the firmwared registered firmwares list
+will be used.
+
+usage: ${0/*\//} [wifi_config [eth0_name]]
+	Where wifi_config has the form:
+		stolen_interface:target_name:cidr_ip_address
+	example : ${0/*\//} wlan0:eth0:192.168.0.1/24
+	eth0_name is the name the instance's veth's end will have (defaults to
+	eth0)
+EndOfUsage
 	exit
 fi
+
+wifi_config=${1:-}
+eth0_name=${2:-}
 
 if [ -n "${V+x}" ]
 then
@@ -67,11 +79,19 @@ fdc set_property instances $instance cmdline[2] ro.hardware=mykonos3board
 # the parameters which were already registered in the command-line
 fdc set_property instances $instance cmdline[3] nil
 
+if [ -n "${wifi_config}" ]; then
+	fdc set_property instances $instance stolen_interface ${wifi_config}
+	if [ -n "${eth0_name}" ]; then
+		fdc set_property instances $instance interface ${eth0_name}
+	fi
+fi
+
 # check everything went well
 fdc show instances $instance
 
 # watch what's going on the "simulated uart" console
-x-terminal-emulator -e "microcom -p $(fdc get_property instances $instance outer_pts)" &
+outer_pts=$(fdc get_property instances $instance outer_pts)
+x-terminal-emulator -e "microcom -p ${outer_pts}" &
 
 # if the terminal doesn't have the time to launch before the instance starts,
 # some outputs can be garbage
