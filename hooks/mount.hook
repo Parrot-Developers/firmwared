@@ -37,6 +37,9 @@ then
 			${sha1} ${union_mount_point}
 	fi
 
+elif [ "${action}" = "remount" ];
+then
+	mount -oremount ${union_mount_point}
 elif [ "${action}" = "clean" ];
 then
 	# unmount

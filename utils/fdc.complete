@@ -21,7 +21,7 @@ _fdc()
 			COMPREPLY=( $( compgen -W "${commands}" -- $cur ) )
 			return 0
 			;;
-		start|kill)
+		start|kill|remount)
 			local instances=$(fdc list instances | sed "${names}")
 			COMPREPLY=( $( compgen -W "${instances}" -- $cur ) )
 			return 0

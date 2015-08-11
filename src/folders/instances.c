@@ -962,6 +962,13 @@ int instance_kill(struct instance *instance, uint32_t killer_msgid)
 	return ret;
 }
 
+int instance_remount(struct instance *instance)
+{
+	if (instance == 0)
+		return -EINVAL;
+
+	return invoke_mount_helper(instance, "remount", false);
+}
 
 const char *instance_get_sha1(struct instance *instance)
 {

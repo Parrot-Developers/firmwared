@@ -102,6 +102,9 @@ entities types are named *folders*.
   retrieves the value of the CONFIG_KEY configuration key.
 * *CONFIG_KEYS*  
   lists all the available configuration keys.
+* *REMOUNT* INSTANCE\_IDENTIFIER  
+  asks to remount the union file system of an instance, to take into account
+  modifications in the lower dir (e.g. rebuild of a final dir)
 
 ### Notifications
 
@@ -145,6 +148,8 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   answer to a *GET\_PROPERTY* command
 * *PROPERTY\_SET* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
   answer to a *SET\_PROPERTY* command
+* *REMOUNTED* INSTANCE\_IDENTIFIER
+  answer to a *REMOUNT* command
 
 ### Instance states
 

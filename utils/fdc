@@ -171,6 +171,12 @@ case "${command}" in
 		args=""
 		sed_command="s/.*STR:'CONFIG_KEYS', STR:'\([^']*\)'.*/\1/g"
 		;;
+	REMOUNT)
+		format="%s%s"
+		identifier=$2
+		args="${identifier}"
+		sed_command="s/.*/${identifier} remounted/g"
+		;;
 	*)
 		exit ${ERROR_INVALID_COMMAND}
 		;;
