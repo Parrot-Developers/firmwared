@@ -91,7 +91,7 @@ fdc show instances $instance
 
 # watch what's going on the "simulated uart" console
 outer_pts=$(fdc get_property instances $instance outer_pts)
-x-terminal-emulator -e "microcom -p ${outer_pts}" &
+x-terminal-emulator -e "parrotcom ${outer_pts}" &
 
 # if the terminal doesn't have the time to launch before the instance starts,
 # some outputs can be garbage
