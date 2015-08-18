@@ -392,7 +392,7 @@ static int setup_chroot(struct instance *instance)
 	return 0;
 }
 
-static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
+static void launch_pid_1(struct instance *instance, int fd)
 {
 	int ret;
 	int i;
@@ -400,6 +400,7 @@ static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 	const char *sha1;
 	char **argv = NULL;
 	size_t argc;
+	sigset_t mask;
 
 	sha1 = instance_get_sha1(instance);
 	ret = ut_process_change_name("pid-1-%s", sha1);
@@ -442,7 +443,8 @@ static void launch_pid_1(struct instance *instance, int fd, sigset_t *mask)
 			ULOGE("dup2(fd, STDERR_FILENO): %m");
 	}
 	/* re-enable the signals previously blocked */
-	ret = sigprocmask(SIG_UNBLOCK, mask, NULL);
+	sigemptyset(&mask);
+	ret = sigprocmask(SIG_SETMASK, &mask, NULL);
 	if (ret == -1) {
 		ULOGE("sigprocmask: %m");
 		_exit(EXIT_FAILURE);
@@ -557,7 +559,7 @@ static void launch_instance(struct instance *instance)
 		_exit(EXIT_FAILURE);
 	}
 	if (pid == 0)
-		launch_pid_1(instance, fd, &mask);
+		launch_pid_1(instance, fd);
 	close(fd);
 
 	ret = TEMP_FAILURE_RETRY(read(sfd, &si, sizeof(si)));
