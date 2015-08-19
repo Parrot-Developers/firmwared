@@ -5,7 +5,7 @@ _fdc()
 	local cur=${COMP_WORDS[COMP_CWORD]}
 	case "$COMP_CWORD" in
 	1)
-		COMPREPLY=( $( compgen -W "$(fdc commands | ${tolower})" -- $cur ) )
+		COMPREPLY=( $( compgen -W "$(fdc commands | ${tolower}) restart" -- $cur ) )
 		return 0
 		;;
 	2)
@@ -18,10 +18,10 @@ _fdc()
 			;;
 		help)
 			local commands=$(fdc commands | ${tolower})
-			COMPREPLY=( $( compgen -W "${commands}" -- $cur ) )
+			COMPREPLY=( $( compgen -W "${commands} restart" -- $cur ) )
 			return 0
 			;;
-		start|kill|remount)
+		start|kill|remount|restart)
 			local instances=$(fdc list instances | sed "${names}")
 			COMPREPLY=( $( compgen -W "${instances}" -- $cur ) )
 			return 0

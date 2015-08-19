@@ -117,8 +117,15 @@ case "${command}" in
 		sed_command="s/.*/${identifier} killed/g"
 		;;
 	HELP)
-		format="%s%s"
 		identifier=$2
+		if [ "${identifier}" = "restart" ]; then
+			echo "Command RESTART"
+			echo "Synopsis: RESTART INSTANCE_IDENTIFIER"
+			echo "Overview: fdc meta-command which performs kill, \
+remount and start on an instance."
+			exit 0
+		fi
+		format="%s%s"
 		args="${identifier}"
 		sed_command="s/.*STR:'//g"
 		;;
@@ -176,6 +183,14 @@ case "${command}" in
 		identifier=$2
 		args="${identifier}"
 		sed_command="s/.*/${identifier} remounted/g"
+		;;
+# upper level commands
+	RESTART)
+		identifier=$2
+		fdc kill $identifier || true
+		fdc remount $identifier
+		fdc start $identifier
+		exit 0
 		;;
 	*)
 		exit ${ERROR_INVALID_COMMAND}
