@@ -142,7 +142,7 @@ remount and start on an instance."
 	COMMANDS)
 		format="%s"
 		args=""
-		sed_command="s/.*STR:'COMMANDS', STR:'\([^']*\)'.*/\1/g"
+		sed_command="s/.*STR:'COMMANDS', STR:'\([^']*\)'.*/\1 RESTART/g"
 		;;
 	PROPERTIES)
 		format="%s%s"
