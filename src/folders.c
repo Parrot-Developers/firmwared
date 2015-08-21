@@ -556,7 +556,7 @@ int folder_preparation_abort(const char *folder_name,
 	node = rs_dll_find_match(&folder->preparations,
 			preparation_match_str_identification_string,
 			identification_string);
-	if (folder == NULL)
+	if (node == NULL)
 		return -ENOENT;
 
 	preparation = to_preparation(node);
