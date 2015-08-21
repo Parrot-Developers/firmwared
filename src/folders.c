@@ -766,6 +766,11 @@ const char *folders_list(void)
 			return NULL;
 		}
 	}
+	if (list == NULL) {
+		ULOGE("no folder registered, that _is_ weird");
+		errno = ENOENT;
+		return NULL;
+	}
 	if (list[0] != '\0')
 		list[strlen(list) - 1] = '\0';
 
