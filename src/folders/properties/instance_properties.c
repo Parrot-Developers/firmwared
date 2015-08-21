@@ -155,7 +155,7 @@ static int get_time(struct folder_entity *entity, char **value)
 	instance = to_instance(entity);
 
 	*value = strdup(ctime(&instance->time));
-	if (value == NULL)
+	if (*value == NULL)
 		return -errno;
 	(*value)[strlen(*value) - 1] = '\0';
 
