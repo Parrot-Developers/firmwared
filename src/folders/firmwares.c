@@ -486,7 +486,8 @@ static int index_firmwares(void)
 	int n;
 	struct dirent __attribute__((cleanup(free_namelist))) **namelist = NULL;
 	const char *repository = config_get(CONFIG_REPOSITORY_PATH);
-	struct firmware __attribute__((cleanup(free_firmwares))) **firmwares;
+	struct firmware __attribute__((cleanup(free_firmwares))) **firmwares =
+			NULL;
 
 	ULOGI("indexing "FIRMWARES_FOLDER_NAME);
 
