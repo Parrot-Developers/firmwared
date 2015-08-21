@@ -55,6 +55,7 @@ static size_t setup_address(struct sockaddr_storage *addr_storage)
 	addr_un->sun_family = AF_UNIX;
 	strncpy(addr_un->sun_path, config_get(CONFIG_SOCKET_PATH),
 			sizeof(addr_un->sun_path));
+	addr_un->sun_path[sizeof(addr_un->sun_path) - 1] = 0;
 
 	return sizeof(*addr_un);
 }
