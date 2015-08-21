@@ -94,7 +94,7 @@ static int vload_profile(const char *command, const char *fmt, ...)
 	if (aa_parser_stdin == NULL) {
 		ret = -errno;
 		ULOGE("popen(%s, \"we\"): %s", command, strerror(-ret));
-		goto out;
+		return ret;
 	}
 
 	va_start(args, fmt);
