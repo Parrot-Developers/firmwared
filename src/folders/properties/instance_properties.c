@@ -159,7 +159,7 @@ static int get_time(struct folder_entity *entity, char **value)
 		return -errno;
 	(*value)[strlen(*value) - 1] = '\0';
 
-	return *value == NULL ? -errno : 0;
+	return 0;
 }
 
 static int get_interface(struct folder_entity *entity, char **value)
