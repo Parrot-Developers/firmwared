@@ -399,7 +399,7 @@ static int read_config(lua_State *l)
 
 static int check_config(void)
 {
-	if (config_get_bool(CONFIG_DISABLE_APPARMOR)
+	if (!config_get_bool(CONFIG_DISABLE_APPARMOR)
 			&& config_get_bool(CONFIG_USE_AUFS)) {
 		ULOGE("AuFS isn't supported by firmwared's AppArmor integration"
 				" you should disable AppArmor or better, "
