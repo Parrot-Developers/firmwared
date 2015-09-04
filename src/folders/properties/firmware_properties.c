@@ -40,7 +40,13 @@ static int get_product(struct folder_entity *entity, char **value)
 		return -EINVAL;
 	firmware = to_firmware(entity);
 
-	*value = strdup(firmware->product);
+	if (firmware->product == NULL) {
+		ULOGW("no product property for firmware %s",
+				firmware_get_name(firmware));
+		*value = strdup("(none)");
+	} else {
+		*value = strdup(firmware->product);
+	}
 
 	return *value == NULL ? -errno : 0;
 }
