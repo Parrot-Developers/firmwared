@@ -39,7 +39,6 @@
    capability sys_boot,
    capability sys_nice,
    capability sys_resource,
-   capability sys_time,
    capability sys_tty_config,
    capability mknod,
    capability lease,
