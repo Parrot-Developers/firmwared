@@ -10,3 +10,4 @@ Add an automated way to test the config and the AppArmor profile
 automated cleanup mechanism in case of crash
 install bash completion to /etc/bash_completion.d/
 code cleanup / refactoring in instances.c
+modprobe ulogger at startup
