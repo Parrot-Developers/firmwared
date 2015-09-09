@@ -256,7 +256,7 @@ static int read_firmware_info(struct firmware *firmware)
 				"ro,loop", firmware->path, mount_dir, NULL);
 	}
 	if (ret < 0) {
-		ULOGE("io_process_init_prepare_launch_and_wait:%s",
+		ULOGE("io_process_init_prepare_launch_and_wait: %s",
 				strerror(-ret));
 		goto out;
 	}
