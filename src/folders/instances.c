@@ -463,6 +463,7 @@ static void launch_pid_1(struct instance *instance, int fd)
 	_exit(EXIT_FAILURE);
 }
 
+__attribute__((noreturn))
 static void launch_instance(struct instance *instance)
 {
 	int ret;
