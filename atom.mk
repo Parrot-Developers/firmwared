@@ -33,6 +33,7 @@ LOCAL_COPY_FILES := \
 	resources/adjectives:usr/share/$(LOCAL_MODULE)/ \
 	resources/names:usr/share/$(LOCAL_MODULE)/ \
 	resources/firmwared.apparmor.profile:usr/share/$(LOCAL_MODULE)/ \
+	hooks/curl.hook:usr/libexec/$(LOCAL_MODULE)/curl.hook \
 	hooks/mount.hook:usr/libexec/$(LOCAL_MODULE)/mount.hook \
 	hooks/net.hook:usr/libexec/$(LOCAL_MODULE)/net.hook
 
