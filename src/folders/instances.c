@@ -654,7 +654,6 @@ static int init_command_line(struct instance *instance)
 	char *argv[] = {
 		"/sbin/boxinit",
 		"ro.hardware=mykonos3board",
-		"ro.debuggable=1",
 		ro_boot_console,
 		NULL,
 	};
