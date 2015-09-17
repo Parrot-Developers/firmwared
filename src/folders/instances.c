@@ -653,7 +653,6 @@ static int init_command_line(struct instance *instance)
 	char ro_boot_console[] = RO_BOOT_CONSOLE "=XXXXXXXXXXXXXXX";
 	char *argv[] = {
 		"/sbin/boxinit",
-		"ro.hardware=mykonos3board",
 		ro_boot_console,
 		NULL,
 	};

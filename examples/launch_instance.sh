@@ -73,11 +73,9 @@ console_pts=$(fdc get_property instances $instance inner_pts)
 console_pts=${console_pts#/dev}
 # pass it as an argument to boxinit
 fdc set_property instances $instance cmdline[1] ro.boot.console=${console_pts}
-# set the ro.hardware, boxinit will use it to load the corresponding .rc
-fdc set_property instances $instance cmdline[2] ro.hardware=mykonos3board
 # the first nil command-line argument ends the array, it is needed to get rid of
 # the parameters which were already registered in the command-line
-fdc set_property instances $instance cmdline[3] nil
+fdc set_property instances $instance cmdline[2] nil
 
 if [ -n "${wifi_config}" ]; then
 	fdc set_property instances $instance stolen_interface ${wifi_config}
