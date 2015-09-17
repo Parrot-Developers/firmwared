@@ -136,6 +136,7 @@ static void firmware_delete(struct firmware **firmware)
 	f = *firmware;
 
 	ut_string_free(&f->path);
+	ut_string_free(&f->hardware);
 	ut_string_free(&f->product);
 	free(f);
 	*firmware = NULL;
@@ -197,6 +198,25 @@ static void preparation_progress_sep_cb(struct io_src_sep *sep, char *chunk,
 		ULOGE("firmwared_notify: %s", strerror(-ret));
 }
 
+static int get_build_prop(struct firmware *firmware, const char *argz,
+		size_t argz_len, char **out, const char *property)
+{
+	if (out == NULL)
+		return -EINVAL;
+
+	*out = envz_get(argz, argz_len, property);
+	if (*out == NULL) {
+		ULOGI("property \"%s\" not found", property);
+		return 0;
+	}
+	*out = strdup(*out);
+	if (*out == NULL)
+		return -errno;
+	ULOGD("%s read from build.prop : %s", property, *out);
+
+	return 0;
+}
+
 static int extract_firmware_info(struct firmware *firmware, char *props)
 {
 	int ret;
@@ -209,17 +229,13 @@ static int extract_firmware_info(struct firmware *firmware, char *props)
 		return ret;
 	}
 
-	firmware->product = envz_get(argz, argz_len, "ro.build.alchemy.product");
-	if (firmware->product == NULL) {
-		ULOGE("property \"ro.build.alchemy.product\" not found");
-		return -ENOENT;
-	}
-	firmware->product = strdup(firmware->product);
-	if (firmware->product == NULL)
-		return -errno;
-	ULOGD("product read from build.prop : %s", firmware->product);
+	ret = get_build_prop(firmware, argz, argz_len, &firmware->product,
+			"ro.build.alchemy.product");
+	if (ret < 0)
+		return ret;
 
-	return 0;
+	return get_build_prop(firmware, argz, argz_len, &firmware->hardware,
+			"ro.hardware");
 }
 
 /* mounts the firmware to read some informations it contains */
