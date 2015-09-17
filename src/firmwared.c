@@ -36,6 +36,10 @@ ULOG_DECLARE_TAG(firmwared);
 #include "firmwares.h"
 #include "config.h"
 
+#ifndef MOUNT_PATH_SYMLINK
+#define MOUNT_PATH_SYMLINK "/tmp/fd_mount_points"
+#endif /* MOUNT_PATH_SYMLINK */
+
 struct firmwared {
 	struct io_mon mon;
 	struct io_src pomp_src;
@@ -199,6 +203,13 @@ int firmwared_init(void)
 		ULOGE("io_mon_add_sources: %s", strerror(-ret));
 		goto err;
 	}
+
+	ret = symlink(config_get(CONFIG_MOUNT_PATH), MOUNT_PATH_SYMLINK);
+	if (ret == -1) {
+		ret = errno;
+		ULOGE("symlink: %s", strerror(-ret));
+
+	}
 	ctx.initialized = true;
 
 	return 0;
@@ -249,6 +260,7 @@ struct io_mon *firmwared_get_mon(void)
 
 void firmwared_clean(void)
 {
+	unlink(MOUNT_PATH_SYMLINK);
 	io_mon_remove_sources(&ctx.mon, io_src_sig_get_source(&ctx.sig_src),
 			&ctx.pomp_src, NULL /* guard */);
 	io_src_sig_clean(&ctx.sig_src);
