@@ -16,7 +16,7 @@ IFS=$OLDIFS
 
 host_interface_base=$4	# e.g. fd_veth_peer, base for building host's end name
 instance_id=$5		# e.g. 0, 1, ...
-ip_base=$6		# e.g. 172.30., ~ first two bytes of IP
+ip_base=$6		# e.g. 10.202., ~ first two bytes of IP
 net_bits=$7		# number of bits of an IP's network part
 netns=$8		# normally, pid (in host ns) of the pid 1 (in container)
 

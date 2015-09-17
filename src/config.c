@@ -72,7 +72,7 @@ ULOG_DECLARE_TAG(firmwared_config);
 #endif /* HOST_INTERFACE_PREFIX */
 
 #ifndef NET_FIRST_TWO_BYTES
-#define NET_FIRST_TWO_BYTES "172.30."
+#define NET_FIRST_TWO_BYTES "10.202."
 #endif /* NET_FIRST_TWO_BYTES */
 
 #ifndef DUMP_PROFILE
