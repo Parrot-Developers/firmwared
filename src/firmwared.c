@@ -204,6 +204,7 @@ int firmwared_init(void)
 		goto err;
 	}
 
+	unlink(MOUNT_PATH_SYMLINK);
 	ret = symlink(config_get(CONFIG_MOUNT_PATH), MOUNT_PATH_SYMLINK);
 	if (ret == -1) {
 		ret = errno;
