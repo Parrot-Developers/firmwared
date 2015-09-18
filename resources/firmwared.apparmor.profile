@@ -49,6 +49,10 @@
    capability mac_admin,
    capability syslog,
 
+   mount,
+   unix addr=@*,
+   network,
+
 # first we allow all filesystem accesses ...
    /** rwixk,
    /* rwixk,
