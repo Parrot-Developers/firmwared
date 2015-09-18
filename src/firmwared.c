@@ -209,7 +209,7 @@ int firmwared_init(void)
 	if (ret == -1) {
 		ret = errno;
 		ULOGE("symlink: %s", strerror(-ret));
-
+		goto err;
 	}
 	ctx.initialized = true;
 
