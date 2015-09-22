@@ -30,6 +30,7 @@ LOCAL_C_INCLUDES := \
 LOCAL_COPY_FILES := \
 	man/firmwared.1:usr/share/man/man1/ \
 	man/firmwared.conf.5:usr/share/man/man5/ \
+	resources/firmwared.service:lib/systemd/system/ \
 	resources/adjectives:usr/share/$(LOCAL_MODULE)/ \
 	resources/names:usr/share/$(LOCAL_MODULE)/ \
 	resources/firmwared.apparmor.profile:usr/share/$(LOCAL_MODULE)/ \

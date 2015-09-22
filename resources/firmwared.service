@@ -1,0 +1,10 @@
+[Unit]
+Description=Parrot products firmware loading daemon
+
+[Service]
+Restart=always
+RestartSec=0
+ExecStart=/usr/bin/firmwared
+
+[Install]
+WantedBy=multi-user.target
