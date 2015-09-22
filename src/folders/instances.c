@@ -477,6 +477,10 @@ static void launch_instance(struct instance *instance)
 	struct signalfd_siginfo si;
 	int status;
 
+	ret = prctl(PR_SET_PDEATHSIG, SIGKILL);
+	if (ret < 0)
+		ULOGE("prctl(PR_SET_PDEATHSIG, SIGKILL): %m");
+
 	instance_name = instance_get_name(instance);
 	sha1 = instance_get_sha1(instance);
 	ret = ut_process_change_name("monitor-%s", sha1);
