@@ -62,7 +62,8 @@ static const struct command get_config_command = {
 		.handler = get_config_command_handler,
 };
 
-static __attribute__((constructor)) void get_config_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void get_config_init(void)
 {
 	int ret;
 

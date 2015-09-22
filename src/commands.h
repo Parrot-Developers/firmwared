@@ -13,6 +13,8 @@
 
 #include "firmwared.h"
 
+#define COMMAND_CONSTRUCTOR_PRIORITY (FIRMWARED_CONSTRUCTOR_PRIORITY + 1)
+
 struct command {
 	const char *name;
 	const char *help;

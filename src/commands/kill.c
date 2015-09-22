@@ -64,7 +64,8 @@ static const struct command kill_command = {
 		.handler = kill_command_handler,
 };
 
-static __attribute__((constructor)) void kill_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void kill_init(void)
 {
 	int ret;
 

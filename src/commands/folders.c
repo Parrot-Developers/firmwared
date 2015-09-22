@@ -41,7 +41,8 @@ static const struct command folders_command = {
 		.handler = folders_command_handler,
 };
 
-static __attribute__((constructor)) void folders_cmd_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void folders_cmd_init(void)
 {
 	int ret;
 

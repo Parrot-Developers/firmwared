@@ -53,7 +53,8 @@ static const struct command version_command = {
 		.handler = version_command_handler,
 };
 
-static __attribute__((constructor)) void version_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void version_init(void)
 {
 	int ret;
 

@@ -67,7 +67,8 @@ static const struct command show_command = {
 		.handler = show_command_handler,
 };
 
-static __attribute__((constructor)) void show_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void show_init(void)
 {
 	int ret;
 

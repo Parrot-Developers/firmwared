@@ -74,7 +74,8 @@ static const struct command drop_command = {
 		.handler = drop_command_handler,
 };
 
-static __attribute__((constructor)) void drop_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void drop_init(void)
 {
 	int ret;
 

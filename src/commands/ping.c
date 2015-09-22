@@ -34,7 +34,8 @@ static const struct command ping_command = {
 		.handler = ping_command_handler,
 };
 
-static __attribute__((constructor)) void ping_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void ping_init(void)
 {
 	int ret;
 

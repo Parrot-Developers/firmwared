@@ -29,6 +29,7 @@ ULOG_DECLARE_TAG(firmwared);
 #include <ut_string.h>
 #include <ut_utils.h>
 #include <ut_process.h>
+#include <ut_module.h>
 
 #include "commands.h"
 #include "folders.h"
@@ -39,6 +40,10 @@ ULOG_DECLARE_TAG(firmwared);
 #ifndef MOUNT_PATH_SYMLINK
 #define MOUNT_PATH_SYMLINK "/tmp/fd_mount_points"
 #endif /* MOUNT_PATH_SYMLINK */
+
+static const struct ut_module ulogger_module = {
+		.name = "ulogger",
+};
 
 struct firmwared {
 	struct io_mon mon;
@@ -274,4 +279,18 @@ void firmwared_clean(void)
 	memset(&ctx, 0, sizeof(ctx));
 
 	unlink(config_get(CONFIG_SOCKET_PATH));
+}
+
+static  __attribute__((constructor(FIRMWARED_CONSTRUCTOR_PRIORITY)))
+		void firmwared_constructor(void)
+{
+	int ret;
+
+	if (!ut_module_is_loaded(&ulogger_module)) {
+		ret = ut_module_load(&ulogger_module);
+		if (ret < 0)
+			fprintf(stderr, "ulogger module could'nt be loaded, "
+					"continuing, but no log message will be"
+					" available");
+	}
 }

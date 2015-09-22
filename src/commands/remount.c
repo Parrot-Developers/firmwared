@@ -62,7 +62,8 @@ static const struct command remount_command = {
 		.handler = remount_command_handler,
 };
 
-static __attribute__((constructor)) void remount_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void remount_init(void)
 {
 	int ret;
 

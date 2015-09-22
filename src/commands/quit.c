@@ -35,7 +35,8 @@ static const struct command quit_command = {
 		.handler = quit_command_handler,
 };
 
-static __attribute__((constructor)) void quit_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void quit_init(void)
 {
 	int ret;
 

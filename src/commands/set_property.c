@@ -84,7 +84,8 @@ static const struct command set_property_command = {
 		.handler = set_property_command_handler,
 };
 
-static __attribute__((constructor)) void set_property_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void set_property_init(void)
 {
 	int ret;
 

@@ -58,7 +58,8 @@ static const struct command help_command = {
 		.handler = help_command_handler,
 };
 
-static __attribute__((constructor)) void help_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void help_init(void)
 {
 	int ret;
 

@@ -56,7 +56,8 @@ static const struct command properties_command = {
 		.handler = properties_command_handler,
 };
 
-static __attribute__((constructor)) void properties_cmd_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void properties_cmd_init(void)
 {
 	int ret;
 

@@ -53,7 +53,8 @@ static const struct command config_keys_command = {
 		.handler = config_keys_command_handler,
 };
 
-static __attribute__((constructor)) void config_keys_cmd_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void config_keys_cmd_init(void)
 {
 	int ret;
 

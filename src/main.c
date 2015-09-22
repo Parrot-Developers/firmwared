@@ -20,7 +20,6 @@
 
 #include <ut_process.h>
 #include <ut_file.h>
-#include <ut_module.h>
 
 #include "apparmor.h"
 #include "folders.h"
@@ -37,10 +36,6 @@ ULOG_DECLARE_TAG(firmwared_main);
 #ifndef DEFAULT_CONFIG_FILE
 #define DEFAULT_CONFIG_FILE "/etc/firmwared.conf"
 #endif /* DEFAULT_CONFIG_FILE */
-
-static const struct ut_module ulogger_module = {
-		.name = "ulogger",
-};
 
 static void usage(int status)
 {
@@ -103,14 +98,6 @@ int main(int argc, char *argv[])
 	sighandler_t sret;
 	const char *commands_list;
 	const char *config_file;
-
-	if (!ut_module_is_loaded(&ulogger_module)) {
-		ret = ut_module_load(&ulogger_module);
-		if (ret < 0)
-			fprintf(stderr, "ulogger module could'nt be loaded, "
-					"continuing, but no log message will be"
-					" available");
-	}
 
 	ULOGI("%s[%jd] starting", basename(argv[0]), (intmax_t)getpid());
 

@@ -75,7 +75,8 @@ static const struct command prepare_command = {
 		.handler = prepare_command_handler,
 };
 
-static __attribute__((constructor)) void prepare_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void prepare_init(void)
 {
 	int ret;
 

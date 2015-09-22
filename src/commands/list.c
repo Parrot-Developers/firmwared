@@ -101,7 +101,8 @@ static const struct command list_command = {
 		.handler = list_command_handler,
 };
 
-static __attribute__((constructor)) void list_init(void)
+static __attribute__((constructor(COMMAND_CONSTRUCTOR_PRIORITY)))
+		void list_init(void)
 {
 	int ret;
 
