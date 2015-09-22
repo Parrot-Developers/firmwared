@@ -21,7 +21,7 @@
 #define FIRMWARED_GROUP "firmwared"
 #endif /* FIRMWARED_GROUP */
 
-#define FIRMWARED_CONSTRUCTOR_PRIORITY 100
+#define FIRMWARED_CONSTRUCTOR_PRIORITY 200
 
 int firmwared_init(void);
 void firmwared_run(void);
