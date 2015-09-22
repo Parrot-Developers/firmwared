@@ -32,7 +32,7 @@ ULOG_DECLARE_TAG(firmwared_config);
 #include "config.h"
 
 #ifndef MOUNT_HOOK_DEFAULT
-#define MOUNT_HOOK_DEFAULT "/opt/sphinx/usr/libexec/firmwared/mount.hook"
+#define MOUNT_HOOK_DEFAULT "/usr/libexec/firmwared/mount.hook"
 #endif /* MOUNT_HOOK_DEFAULT */
 
 #ifndef SOCKET_PATH_DEFAULT
@@ -40,7 +40,7 @@ ULOG_DECLARE_TAG(firmwared_config);
 #endif /* SOCKET_PATH_DEFAULT */
 
 #ifndef FOLDERS_RESOURCES_DIR_DEFAULT
-#define FOLDERS_RESOURCES_DIR_DEFAULT "/opt/sphinx/usr/share/firmwared/"
+#define FOLDERS_RESOURCES_DIR_DEFAULT "/usr/share/firmwared/"
 #endif /* FOLDERS_RESOURCES_DIR_DEFAULT */
 
 #ifndef FIRMWARE_REPOSITORY_DEFAULT
@@ -52,7 +52,7 @@ ULOG_DECLARE_TAG(firmwared_config);
 #endif /* INSTANCES_MOUNT_PATH_DEFAULT */
 
 #ifndef NET_HOOK_DEFAULT
-#define NET_HOOK_DEFAULT "/opt/sphinx/usr/libexec/firmwared/net.hook"
+#define NET_HOOK_DEFAULT "usr/libexec/firmwared/net.hook"
 #endif /* NET_HOOK_DEFAULT */
 
 #ifndef PREVENT_REMOVAL
@@ -64,7 +64,7 @@ ULOG_DECLARE_TAG(firmwared_config);
 #endif /* CONTAINER_INTERFACE */
 
 #ifndef CURL_HOOK
-#define CURL_HOOK "/opt/sphinx/usr/libexec/firmwared/curl.hook"
+#define CURL_HOOK "/usr/libexec/firmwared/curl.hook"
 #endif /* CURL_HOOK */
 
 #ifndef HOST_INTERFACE_PREFIX
