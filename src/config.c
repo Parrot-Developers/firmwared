@@ -52,7 +52,7 @@ ULOG_DECLARE_TAG(firmwared_config);
 #endif /* INSTANCES_MOUNT_PATH_DEFAULT */
 
 #ifndef NET_HOOK_DEFAULT
-#define NET_HOOK_DEFAULT "usr/libexec/firmwared/net.hook"
+#define NET_HOOK_DEFAULT "/usr/libexec/firmwared/net.hook"
 #endif /* NET_HOOK_DEFAULT */
 
 #ifndef PREVENT_REMOVAL
