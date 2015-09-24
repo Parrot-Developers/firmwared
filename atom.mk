@@ -28,6 +28,7 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/src/folders
 
 LOCAL_COPY_FILES := \
+	utils/fdc.complete:etc/bash_completion.d/ \
 	man/firmwared.1:usr/share/man/man1/ \
 	man/firmwared.conf.5:usr/share/man/man5/ \
 	resources/firmwared.service:lib/systemd/system/ \
