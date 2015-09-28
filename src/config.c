@@ -48,7 +48,7 @@ ULOG_DECLARE_TAG(firmwared_config);
 #endif /* FIRMWARE_REPOSITORY_DEFAULT */
 
 #ifndef INSTANCES_MOUNT_PATH_DEFAULT
-#define INSTANCES_MOUNT_PATH_DEFAULT "/var/run/firmwared/mount_points/"
+#define INSTANCES_MOUNT_PATH_DEFAULT "/var/cache/firmwared/mount_points/"
 #endif /* INSTANCES_MOUNT_PATH_DEFAULT */
 
 #ifndef NET_HOOK_DEFAULT
