@@ -55,7 +55,7 @@ static bool apparmor_is_enabled(void)
 int apparmor_init(void)
 {
 	int ret;
-	char __attribute__((cleanup(ut_string_free))) *path = NULL;
+	const char *path = NULL;
 
 	ULOGD("%s", __func__);
 
@@ -66,13 +66,7 @@ int apparmor_init(void)
 		return -ENOSYS;
 	}
 
-	ret = asprintf(&path, "%s/firmwared.apparmor.profile",
-			config_get(CONFIG_RESOURCES_DIR));
-	if (ret < 0) {
-		path = NULL;
-		ULOGE("asprintf error");
-		return -EINVAL;
-	}
+	path = config_get(CONFIG_APPARMOR_PROFILE);
 	ret = ut_file_to_string("%s", &static_apparmor_profile, path);
 	if (ret < 0) {
 		ULOGE("ut_file_to_string: %s", strerror(-ret));

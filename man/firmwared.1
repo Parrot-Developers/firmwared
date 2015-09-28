@@ -26,6 +26,14 @@ If no configuration file is found, default values or environment are used.
 returns 0 on success and 1 on error.
 .SH ENVIRONMENT
 .TP
+.B FIRMWARED_APPARMOR_PROFILE
+If
+.RB $ FIRMWARED_APPARMOR_PROFILE
+is set, it will be used as an alternative implementation for the apparmor
+security profile pattern, used for protecting the host pc, from potentially
+harmful behavior of the instances, defaults to
+.RB $ FIRMWARED_RESOURCES_DIR/firmwared.apparmor.profile .
+.TP
 .B FIRMWARED_CONTAINER_INTERFACE
 If
 .RB $ FIRMWARED_CONTAINER_INTERFACE

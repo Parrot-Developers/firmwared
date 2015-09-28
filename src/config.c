@@ -59,6 +59,11 @@ ULOG_DECLARE_TAG(firmwared_config);
 #define PREVENT_REMOVAL "n"
 #endif /* PREVENT_REMOVAL */
 
+#ifndef APPARMOR_PROFILE_DEFAULT
+#define APPARMOR_PROFILE_DEFAULT FOLDERS_RESOURCES_DIR_DEFAULT \
+	"firmwared.apparmor.profile"
+#endif /* APPARMOR_PROFILE_DEFAULT */
+
 #ifndef CONTAINER_INTERFACE
 #define CONTAINER_INTERFACE "eth0"
 #endif /* CONTAINER_INTERFACE */
@@ -246,6 +251,11 @@ static bool valid_net_first_two_bytes(const char *value)
 }
 
 static struct config configs[CONFIG_NB] = {
+		[CONFIG_APPARMOR_PROFILE] = {
+				.env = CONFIG_KEYS_PREFIX"APPARMOR_PROFILE",
+				.default_value = APPARMOR_PROFILE_DEFAULT,
+				.valid = valid_accessible,
+		},
 		[CONFIG_CONTAINER_INTERFACE] = {
 				.env = CONFIG_KEYS_PREFIX"CONTAINER_INTERFACE",
 				.default_value = CONTAINER_INTERFACE,
