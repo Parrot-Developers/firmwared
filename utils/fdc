@@ -117,8 +117,8 @@ case "${command}" in
 		sed_command="s/.*/${identifier} killed/g"
 		;;
 	HELP)
-		identifier=$2
-		if [ "${identifier}" = "restart" ]; then
+		identifier=$(echo $2 | tr '[a-z]' '[A-Z]')
+		if [ "${identifier}" = "RESTART" ]; then
 			echo "Command RESTART"
 			echo "Synopsis: RESTART INSTANCE_IDENTIFIER"
 			echo "Overview: fdc meta-command which performs kill, \
