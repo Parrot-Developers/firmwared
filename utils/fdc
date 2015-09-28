@@ -61,8 +61,6 @@ fi
 
 seq_num=$$
 
-pomp_cmd="pomp-cli --timeout ${timeout} --dump --wait ${seq_num} unix:${socket}"
-
 command=$(echo $1 | tr '[a-z]' '[A-Z]')
 
 case "${command}" in
@@ -99,6 +97,9 @@ case "${command}" in
 	PREPARE)
 		format="%s%s%s"
 		folder=$2
+		if [ "${folder}" = "firmwares" ]; then
+			timeout=-1
+		fi
 		identification_string=$3
 		args="${folder} ${identification_string}"
 		sed_command[0]="s#.*STR:'PREPARED', STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#new entity in \1 folder created\nsha1: \2\nname: \3#g"
@@ -196,6 +197,8 @@ remount and start on an instance."
 		exit ${ERROR_INVALID_COMMAND}
 		;;
 esac
+
+pomp_cmd="pomp-cli --timeout ${timeout} --dump --wait ${seq_num} unix:${socket}"
 
 ${pomp_cmd} ${seq_num} ${format} ${command} ${args} 2>&1 | while read line
 do

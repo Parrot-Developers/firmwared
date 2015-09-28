@@ -140,6 +140,11 @@ is set, then it's value will be used by
 .B fdc
 for the timeout, in seconds, when trying to contact
 .BR firmwared .
+This value is ignored by the
+.B PREPARE
+command when applied to the
+.B firmwares
+folder.
 .TP
 .B FIRMWARED_SOCKET_PATH
 If
@@ -206,11 +211,11 @@ interface: eth0
 .fi
 .PP
 Then you can interact with the instance with, e.g.
-.BR microcom :
+.BR parrotcom :
 .PP
 .nf
 .RS
-$ microcom -p /dev/pts/9
+$ parrotcom /dev/pts/9
 root@mykonos3board:/ # ls
 bin                       home                      native-chroot-wrapper.sh  update
 data                      lib                       native-wrapper.sh         usr
@@ -219,13 +224,11 @@ dev                       lost+found                sbin
 etc                       mnt                       sys
 factory                   native-boxinit.sh         tmp
 <Ctrl+\\>
-Enter command. Try 'help' for a list of builtin commands
--> quit
 .RE
 .fi
 .PP
 Please note that
-.B microcom
+.B parrotcom
 could have been launched as soon as the instance was prepared.
 Then you can kill the instance:
 .PP
