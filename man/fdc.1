@@ -88,6 +88,9 @@ If FOLDER equals to instance, then IDENTIFICATION_STRING must be either a sha1 o
 .B REMOUNT INSTANCE_IDENTIFIER
 - Asks to remount the union file system of an instance, to take into account modifications in the lower dir (e.g. rebuild of a final dir).
 .TP
+.B RESTART INSTANCE_IDENTIFIER
+- fdc meta-command which performs kill, remount and start on an instance.
+.TP
 .B SET_PROPERTY FOLDER ENTITY_IDENTIFIER PROPERTY_NAME PROPERTY_VALUE
 - Sets the value of the property PROPERTY to the value PROPERTY_VALUE, for the entity whose name or sha1 is ENTITY_IDENTIFIER from the folder FOLDER.
 If the property is an array, append [i] to the property name to set the i-th item's value. If i is the index of a non nil element, it will be replaced, if i is the index after the last non-nil element, it will be stored in this position and the array will grow accordingly. If PROPERTY_VALUE is "nil", then the array will be truncated before the i-th index.
