@@ -44,6 +44,7 @@ on_exit() {
 			usage
 			;;
 	esac
+	tput cnorm;
 }
 
 trap on_exit EXIT
@@ -102,8 +103,8 @@ case "${command}" in
 		fi
 		identification_string=$3
 		args="${folder} ${identification_string}"
-		sed_command[0]="s#.*STR:'PREPARED', STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#new entity in \1 folder created\nsha1: \2\nname: \3#g"
-		sed_command[1]="s#.*STR:'PREPARATION_PROGRESS', STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#\3% done#g"
+		sed_command[0]="s#.*STR:'PREPARED', STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#new entity in \1 folder created\nsha1: \2\nname: \3$(echo -e '\033[?12l\033[?25h')#g"
+		sed_command[1]="s#.*STR:'PREPARATION_PROGRESS', STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#\3% done$(echo -e '\033[1A\033[?25l')#g"
 		;;
 	START)
 		format="%s%s"
