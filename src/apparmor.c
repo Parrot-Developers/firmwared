@@ -72,6 +72,8 @@ int apparmor_init(void)
 		ULOGE("ut_file_to_string: %s", strerror(-ret));
 		return ret;
 	}
+	if (config_get_bool(CONFIG_DUMP_PROFILE))
+		fprintf(stderr, "%s\n", static_apparmor_profile);
 
 	return 0;
 }
