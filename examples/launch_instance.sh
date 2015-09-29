@@ -62,7 +62,7 @@ if [ -z "${firmware}" ]; then
 fi
 
 # create an instance and store it's name for future use
-instance=$(fdc prepare instances ${firmware} | tail -n 1 | sed 's/.*: //g');
+instance=$(fdc prepare instances ${firmware} | grep 'name:' | sed 's/.*: //g');
 
 fdc show instances $instance
 # set which process will be used as the pid 1
