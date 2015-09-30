@@ -49,6 +49,11 @@
    capability mac_admin,
    capability syslog,
 
+   signal,
+   mount,
+   unix,
+   network,
+
 # first we allow all filesystem accesses ...
    /** rwixk,
    /* rwixk,
