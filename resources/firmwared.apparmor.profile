@@ -51,7 +51,6 @@
 
    signal,
    mount,
-   unix,
    network,
 
 # first we allow all filesystem accesses ...
