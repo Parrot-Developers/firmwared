@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-set -x
 
 action=$1		# one of create, assign or config
 instance_interface=$2	# e.g. eth0, interface seen in the container
@@ -19,6 +18,11 @@ instance_id=$5		# e.g. 0, 1, ...
 ip_base=$6		# e.g. 10.202., ~ first two bytes of IP
 net_bits=$7		# number of bits of an IP's network part
 netns=$8		# normally, pid (in host ns) of the pid 1 (in container)
+verbose=$9
+
+if [ "${verbose}" = "y" ]; then
+	set -x
+fi
 
 set -u
 

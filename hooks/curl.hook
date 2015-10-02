@@ -1,11 +1,16 @@
 #!/bin/bash
 
 set -e
-set -x
 set -u
 
 url=$1
 firmware_repository=$2
+
+verbose=$3
+
+if [ "${verbose}" = "y" ]; then
+	set -x
+fi
 
 # accept path without the file:// prefix /!\ it must be an absolute path
 if [ -f "${url}" ]; then

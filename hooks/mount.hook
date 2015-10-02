@@ -1,7 +1,6 @@
 #!/bin/sh
 
 set -e
-set -x
 
 action=$1
 base_workspace=$2
@@ -13,6 +12,11 @@ sha1=$7
 only_unregister=$8
 prevent_removal=$9
 use_aufs=$10
+verbose=$11
+
+if [ "${verbose}" = "y" ]; then
+	set -x
+fi
 
 workdir=${base_workspace}/workdir
 
