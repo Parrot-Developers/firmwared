@@ -38,6 +38,7 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 #include "log.h"
 #include "utils.h"
 #include "config.h"
+#include "process.h"
 #include "firmwares-private.h"
 #include "properties/firmware_properties.h"
 
@@ -246,13 +247,6 @@ static int read_firmware_info(struct firmware *firmware)
 	int status;
 	char mount_dir[] = "/tmp/firmwared_firmwareXXXXXX";
 	char __attribute__((cleanup(ut_string_free)))*props = NULL;
-	// TODO check constness of struct parameters in io_process
-	struct io_process_parameters parameters = {
-		.stdout_sep_cb = log_dbg_src_sep_cb,
-		.stderr_sep_cb = log_warn_src_sep_cb,
-		.timeout = 1000,
-		.signum = SIGKILL,
-	};
 	void termination_cb(struct io_src_pid *pid_src, pid_t pid, int s)
 	{
 		status = s;
@@ -263,13 +257,14 @@ static int read_firmware_info(struct firmware *firmware)
 
 	if (ut_file_is_dir(firmware->path)) {
 		ret = io_process_init_prepare_launch_and_wait(&process,
-				&parameters, termination_cb, "/bin/mount", "-o",
-				"ro", "--bind", firmware->path, mount_dir,
-				NULL);
+				&process_default_parameters, termination_cb,
+				"/bin/mount", "-o", "ro", "--bind",
+				firmware->path, mount_dir, NULL);
 	} else  {
 		ret = io_process_init_prepare_launch_and_wait(&process,
-				&parameters, termination_cb, "/bin/mount", "-o",
-				"ro,loop", firmware->path, mount_dir, NULL);
+				&process_default_parameters, termination_cb,
+				"/bin/mount", "-o", "ro,loop", firmware->path,
+				mount_dir, NULL);
 	}
 	if (ret < 0) {
 		ULOGE("io_process_init_prepare_launch_and_wait: %s",
@@ -286,8 +281,9 @@ static int read_firmware_info(struct firmware *firmware)
 
 	ret = extract_firmware_info(firmware, props);
 out:
-	io_process_init_prepare_launch_and_wait(&process, &parameters,
-			termination_cb, "/bin/umount", mount_dir, NULL);
+	io_process_init_prepare_launch_and_wait(&process,
+			&process_default_parameters, termination_cb,
+			"/bin/umount", mount_dir, NULL);
 	rmdir(mount_dir);
 
 	return ret;
