@@ -92,6 +92,10 @@ ULOG_DECLARE_TAG(firmwared_config);
 #define USE_AUFS "n"
 #endif /* USE_AUFS */
 
+#ifndef VERBOSE_HOOK_SCRIPTS
+#define VERBOSE_HOOK_SCRIPTS "n"
+#endif /* VERBOSE_HOOK_SCRIPTS */
+
 typedef bool (*validate_cb_t)(const char *value);
 
 struct config {
@@ -324,6 +328,11 @@ static struct config configs[CONFIG_NB] = {
 		[CONFIG_USE_AUFS] = {
 				.env = CONFIG_KEYS_PREFIX"USE_AUFS",
 				.default_value = USE_AUFS,
+				.valid = valid_yes_no,
+		},
+		[CONFIG_VERBOSE_HOOK_SCRIPTS] = {
+				.env = CONFIG_KEYS_PREFIX"VERBOSE_HOOK_SCRIPTS",
+				.default_value = VERBOSE_HOOK_SCRIPTS,
 				.valid = valid_yes_no,
 		},
 };
