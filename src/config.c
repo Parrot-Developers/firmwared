@@ -90,7 +90,7 @@ ULOG_DECLARE_TAG(firmwared_config);
 
 #ifndef USE_AUFS
 #define USE_AUFS "n"
-#endif /* DISABLE_APPARMOR */
+#endif /* USE_AUFS */
 
 typedef bool (*validate_cb_t)(const char *value);
 
