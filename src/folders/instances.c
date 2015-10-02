@@ -45,6 +45,7 @@ ULOG_DECLARE_TAG(firmwared_instances);
 
 #include <io_mon.h>
 #include <io_src_pid.h>
+#include <io_process.h>
 
 #include <ut_utils.h>
 #include <ut_string.h>
@@ -55,6 +56,7 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include <ptspair.h>
 
 #include "log.h"
+#include "process.h"
 #include "folders.h"
 #include "instances.h"
 #include "preparation.h"
@@ -131,9 +133,15 @@ static void clean_paths(struct instance *instance)
 static int invoke_mount_helper(struct instance *instance, const char *action,
 		bool only_unregister)
 {
-	return ut_process_vsystem("\"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" "
-				"\"%s\" \"%s\" \"%s\" \"%s\" \"%s\" 2>&1 "
-				"| ulogger -p D -t fd-mount",
+	struct io_process process;
+	// TODO get rid of that
+	void termination_cb(struct io_src_pid *pid_src, pid_t pid, int s)
+	{
+	} ;
+
+	return io_process_init_prepare_launch_and_wait(&process,
+			&process_default_parameters,
+			termination_cb,
 			config_get(CONFIG_MOUNT_HOOK),
 			action,
 			instance->base_workspace,
@@ -144,13 +152,22 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 			instance_get_sha1(instance),
 			only_unregister ? "true" : "false",
 			config_get(CONFIG_PREVENT_REMOVAL),
-			config_get(CONFIG_USE_AUFS));
+			config_get(CONFIG_USE_AUFS),
+			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS),
+			NULL /* NULL guard */);
 }
 
 static int invoke_net_helper(struct instance *i, const char *action)
 {
+	/*
+	 * here, sadly, we can't use the io_process module, because the netlink
+	 * message subscription that pidwatch tries to create, fails with an
+	 * ECONNREFUSED error. This seems to be related to the namespaces, but I
+	 * haven't the time to investigate it for now
+	 */
 	return ut_process_vsystem("\"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%"PRIu8
-			"\" \"%s\" \"%d\" \"%jd\" 2>&1 | ulogger -p D -t fd-net",
+			"\" \"%s\" \"%d\" \"%jd\" \"%s\" 2>&1 | "
+			"ulogger -p D -t fd-net",
 			config_get(CONFIG_NET_HOOK),
 			action,
 			i->interface,
@@ -159,7 +176,8 @@ static int invoke_net_helper(struct instance *i, const char *action)
 			i->id,
 			config_get(CONFIG_NET_FIRST_TWO_BYTES),
 			NET_BITS,
-			(intmax_t)io_src_pid_get_pid(&i->pid_src));
+			(intmax_t)io_src_pid_get_pid(&i->pid_src),
+			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS));
 }
 
 static void clean_mount_points(struct instance *instance, bool only_unregister)

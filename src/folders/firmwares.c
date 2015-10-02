@@ -411,7 +411,9 @@ static int firmware_preparation_start(struct preparation *preparation)
 			firmware_preparation_termination,
 			config_get(CONFIG_CURL_HOOK),
 			preparation->identification_string,
-			config_get(CONFIG_REPOSITORY_PATH), NULL);
+			config_get(CONFIG_REPOSITORY_PATH),
+			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS),
+			NULL);
 	if (ret < 0)
 		return ret;
 

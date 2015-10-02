@@ -166,6 +166,21 @@ which, overlayfs support has been integrated.
 Using this option is strongly discouraged since it forces to disable AppArmor.
 Defaults to
 .BR n .
+.TP
+.B FIRMWARED_VERBOSE_HOOK_SCRIPTS
+If
+.RB $ FIRMWARED_VERBOSE_HOOK_SCRIPTS
+is set to
+.BR y ,
+the hook scripts used, provided they are the stock ones, will log all the
+actions they take.
+The logs will occur in warning level, due to restrictions on the 'set' shell
+built-in.
+If you use custom hook scripts, you'll have to retrieve the last parameter value
+and to use the set -x command, to replicate this behavior.
+You can take the provided examples as examples on how to do so.
+Defaults to
+.BR n .
 
 The firmwares initial indexing performs sha1 computation which can take a
 significant amount of time.
