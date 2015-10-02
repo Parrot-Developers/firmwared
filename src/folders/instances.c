@@ -133,13 +133,18 @@ static void clean_paths(struct instance *instance)
 static int invoke_mount_helper(struct instance *instance, const char *action,
 		bool only_unregister)
 {
+	int ret;
 	struct io_process process;
-	// TODO get rid of that
+	int status;
 	void termination_cb(struct io_src_pid *pid_src, pid_t pid, int s)
 	{
-	} ;
+		status = s;
+		if (s != 0)
+			ULOGI("%s return status is %d",
+					config_get(CONFIG_MOUNT_HOOK), s);
+	};
 
-	return io_process_init_prepare_launch_and_wait(&process,
+	ret = io_process_init_prepare_launch_and_wait(&process,
 			&process_default_parameters,
 			termination_cb,
 			config_get(CONFIG_MOUNT_HOOK),
@@ -155,6 +160,10 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 			config_get(CONFIG_USE_AUFS),
 			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS),
 			NULL /* NULL guard */);
+	if (ret < 0)
+		return ret;
+
+	return status == 0 ? 0 : -ECANCELED;
 }
 
 static int invoke_net_helper(struct instance *i, const char *action)
