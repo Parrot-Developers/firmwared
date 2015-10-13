@@ -38,7 +38,7 @@ then
 	else
 		mount -t overlay -o \
 			lowerdir=${ro_mount_point},upperdir=${rw_dir},workdir=${workdir} \
-			${sha1} ${union_mount_point}
+			firmwared_${sha1} ${union_mount_point}
 	fi
 
 elif [ "${action}" = "remount" ];
