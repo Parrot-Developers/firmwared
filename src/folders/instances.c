@@ -527,10 +527,18 @@ static void launch_instance(struct instance *instance)
 		ULOGE("setup_container: %m");
 		_exit(EXIT_FAILURE);
 	}
+	/*
+	 * notify firmwared that we have just created our net namespace in which
+	 * it can migrate our network interfaces.
+	 */
 	ret = ut_process_sync_child_unlock(&instance->sync);
 	if (ret < 0)
 		ULOGE("ut_process_sync_child_unlock: parent/child "
 				"synchronisation failed: %s", strerror(-ret));
+	/*
+	 * wait until firmwared has assigned our network interfaces to our
+	 * namespace, so that we can configure them
+	 */
 	ret = ut_process_sync_child_lock(&instance->sync);
 	if (ret < 0)
 		ULOGE("ut_process_sync_child_lock: parent/child "
@@ -957,6 +965,10 @@ int instance_start(struct instance *instance)
 		ULOGE("io_src_pid_set_pid: %s", strerror(-ret));
 		return ret;
 	}
+	/*
+	 * wait until the child as setup it's network container, so that we can
+	 * assign it's network interfaces to it
+	 */
 	ret = ut_process_sync_parent_lock(&instance->sync);
 	if (ret < 0)
 		ULOGE("ut_process_sync_parent_lock: parent/child "
@@ -964,6 +976,11 @@ int instance_start(struct instance *instance)
 	ret = invoke_net_helper(instance, "assign");
 	if (ret != 0)
 		ULOGE("invoke_net_helper assign returned %d", ret);
+	/*
+	 * now the interface has been assigned to the child's name space, the
+	 * child can be unlocked and can now configure the interface to fit it's
+	 * needs
+	 */
 	ret = ut_process_sync_parent_unlock(&instance->sync);
 	if (ret < 0)
 		ULOGE("ut_process_sync_parent_unlock: parent/child "
