@@ -120,8 +120,7 @@ static void initial_cleanup_mount_points(void)
 static void initial_cleanup(void)
 {
 	initial_cleanup_mount_points();
-	/* TODO initial_cleanup_remove_artifacts(); */
-	/* TODO apparmor_remove_obsolete_profiles(); */
+	apparmor_remove_all_firmwared_profiles();
 }
 
 static int init_subsystems(void)

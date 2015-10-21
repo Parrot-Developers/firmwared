@@ -13,6 +13,7 @@ int apparmor_init(void);
 int apparmor_load_profile(const char *root, const char *name);
 int apparmor_change_profile(const char *name);
 int apparmor_remove_profile(const char *name);
+void apparmor_remove_all_firmwared_profiles(void);
 void apparmor_cleanup(void);
 
 #endif /* APPARMOR_H_ */

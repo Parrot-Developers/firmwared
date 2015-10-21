@@ -9,12 +9,14 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif /* _GNU_SOURCE */
-#include <sys/apparmor.h>
-
+#define _SVID_SOURCE
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
+
+#include <sys/apparmor.h>
 
 #define ULOG_TAG apparmor_config
 #include <ulog.h>
@@ -27,14 +29,21 @@ ULOG_DECLARE_TAG(apparmor_config);
 #include "./apparmor.h"
 #include "config.h"
 
-#define PROFILE_NAME_PATTERN "firmwared_%s"
+#define PROFILE_NAME_PREFIX "firmwared_"
+#define PROFILE_NAME_PATTERN PROFILE_NAME_PREFIX "%s"
 #define APPARMOR_COMMAND "apparmor_parser --replace --quiet"
 #define APPARMOR_REMOVE_COMMAND "apparmor_parser --remove --quiet"
 #define STATIC_PROFILE_PATTERN "@{root}=%s\nprofile "PROFILE_NAME_PATTERN" %s "
 #define REMOVE_PROFILE_PATTERN "profile "PROFILE_NAME_PATTERN" {\n}\n"
 
+#define APPARMOR_PROFILES_DIR "/sys/kernel/security/apparmor/policy/profiles/"
 
 static char *static_apparmor_profile;
+
+static int filter_dirent_without_firmwared_prefix(const struct dirent *d)
+{
+	return ut_string_match_prefix(d->d_name, PROFILE_NAME_PREFIX);
+}
 
 int apparmor_init(void)
 {
@@ -137,6 +146,28 @@ int apparmor_remove_profile(const char *name)
 
 	return vload_profile(APPARMOR_REMOVE_COMMAND, REMOVE_PROFILE_PATTERN,
 			name);
+}
+
+void apparmor_remove_all_firmwared_profiles(void)
+{
+	int count;
+	struct dirent **namelist;
+	char *dot;
+
+	count = scandir(APPARMOR_PROFILES_DIR, &namelist,
+			filter_dirent_without_firmwared_prefix, NULL);
+	if (count == -1) {
+		ULOGE("scandir(%s,...): %m", APPARMOR_PROFILES_DIR);
+		return;
+	}
+	while (count--) {
+		if ((dot = strchr(namelist[count]->d_name, '.')) != NULL)
+			*dot = '\0';
+		apparmor_remove_profile(namelist[count]->d_name +
+				strlen(PROFILE_NAME_PREFIX));
+		free(namelist[count]);
+	}
+	free(namelist);
 }
 
 void apparmor_cleanup(void)
