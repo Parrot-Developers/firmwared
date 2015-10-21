@@ -357,7 +357,9 @@ static void firmware_preparation_termination(struct io_src_pid *pid_src,
 	preparation = &firmware_preparation->preparation;
 
 	if (status != 0) {
-		ULOGE("curl hook execution status is non-zero");
+		ULOGE("curl hook execution status is non-zero, "
+				"please keep in mind that relative paths "
+				"aren't accepted");
 		ret = -EINVAL;
 		goto err;
 	}
