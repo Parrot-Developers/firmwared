@@ -215,7 +215,7 @@ static bool valid_net_first_two_bytes(const char *value)
 	char errbuf[0x80];
 	bool valid;
 	/*
-	 * 3 is because the regex has 3 sub expressions, and the entire
+	 * 3 is because the regex has 2 sub expressions, and the entire
 	 * expression is put in matches[0]
 	 */
 	regmatch_t matches[3];
