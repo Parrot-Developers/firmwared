@@ -9,6 +9,8 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif /* _GNU_SOURCE */
+#include <sys/mount.h>
+
 #include <signal.h>
 
 #include <string.h>
@@ -18,8 +20,11 @@
 
 #include <unistd.h>
 
+#include <regex.h>
+
 #include <ut_process.h>
 #include <ut_file.h>
+#include <ut_string.h>
 
 #include "apparmor.h"
 #include "folders.h"
@@ -55,6 +60,68 @@ static void clean_subsystems(void)
 	instances_cleanup();
 	firmwares_cleanup();
 	folders_cleanup();
+}
+
+static void initial_cleanup_mount_points(void)
+{
+	int ret;
+	char __attribute__((cleanup(ut_string_free)))*line = NULL;
+	size_t len = 0;
+	ssize_t count;
+	const char *mount_path = config_get(CONFIG_MOUNT_PATH);
+	FILE __attribute__((cleanup(ut_file_close)))*mounts = NULL;
+	char __attribute__((cleanup(ut_string_free)))*str_regex = NULL;
+	regex_t preg;
+	char errbuf[0x80];
+	bool match;
+	/*
+	 * 2 is because the regex has 1 sub expressions, and the entire
+	 * expression is put in matches[0]
+	 */
+	regmatch_t matches[3];
+	const char *path;
+
+	ret = asprintf(&str_regex, "^[^ ]+ (%s/?[a-f0-9]+/[a-z]+) .*$",
+			mount_path);
+	if (ret == -1) {
+		str_regex = NULL;
+		ULOGE("asprintf error\n");
+		return;
+	}
+	mounts = fopen("/proc/mounts", "r");
+	if (mounts == NULL) {
+		ULOGW("failed to open /proc/mounts: %m");
+		return;
+	}
+
+	ret = regcomp(&preg, str_regex, REG_EXTENDED);
+	if (ret != 0) {
+		regerror(ret, &preg, errbuf, 0x80);
+		ULOGE("regcomp: %s", errbuf);
+		return;
+	}
+	/* unmount all mounted fs' mounted under mount_path */
+	while ((count = getline(&line, &len, mounts)) != -1) {
+		match = regexec(&preg, line, UT_ARRAY_SIZE(matches), matches, 0)
+				== 0;
+		if (match) {
+			line[matches[1].rm_eo] = '\0';
+			path = line + matches[1].rm_so;
+			ULOGI("%s: unmount(%s)", __func__, path);
+			ret = umount(path);
+			if (ret == -1)
+				ULOGW("umount(%s): %m", path);
+		}
+	}
+
+	regfree(&preg);
+}
+
+static void initial_cleanup(void)
+{
+	initial_cleanup_mount_points();
+	/* TODO initial_cleanup_remove_artifacts(); */
+	/* TODO apparmor_remove_obsolete_profiles(); */
 }
 
 static int init_subsystems(void)
@@ -116,6 +183,7 @@ int main(int argc, char *argv[])
 		ULOGE("loading config file %s failed", config_file);
 		exit(EXIT_FAILURE);
 	}
+	initial_cleanup();
 
 	ret = firmwared_init();
 	if (ret < 0) {
