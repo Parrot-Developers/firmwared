@@ -54,16 +54,16 @@
    network,
 
 # first we allow all filesystem accesses ...
-   /** rwixk,
-   /* rwixk,
-   / rwixk,
+   /** lrwixk,
+   /* lrwixk,
+   / lrwixk,
 
 # ... then we restrict what is suspected (or known) to be harmful
-   audit deny @{root}/union/proc/sysrq-trigger rwx,
-   audit deny @{root}/union/dev/sd** rwx,
-   audit deny @{root}/union/dev/mem rwx,
-   audit deny @{root}/union/dev/watchdog** rwx,
-   audit deny @{root}/union/dev/disk/** rwx,
-   audit deny @{root}/union/dev/disk/ rwx,
-   audit @{root}/union/{proc,dev,sys}/** rwix,
+   audit deny @{root}/union/proc/sysrq-trigger lrwx,
+   audit deny @{root}/union/dev/sd** lrwx,
+   audit deny @{root}/union/dev/mem lrwx,
+   audit deny @{root}/union/dev/watchdog** lrwx,
+   audit deny @{root}/union/dev/disk/** lrwx,
+   audit deny @{root}/union/dev/disk/ lrwx,
+   audit @{root}/union/{proc,dev,sys}/** lrwix,
 }
