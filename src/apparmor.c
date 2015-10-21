@@ -33,24 +33,8 @@ ULOG_DECLARE_TAG(apparmor_config);
 #define STATIC_PROFILE_PATTERN "@{root}=%s\nprofile "PROFILE_NAME_PATTERN" %s "
 #define REMOVE_PROFILE_PATTERN "profile "PROFILE_NAME_PATTERN" {\n}\n"
 
-#define APPARMOR_ENABLED_FILE "/sys/module/apparmor/parameters/enabled"
-
 
 static char *static_apparmor_profile;
-
-static bool apparmor_is_enabled(void)
-{
-	int ret;
-	char __attribute__((cleanup(ut_string_free))) *status = NULL;
-
-	ret = ut_file_to_string(APPARMOR_ENABLED_FILE, &status);
-	if (ret < 0) {
-		status = NULL;
-		return false;
-	}
-
-	return ut_string_match(status, "Y\n");
-}
 
 int apparmor_init(void)
 {
@@ -59,7 +43,7 @@ int apparmor_init(void)
 
 	ULOGD("%s", __func__);
 
-	if (!apparmor_is_enabled()) {
+	if (!aa_is_enabled()) {
 		ULOGE("AppArmor is not enabled or installed, please see the "
 				"instructions for your distribution to enable "
 				"it");
