@@ -52,6 +52,7 @@
    signal,
    mount,
    network,
+   ptrace,
 
 # first we allow all filesystem accesses ...
    /** lrwixk,
