@@ -10,6 +10,7 @@
 #define _GNU_SOURCE
 #endif /* _GNU_SOURCE */
 #include <sys/mount.h>
+#include <sys/utsname.h>
 
 #include <signal.h>
 
@@ -37,6 +38,10 @@
 #define ULOG_TAG firmwared_main
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_main);
+
+#ifndef MINIMAL_KERNEL_VERSION
+#define MINIMAL_KERNEL_VERSION "3.18"
+#endif /* MINIMAL_KERNEL_VERSION */
 
 #ifndef DEFAULT_CONFIG_FILE
 #define DEFAULT_CONFIG_FILE "/etc/firmwared.conf"
@@ -157,6 +162,23 @@ err:
 	return ret;
 }
 
+static void check_kernel_version(void)
+{
+	int ret;
+	struct utsname info;
+
+	ret = uname(&info);
+	if (ret < 0) {
+		ULOGW("uname: %m");
+		return;
+	}
+
+	if (strverscmp(info.release, MINIMAL_KERNEL_VERSION) < 0) {
+		ULOGE("Linux kernel too old, install a 3.18+ one");
+		exit(EXIT_FAILURE);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	int status = EXIT_FAILURE;
@@ -166,6 +188,8 @@ int main(int argc, char *argv[])
 	const char *config_file;
 
 	ULOGI("%s[%jd] starting", basename(argv[0]), (intmax_t)getpid());
+
+	check_kernel_version();
 
 	if (argc > 2)
 		usage(EXIT_FAILURE);
