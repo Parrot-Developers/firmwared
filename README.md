@@ -119,7 +119,7 @@ command and *notifications*, broadcast to all the clients currently listening.
 * *ERROR* ERRNO MESSAGE  
   answer to any command whose execution encountered a problem
 * *FOLDERS* FOLDERS\_LIST  
-  answer to a *FOLDERS* command, FOLDERS\_LIST is a comma-separated list of the
+  answer to a *FOLDERS* command, FOLDERS\_LIST is a space-separated list of the
   folders registered so far
 * *GET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
   answer to a *GET\_PROPERTY* command
@@ -135,7 +135,7 @@ command and *notifications*, broadcast to all the clients currently listening.
 * *VERSION* VERSION\_DESCRIPTION  
   answer to a *VERSION* command.
 * *PROPERTIES* FOLDER PROPERTIES\_LIST  
-  answer to a *PROPERTIES* command, PROPERTIES\_LIST is a comma-separated list
+  answer to a *PROPERTIES* command, PROPERTIES\_LIST is a space-separated list
   of the properties registered for the folder
 * *PROPERTY\_SET* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
   answer to a *SET\_PROPERTY* command
