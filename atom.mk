@@ -52,6 +52,22 @@ LOCAL_REQUIRED_MODULES := \
 include $(BUILD_EXECUTABLE)
 
 ################################################################################
+# libfwd
+################################################################################
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libfwd
+LOCAL_DESCRIPTION := Utilities for implementing firmwared clients
+LOCAL_CATEGORY_PATH := sphinx/firmwared
+
+LOCAL_SRC_FILES := \
+	$(call all-c-files-under,lib)
+
+LOCAL_EXPORT_C_INCLUDES  := $(LOCAL_PATH)/include
+
+include $(BUILD_LIBRARY)
+
+################################################################################
 # fdc
 ################################################################################
 
