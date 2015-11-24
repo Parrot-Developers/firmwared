@@ -10,6 +10,8 @@
 
 #include <fwd.h>
 
+#define FWD_MESSAGE_INVALID_STR "(invalid)"
+
 const char *fwd_message_str(enum fwd_message message)
 {
 	switch (message) {
@@ -93,18 +95,26 @@ const char *fwd_message_str(enum fwd_message message)
 		return "PREPARE_PROGRESS";
 	case FWD_ANSWER_STARTED:
 		return "STARTED";
-	}
 
-	return "(invalid)";
+	default:
+		return FWD_MESSAGE_INVALID_STR;
+	}
 }
 
-const enum fwd_message fwd_message_from_str(const char *str)
+enum fwd_message fwd_message_from_str(const char *str)
 {
 	enum fwd_message m;
 
 	for (m = FWD_MESSAGE_FIRST; m < FWD_MESSAGE_LAST; m++)
-		if (ut_string_match(m, str))
+		if (ut_string_match(fwd_message_str(m), str))
 			return m;
 
 	return FWD_MESSAGE_INVALID;
 }
+
+bool fwd_message_is_invalid(enum fwd_message message)
+{
+	return ut_string_match(fwd_message_str(message),
+			FWD_MESSAGE_INVALID_STR);
+}
+

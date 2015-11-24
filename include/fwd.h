@@ -9,6 +9,7 @@
 
 #ifndef INCLUDE_FWD_H_
 #define INCLUDE_FWD_H_
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,6 +77,8 @@ enum fwd_message {
 const char *fwd_message_str(enum fwd_message message);
 
 enum fwd_message fwd_message_from_str(const char *str);
+
+bool fwd_message_is_invalid(enum fwd_message message);
 
 #ifdef __cplusplus
 }
