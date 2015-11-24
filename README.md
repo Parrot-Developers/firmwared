@@ -148,7 +148,7 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   answer to a *GET\_PROPERTY* command
 * *PROPERTY\_SET* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
   answer to a *SET\_PROPERTY* command
-* *REMOUNTED* INSTANCE\_IDENTIFIER
+* *REMOUNTED* INSTANCE\_IDENTIFIER  
   answer to a *REMOUNT* command
 
 ### Instance states
