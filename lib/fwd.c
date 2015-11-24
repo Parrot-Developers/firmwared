@@ -6,9 +6,11 @@
  * @author ncarrier
  * @copyright Copyright (C) 2015 Parrot S.A.
  */
+#include <ut_string.h>
+
 #include <fwd.h>
 
-const char *fmw_message_str(enum fwd_message message)
+const char *fwd_message_str(enum fwd_message message)
 {
 	switch (message) {
 	/* commands, i.e. from client to server */
@@ -90,4 +92,15 @@ const char *fmw_message_str(enum fwd_message message)
 	}
 
 	return "(invalid)";
+}
+
+const enum fwd_message fwd_message_from_str(const char *str)
+{
+	enum fwd_message m;
+
+	for (m = FWD_MESSAGE_FIRST; m < FWD_MESSAGE_LAST; m++)
+		if (ut_string_match(m, str))
+			return m;
+
+	return FWD_MESSAGE_INVALID;
 }

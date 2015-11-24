@@ -63,6 +63,9 @@ LOCAL_CATEGORY_PATH := sphinx/firmwared
 LOCAL_SRC_FILES := \
 	$(call all-c-files-under,lib)
 
+LOCAL_LIBRARIES := \
+	libutils
+
 LOCAL_EXPORT_C_INCLUDES  := $(LOCAL_PATH)/include
 
 include $(BUILD_LIBRARY)

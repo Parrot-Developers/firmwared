@@ -14,9 +14,11 @@
 extern "C" {
 #endif
 
+/* values must stay consecutive */
 enum fwd_message {
 	/* commands, i.e. from client to server */
-	FWD_COMMAND_FIRST,
+	FWD_MESSAGE_FIRST,
+	FWD_COMMAND_FIRST = FWD_MESSAGE_FIRST,
 
 	FWD_COMMAND_COMMANDS = FWD_COMMAND_FIRST,
 	FWD_COMMAND_CONFIG_KEYS,
@@ -65,9 +67,13 @@ enum fwd_message {
 	FWD_ANSWER_STARTED,
 
 	FWD_ANSWER_LAST = FWD_ANSWER_STARTED,
+	FWD_MESSAGE_LAST = FWD_ANSWER_LAST,
+	FWD_MESSAGE_INVALID = FWD_MESSAGE_LAST + 1,
 };
 
-const char *fmw_message_str(enum fwd_message message);
+const char *fwd_message_str(enum fwd_message message);
+
+enum fwd_message fwd_message_from_str(const char *str);
 
 #ifdef __cplusplus
 }
