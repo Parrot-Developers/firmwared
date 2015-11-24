@@ -50,6 +50,8 @@ const char *fmw_message_str(enum fwd_message message)
 		return "VERSION";
 	/* answers, i.e. from server to client */
 	/* acks */
+	case FWD_ANSWER_COMMANDS:
+		return "COMMANDS";
 	case FWD_ANSWER_ERROR:
 		return "ERROR";
 	case FWD_ANSWER_FOLDERS:

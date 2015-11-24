@@ -113,6 +113,9 @@ command and *notifications*, broadcast to all the clients currently listening.
 
 #### Acks
 
+* *COMMANDS* LIST  
+  answer to a *COMMANDS* command, LIST is a space-separated list of the commands
+  implemented in firmwared
 * *ERROR* ERRNO MESSAGE  
   answer to any command whose execution encountered a problem
 * *FOLDERS* FOLDERS\_LIST  
