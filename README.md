@@ -138,7 +138,7 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
 * *VERSION* VERSION\_DESCRIPTION  
   answer to a *VERSION* command.
 * *BYEBYE*  
-  acknowledge reception of a *QUIT* command
+  notification in reaction to the reception of a *QUIT* command
 * *ERROR* ERRNO MESSAGE  
   answer to any command whose execution encountered a problem
 * *PROPERTIES* FOLDER PROPERTIES\_LIST  

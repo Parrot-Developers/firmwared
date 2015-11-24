@@ -25,7 +25,8 @@ static int quit_command_handler(struct pomp_conn *conn,
 {
 	firmwared_stop();
 
-	return firmwared_answer(conn, msg, "%s", "BYEBYE");
+	return firmwared_notify(pomp_msg_get_id(msg), "%s", "BYEBYE");
+
 }
 
 static const struct command quit_command = {
