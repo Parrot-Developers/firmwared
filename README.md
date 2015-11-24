@@ -106,7 +106,7 @@ entities types are named *folders*.
 * *VERSION*  
   sends back informations concerning this firmwared program's version
 
-### Notifications
+### Answers
 
 *Answers* are of two types: *acks*, unicast answer to the client which issued a
 command and *notifications*, broadcast to all the clients currently listening.  
@@ -116,11 +116,16 @@ command and *notifications*, broadcast to all the clients currently listening.
 * *COMMANDS* LIST  
   answer to a *COMMANDS* command, LIST is a space-separated list of the commands
   implemented in firmwared
+* *CONFIG\_KEYS* CONFIG\_KEYS\_LIST  
+  answer to a *CONFIG\_KEYS* command, CONFIG\_KEYS\_LIST is a space-separated
+  list of the configuration keys available in firmwared
 * *ERROR* ERRNO MESSAGE  
   answer to any command whose execution encountered a problem
 * *FOLDERS* FOLDERS\_LIST  
   answer to a *FOLDERS* command, FOLDERS\_LIST is a space-separated list of the
   folders registered so far
+* *GET\_CONFIG* CONFIG\_KEY CONFIG\_VALUE  
+  answer to a *GET\_CONFIG* command
 * *GET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
   answer to a *GET\_PROPERTY* command
 * *HELP* COMMAND HELP\_TEXT  

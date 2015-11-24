@@ -54,10 +54,14 @@ const char *fwd_message_str(enum fwd_message message)
 	/* acks */
 	case FWD_ANSWER_COMMANDS:
 		return "COMMANDS";
+	case FWD_ANSWER_CONFIG_KEYS:
+		return "CONFIG_KEYS";
 	case FWD_ANSWER_ERROR:
 		return "ERROR";
 	case FWD_ANSWER_FOLDERS:
 		return "FOLDERS";
+	case FWD_ANSWER_GET_CONFIG:
+		return "GET_CONFIG";
 	case FWD_ANSWER_GET_PROPERTY:
 		return "GET_PROPERTY";
 	case FWD_ANSWER_HELP:
