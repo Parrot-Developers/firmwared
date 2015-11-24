@@ -31,28 +31,43 @@ An xterm should popup, with a console opened on the running instance's console.
 
 ### Vocabulary
 
-*Commands* are sent by clients.  The server sends *notifications*, which can be
-in reaction to a client *command*.  
+*Commands* are sent by clients.  The server sends *answers*, which can be
+in reaction to a client *command* but not only.  
 An *identifier* is either the sha1 of the entity or it's friendly random name.
 As the time of writing, there is 2 types of entities, "instances", "firmwares",
 entities types are named *folders*.
 
 ### Commands
 
-* *PING*  
-  asks for the server to answer with a *PONG* notification
-* *FOLDERS*  
-  asks the server to list the currently registered folders
-* *LIST* FOLDER  
-  lists all the items in the folder FOLDER  
-  FOLDER is one of folders listed in an answer to a *FOLDERS* command
-* *SHOW* FOLDER IDENTIFIER  
-  asks for all the information on a given entity of a folder
+* *COMMANDS*  
+  asks the server to list the currently registered commands
+* *CONFIG_KEYS*  
+  lists all the available configuration keys.
 * *DROP* FOLDER IDENTIFIER  
   removes an entity from a folder  
   if the entity is an instance, it must be in the *READY* state. It's pid 1 will
   be killed and it's run artifacts will be removed if
   FIRMWARED\_PREVENT\_REMOVAL isn't set to "y"
+* *FOLDERS*  
+  asks the server to list the currently registered folders
+* *GET\_CONFIG* CONFIG_KEY  
+  retrieves the value of the CONFIG_KEY configuration key.
+* *GET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME  
+  retrieves the value of the property PROPERTY for the entity whose name or sha1
+  is ENTITY\_IDENTIFIER from the folder FOLDER.
+* *HELP* COMMAND  
+  sends back a little help on the command COMMAND
+* *KILL* INSTANCE\_IDENTIFIER  
+  kills an instance, all the processes are killed, the instance is still
+  registered and it's rw aufs layer is still present  
+  the instance must be in the *STARTED* state.  
+  the instance switches to the *STOPPING* state, before switching back to the
+  *READY* state
+* *LIST* FOLDER  
+  lists all the items in the folder FOLDER  
+  FOLDER is one of folders listed in an answer to a *FOLDERS* command
+* *PING*  
+  asks for the server to answer with a *PONG* notification
 * *PREPARE* FOLDER IDENTIFICATION\_STRING  
   prepares either a firmware or an instance.  
   If FOLDER is equal to "firmwares", then a firmware will be prepared.
@@ -72,55 +87,65 @@ entities types are named *folders*.
   firmware of identifier IDENTIFICATION\_STRING, in the *READY* state  
   IDENTIFICATION\_STRING must correspond to an identifier of a registered
   firmware.
-* *START* INSTANCE\_IDENTIFIER  
-  launches an instance, which switches to the *STARTED* state and must be in the
-  READY state
-* *KILL* INSTANCE\_IDENTIFIER  
-  kills an instance, all the processes are killed, the instance is still
-  registered and it's rw aufs layer is still present  
-  the instance must be in the *STARTED* state.  
-  the instance switches to the *STOPPING* state, before switching back to the
-  *READY* state
-* *HELP* COMMAND  
-  sends back a little help on the command COMMAND
-* *QUIT*  
-  asks firmwared to exit
-* *VERSION*  
-  sends back informations concerning this firmwared program's version
-* *COMMANDS*  
-  asks the server to list the currently registered commands
 * *PROPERTIES* FOLDER  
   asks the server to list the currently registered properties for the folder
   FOLDER
-* *GET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME  
-  retrieves the value of the property PROPERTY for the entity whose name or sha1
-  is ENTITY\_IDENTIFIER from the folder FOLDER.
-* *SET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
-  sets the value of the property PROPERTY to the value PROPERTY\_VALUE, for the
-  entity whose name or sha1 is ENTITY\_IDENTIFIER from the folder FOLDER.
-* *GET_CONFIG* CONFIG_KEY  
-  retrieves the value of the CONFIG_KEY configuration key.
-* *CONFIG_KEYS*  
-  lists all the available configuration keys.
+* *QUIT*  
+  asks firmwared to exit
 * *REMOUNT* INSTANCE\_IDENTIFIER  
   asks to remount the union file system of an instance, to take into account
   modifications in the lower dir (e.g. rebuild of a final dir)
+* *SET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
+  sets the value of the property PROPERTY to the value PROPERTY\_VALUE, for the
+  entity whose name or sha1 is ENTITY\_IDENTIFIER from the folder FOLDER.
+* *SHOW* FOLDER IDENTIFIER  
+  asks for all the information on a given entity of a folder
+* *START* INSTANCE\_IDENTIFIER  
+  launches an instance, which switches to the *STARTED* state and must be in the
+  READY state
+* *VERSION*  
+  sends back informations concerning this firmwared program's version
 
 ### Notifications
 
-There are two types of notifications, unicast (marked as "answer to an XXX
-command) and broadcast (marked as "notification in reaction to an XXX command).
+*Answers* are of two types: *acks*, unicast answer to the client which issued a
+command and *notifications*, broadcast to all the clients currently listening.  
 
-* *PONG*  
-  answer to a *PING*
+#### Acks
+
+* *ERROR* ERRNO MESSAGE  
+  answer to any command whose execution encountered a problem
 * *FOLDERS* FOLDERS\_LIST  
   answer to a *FOLDERS* command, FOLDERS\_LIST is a comma-separated list of the
   folders registered so far
+* *GET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
+  answer to a *GET\_PROPERTY* command
+* *HELP* COMMAND HELP\_TEXT  
+  answer to a *HELP* command
 * *LIST* FOLDER COUNT [list of (ID, NAME) pairs]  
   answer to a *LIST* command
+* *PONG*  
+  answer to a *PING*
 * *SHOW* FOLDER ID NAME INFORMATION\_STRING  
   answer to a *SHOW* command. The actual content of the INFORMATION\_STRING is
   dependent on the FOLDER queried and is for display purpose
+* *VERSION* VERSION\_DESCRIPTION  
+  answer to a *VERSION* command.
+* *PROPERTIES* FOLDER PROPERTIES\_LIST  
+  answer to a *PROPERTIES* command, PROPERTIES\_LIST is a comma-separated list
+  of the properties registered for the folder
+* *PROPERTY\_SET* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
+  answer to a *SET\_PROPERTY* command
+* *REMOUNTED* INSTANCE\_IDENTIFIER  
+  answer to a *REMOUNT* command
+
+#### Notifications
+
+* *BYEBYE*  
+  notification in reaction to the reception of a *QUIT* command
+* *DEAD* INSTANCE\_ID INSTANCE\_NAME  
+  notification in reaction to the end of an instance's main process, be it
+  caused by a *KILL* command or by "natural death"
 * *DROPPED* FOLDER ENTITY\_ID ENTITY\_NAME  
   notification in reaction to a *DROP* command
 * *PREPARED* FOLDER ENTITY\_ID ENTITY\_NAME  
@@ -130,26 +155,6 @@ command) and broadcast (marked as "notification in reaction to an XXX command).
   the preparation. PROGRESS is a percentage.
 * *STARTED* INSTANCE\_ID INSTANCE\_NAME  
   notification in reaction to a *START* command
-* *DEAD* INSTANCE\_ID INSTANCE\_NAME  
-  notification in reaction to the end of an instance's main process, be it
-  caused by a *KILL* command or by "natural death"
-* *HELP* COMMAND HELP\_TEXT  
-  answer to a *HELP* command
-* *VERSION* VERSION\_DESCRIPTION  
-  answer to a *VERSION* command.
-* *BYEBYE*  
-  notification in reaction to the reception of a *QUIT* command
-* *ERROR* ERRNO MESSAGE  
-  answer to any command whose execution encountered a problem
-* *PROPERTIES* FOLDER PROPERTIES\_LIST  
-  answer to a *PROPERTIES* command, PROPERTIES\_LIST is a comma-separated list
-  of the properties registered for the folder
-* *GET\_PROPERTY* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
-  answer to a *GET\_PROPERTY* command
-* *PROPERTY\_SET* FOLDER ENTITY\_IDENTIFIER PROPERTY\_NAME PROPERTY\_VALUE  
-  answer to a *SET\_PROPERTY* command
-* *REMOUNTED* INSTANCE\_IDENTIFIER  
-  answer to a *REMOUNT* command
 
 ### Instance states
 
