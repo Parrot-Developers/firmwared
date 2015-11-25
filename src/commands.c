@@ -23,20 +23,18 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_commands);
 
-#define COMMANDS_MAX 20
+#define COMMANDS_MAX FWD_COMMAND_LAST + 1
 
 static struct command commands[COMMANDS_MAX];
 
 static char *list;
 
-static struct command *command_find(const char *name)
+static struct command *command_find(enum fwd_message msgid)
 {
 	int i;
 
 	for (i = 0; i < COMMANDS_MAX; i++)
-		if (commands[i].name == NULL)
-			return NULL;
-		else if (strcasecmp(name, commands[i].name) == 0)
+		if (commands[i].msgid == msgid)
 			return commands + i;
 
 	return NULL;
@@ -45,68 +43,64 @@ static struct command *command_find(const char *name)
 static bool command_is_invalid(const struct command *cmd)
 {
 	return cmd == NULL || cmd->help == NULL ||
-			ut_string_is_invalid(cmd->name) ||
+			fwd_message_is_invalid(cmd->msgid) ||
 			cmd->handler == NULL || cmd->synopsis == NULL;
 }
 
 static void command_dump(const struct command *cmd)
 {
-	ULOGD("\t%s: \"%s\"", cmd->name, cmd->help);
+	ULOGD("\t%s: \"%s\"", fwd_message_str(cmd->msgid), cmd->help);
 }
 
 static int command_process(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
-	int ret;
-	char __attribute__((cleanup(ut_string_free)))*name = NULL;
 	const struct command *cmd;
+	uint32_t msgid;
 
-	ret = pomp_msg_read(msg, "%ms", &name);
-	if (ret < 0) {
-		cmd = NULL;
-		ULOGE("pomp_msg_read: %s", strerror(-ret));
-		return ret;
-	}
-
-	cmd = command_find(name);
+	msgid = pomp_msg_get_id(msg);
+	cmd = command_find(msgid);
 	if (cmd == NULL) {
-		ULOGE("command \"%s\" isn't implemented", name);
+		ULOGE("command \"%"PRIu32"\" isn't implemented", msgid);
 		return -ENOSYS;
 	}
 
-	ULOGD("execute command %s", name);
+	ULOGD("execute command %s", fwd_message_str(cmd->msgid));
 
-	return cmd->handler(conn, msg);
+	return cmd->handler(conn, msg, seqnum);
 }
 
-static int command_build_help_message(struct command *command)
+static int command_build_help_message(struct command *cmd)
 {
 	int ret;
+	const char *name;
 
-	ret = asprintf(&command->help_msg, "Command %s\n"
+	name = fwd_message_str(cmd->msgid);
+
+	ret = asprintf(&cmd->help_msg, "Command %s\n"
 			"Synopsis: %s %s\n"
-			"Overview: %s\n%s", command->name, command->name,
-			command->synopsis, command->help, command->long_help ?
-					command->long_help : "");
+			"Overview: %s\n%s", name, name, cmd->synopsis,
+			cmd->help, cmd->long_help ? cmd->long_help : "");
 	if (ret < 0) {
+		cmd->help_msg = NULL;
 		ULOGE("asprintf error");
 		return -ENOMEM;
 	}
 
 	return 0;
 }
-const char *command_get_help(const char *name)
+const char *command_get_help(enum fwd_message msg)
 {
 	int ret;
 	struct command *command;
 
 	errno = EINVAL;
-	if (ut_string_is_invalid(name))
+	if (fwd_message_is_invalid(msg))
 		return NULL;
 
-	command = command_find(name);
+	command = command_find(msg);
 	if (command == NULL) {
-		ULOGE("command_find: %s not found", name);
+		ULOGE("command_find: %s not found", fwd_message_str(msg));
 		errno = ESRCH;
 		return NULL;
 	}
@@ -120,16 +114,21 @@ const char *command_get_help(const char *name)
 	return command->help_msg;
 }
 
-int command_invoke(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+int command_invoke(struct pomp_conn *conn, const struct pomp_msg *msg)
 {
 	int ret;
+	uint32_t seqnum;
 
-	ret = command_process(conn, msg);
+	ret = pomp_msg_read(msg, "%"PRIu32, &seqnum);
+	if (ret < 0) {
+		ULOGE("pomp_msg_read: %s", strerror(-ret));
+		return ret;
+	}
+	ret = command_process(conn, msg, seqnum);
 	if (ret < 0) {
 		ULOGE("command_process: %s", strerror(-ret));
-		return firmwared_answer(conn, msg, "%s%d%s", "ERROR", -ret,
-				strerror(-ret));
+		return firmwared_answer(conn, FWD_ANSWER_ERROR, "%"PRIu32"%d%s",
+				seqnum, -ret, strerror(-ret));
 	}
 
 	return 0;
@@ -144,13 +143,13 @@ int command_register(const struct command *cmd)
 		return -EINVAL;
 
 	/* command name must be unique */
-	needle = command_find(cmd->name);
+	needle = command_find(cmd->msgid);
 	if (needle != NULL)
 		return -EEXIST;
 
 	/* find first free slot */
 	for (i = 0; i < COMMANDS_MAX; i++)
-		if (commands[i].name == NULL)
+		if (command_is_invalid(commands + i))
 			break;
 
 	if (i >= COMMANDS_MAX)
@@ -161,12 +160,12 @@ int command_register(const struct command *cmd)
 	return 0;
 }
 
-int command_unregister(const char *name)
+int command_unregister(enum fwd_message msgid)
 {
 	struct command *needle;
 	struct command *max = commands + COMMANDS_MAX - 1;
 
-	needle = command_find(name);
+	needle = command_find(msgid);
 	if (needle == NULL)
 		return -ESRCH;
 	ut_string_free(&needle->help_msg);
@@ -188,9 +187,10 @@ const char *command_list(void)
 		return list;
 
 	while (command-- > commands) {
-		if (command->name == NULL)
+		if (command_is_invalid(command))
 			continue;
-		ret = ut_string_append(&list, "%s ", command->name);
+		ret = ut_string_append(&list, "%s ",
+				fwd_message_str(command->msgid));
 		if (ret < 0) {
 			ULOGC("ut_string_append");
 			errno = -ret;

@@ -26,13 +26,11 @@ ULOG_DECLARE_TAG(firmwared_command_version);
 
 #include "commands.h"
 
-#define COMMAND_NAME "VERSION"
-
 static int version_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	int ret;
-	char __attribute__((cleanup(ut_string_free))) *version;
+	char __attribute__((cleanup(ut_string_free))) *version = NULL;
 
 	ret = asprintf(&version, "Compilation time: "__DATE__" - "__TIME__"\n"
 			"Version: "ALCHEMY_REVISION_FIRMWARED"\n");
@@ -42,11 +40,12 @@ static int version_command_handler(struct pomp_conn *conn,
 		return -ENOMEM;
 	}
 
-	return firmwared_answer(conn, msg, "%s%s", "VERSION", version);
+	return firmwared_answer(conn, FWD_ANSWER_VERSION, "%"PRIu32"%s", seqnum,
+			version);
 }
 
 static const struct command version_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_VERSION,
 		.help = "Sends back informations concerning this firmwared "
 				"program's version.",
 		.synopsis = "",
@@ -71,7 +70,7 @@ static __attribute__((destructor)) void version_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(version_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

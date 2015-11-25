@@ -10,6 +10,7 @@ LOCAL_DESCRIPTION := Firmware instance manager daemon
 LOCAL_CATEGORY_PATH := sphinx/firmwared
 
 LOCAL_LIBRARIES := \
+	libfwd \
 	libulog \
 	libpomp \
 	librs \

@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #include <ut_string.h>
 
@@ -22,21 +23,18 @@ ULOG_DECLARE_TAG(firmwared_command_get_config);
 #include "firmwared.h"
 #include "commands.h"
 
-#define COMMAND_NAME "GET_CONFIG"
-
 static int get_config_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	int ret;
-	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *config_key = NULL;
 	char *prefixed_config_key = NULL;
 	enum config_key key;
 	size_t len;
 
-	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &config_key);
+	ret = pomp_msg_read(msg, "%"PRIu32"%ms", &seqnum, &config_key);
 	if (ret < 0) {
-		cmd = config_key = NULL;
+		config_key = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}
@@ -47,12 +45,12 @@ static int get_config_command_handler(struct pomp_conn *conn,
 	if (key == (enum config_key)-1)
 		return -ESRCH;
 
-	return firmwared_answer(conn, msg, "%s%s%s", COMMAND_NAME, config_key,
-			config_get(key));
+	return firmwared_answer(conn, FWD_ANSWER_GET_CONFIG, "%"PRIu32"%s%s",
+			seqnum, config_key, config_get(key));
 }
 
 static const struct command get_config_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_GET_CONFIG,
 		.help = "Retrieves the value of the CONFIG_KEY configuration "
 				"key.",
 		.long_help = "The CONFIG_KEY is case insensitive. Use the "
@@ -80,7 +78,7 @@ static __attribute__((destructor)) void get_config_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(get_config_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

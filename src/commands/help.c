@@ -23,36 +23,33 @@ ULOG_DECLARE_TAG(firmwared_command_help);
 #include "commands.h"
 #include "folders.h"
 
-#define COMMAND_NAME "HELP"
-
 static int help_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	int ret;
-	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *command_name = NULL;
 	const char *help;
 
-	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &command_name);
+	ret = pomp_msg_read(msg, "%"PRIu32"%ms", &seqnum, &command_name);
 	if (ret < 0) {
-		cmd = command_name = NULL;
+		command_name = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}
 
-	help = command_get_help(command_name);
+	help = command_get_help(pomp_msg_get_id(msg));
 	if (help == NULL) {
 		ret = -errno;
 		ULOGE("command_get_help(%s): %m", command_name);
 		return -EINVAL;
 	}
 
-	return firmwared_answer(conn, msg, "%s%s%s", "HELP", command_name,
-			help);
+	return firmwared_answer(conn, FWD_ANSWER_HELP, "%"PRIu32"%s%s", seqnum,
+			command_name, help);
 }
 
 static const struct command help_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_HELP,
 		.help = "Sends back a little help on the command COMMAND.",
 		.synopsis = "COMMAND",
 		.handler = help_command_handler,
@@ -76,7 +73,7 @@ static __attribute__((destructor)) void help_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(help_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

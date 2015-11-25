@@ -30,23 +30,20 @@ ULOG_DECLARE_TAG(firmwared_command_get_property);
 #include "instances.h"
 #include "folders.h"
 
-#define COMMAND_NAME "GET_PROPERTY"
-
 static int get_property_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	int ret;
-	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *folder = NULL;
 	char __attribute__((cleanup(ut_string_free))) *identifier = NULL;
 	char __attribute__((cleanup(ut_string_free))) *property_name = NULL;
 	char __attribute__((cleanup(ut_string_free))) *value = NULL;
 	struct folder_entity *entity;
 
-	ret = pomp_msg_read(msg, "%ms%ms%ms%ms", &cmd, &folder, &identifier,
-			&property_name);
+	ret = pomp_msg_read(msg, "%"PRIu32"%ms%ms%ms", &seqnum, &folder,
+			&identifier, &property_name);
 	if (ret < 0) {
-		cmd = folder = identifier = property_name = NULL;
+		folder = identifier = property_name = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}
@@ -60,12 +57,12 @@ static int get_property_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
-	return firmwared_notify(pomp_msg_get_id(msg), "%s%s%s%s%s",
-			COMMAND_NAME, folder, identifier, property_name, value);
+	return firmwared_notify(pomp_msg_get_id(msg), "%"PRIu32"%s%s%s%s",
+			seqnum, folder, identifier, property_name, value);
 }
 
 static const struct command get_property_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_GET_PROPERTY,
 		.help = "Retrieves the value of the property PROPERTY for the "
 				"entity whose name or sha1 is ENTITY_IDENTIFIER"
 				" from the folder FOLDER.",
@@ -97,7 +94,7 @@ static __attribute__((destructor)) void get_property_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(get_property_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

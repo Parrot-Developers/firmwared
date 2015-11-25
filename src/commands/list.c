@@ -23,8 +23,6 @@ ULOG_DECLARE_TAG(firmwared_command_list);
 #include "commands.h"
 #include "folders.h"
 
-#define COMMAND_NAME "LIST"
-
 static int build_list(char **list, const struct folder *folder, unsigned *count)
 {
 	int ret;
@@ -60,7 +58,7 @@ static int build_list(char **list, const struct folder *folder, unsigned *count)
 }
 
 static int list_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	int ret;
 	struct folder *folder;
@@ -69,7 +67,7 @@ static int list_command_handler(struct pomp_conn *conn,
 	unsigned count;
 	char __attribute__((cleanup(ut_string_free))) *list = NULL;
 
-	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &folder_name);
+	ret = pomp_msg_read(msg, "%"PRIu32"%ms", &seqnum, &folder_name);
 	if (ret < 0) {
 		cmd = folder_name = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
@@ -88,12 +86,12 @@ static int list_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
-	return firmwared_answer(conn, msg, "%s%s%u%s", "LIST", folder_name,
-			count, list);
+	return firmwared_answer(conn, FWD_ANSWER_LIST, "%"PRIu32"%s%u%s",
+			seqnum, folder_name, count, list);
 }
 
 static const struct command list_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_LIST,
 		.help = "List all the items in the folder FOLDER.",
 		.long_help = "FOLDER is one of folders listed in an answer to "
 				"a FOLDERS command.",
@@ -119,7 +117,7 @@ static __attribute__((destructor)) void list_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(list_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

@@ -30,30 +30,29 @@ ULOG_DECLARE_TAG(firmwared_command_prepare);
 #include "folders.h"
 #include "utils.h"
 
-#define COMMAND_NAME "PREPARE"
-
 static int prepare_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	int ret;
-	char __attribute__((cleanup(ut_string_free)))*cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *folder = NULL;
-	char __attribute__((cleanup(ut_string_free))) *identification_string = NULL;
+	char __attribute__((cleanup(ut_string_free))) *identification_string =
+			NULL;
 
-	ret = pomp_msg_read(msg, "%ms%ms%ms", &cmd, &folder,
+	ret = pomp_msg_read(msg, "%"PRIu32"%ms%ms", &seqnum, &folder,
 			&identification_string);
 	if (ret < 0) {
-		cmd = folder = identification_string = NULL;
+		folder = identification_string = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}
 
+	// TODO how to send back seqnum ?
 	return folder_prepare(folder, identification_string,
 			pomp_msg_get_id(msg));
 }
 
 static const struct command prepare_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_PREPARE,
 		.help = "Creates an instance from a firmware, in the READY "
 				"state, of create a firmware from an URL, a "
 				"path to a final directory or a path to an "
@@ -93,7 +92,7 @@ static __attribute__((destructor)) void prepare_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(prepare_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

@@ -23,20 +23,17 @@ ULOG_DECLARE_TAG(firmwared_command_kill);
 #include "instances.h"
 #include "folders.h"
 
-#define COMMAND_NAME "KILL"
-
 static int kill_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	int ret;
-	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *identifier = NULL;
 	struct folder_entity *entity;
 	struct instance *instance;
 
-	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &identifier);
+	ret = pomp_msg_read(msg, "%"PRIu32"%ms", &seqnum, &identifier);
 	if (ret < 0) {
-		cmd = identifier = NULL;
+		identifier = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}
@@ -50,7 +47,7 @@ static int kill_command_handler(struct pomp_conn *conn,
 }
 
 static const struct command kill_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_KILL,
 		.help = "Kills a running instance.",
 		.long_help = "Searches for the instance whose sha1 or name is "
 				"INSTANCE_IDENTIFIER and kills it. All the "
@@ -82,7 +79,7 @@ static __attribute__((destructor)) void kill_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(kill_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

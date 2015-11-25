@@ -21,21 +21,10 @@ ULOG_DECLARE_TAG(firmwared_command_config_keys);
 #include "commands.h"
 #include "folders.h"
 
-#define COMMAND_NAME "CONFIG_KEYS"
-
 static int config_keys_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
-	int ret;
 	char __attribute__((cleanup(ut_string_free))) *list = NULL;
-	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
-
-	ret = pomp_msg_read(msg, "%ms", &cmd);
-	if (ret < 0) {
-		cmd = NULL;
-		ULOGE("pomp_msg_read: %s", strerror(-ret));
-		return ret;
-	}
 
 	list = config_list_keys();
 	if (list == NULL) {
@@ -43,11 +32,12 @@ static int config_keys_command_handler(struct pomp_conn *conn,
 		return -errno;
 	}
 
-	return firmwared_answer(conn, msg, "%s%s", COMMAND_NAME, list);
+	return firmwared_answer(conn, FWD_ANSWER_CONFIG_KEYS, "%"PRIu32"%s",
+			seqnum, list);
 }
 
 static const struct command config_keys_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_CONFIG_KEYS,
 		.help = "Lists all the config keys available.",
 		.synopsis = "",
 		.handler = config_keys_command_handler,
@@ -71,7 +61,7 @@ static __attribute__((destructor)) void config_keys_cmd_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(config_keys_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

@@ -23,20 +23,17 @@ ULOG_DECLARE_TAG(firmwared_command_start);
 #include "instances.h"
 #include "folders.h"
 
-#define COMMAND_NAME "START"
-
 static int start_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	int ret;
-	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *identifier = NULL;
 	struct folder_entity *entity;
 	struct instance *instance;
 
-	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &identifier);
+	ret = pomp_msg_read(msg, "%"PRIu32"%ms", &seqnum, &identifier);
 	if (ret < 0) {
-		cmd = identifier = NULL;
+		identifier = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}
@@ -55,7 +52,7 @@ static int start_command_handler(struct pomp_conn *conn,
 }
 
 static const struct command start_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_START,
 		.help = "Starts an previously prepared or stopped instance.",
 		.long_help = "Launches an instance, which switches to the "
 				"STARTED state and must be in the READY state.",
@@ -81,7 +78,7 @@ static __attribute__((destructor)) void start_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(start_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

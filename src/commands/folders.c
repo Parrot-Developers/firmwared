@@ -19,10 +19,8 @@ ULOG_DECLARE_TAG(firmwared_command_folders);
 #include "commands.h"
 #include "folders.h"
 
-#define COMMAND_NAME "FOLDERS"
-
 static int folders_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	const char *list;
 
@@ -30,11 +28,12 @@ static int folders_command_handler(struct pomp_conn *conn,
 	if (list == NULL)
 		return -errno;
 
-	return firmwared_answer(conn, msg, "%s%s", "FOLDERS", list);
+	return firmwared_answer(conn, FWD_ANSWER_FOLDERS, "%"PRIu32"%s", seqnum,
+			list);
 }
 
 static const struct command folders_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_FOLDERS,
 		.help = "Asks the server to list the currently registered "
 				"folders.",
 		.synopsis = "",
@@ -59,7 +58,7 @@ static __attribute__((destructor)) void folders_cmd_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(folders_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

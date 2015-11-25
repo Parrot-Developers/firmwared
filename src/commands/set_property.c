@@ -30,23 +30,20 @@ ULOG_DECLARE_TAG(firmwared_command_set_property);
 #include "instances.h"
 #include "folders.h"
 
-#define COMMAND_NAME "SET_PROPERTY"
-
 static int set_property_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	int ret;
-	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *folder = NULL;
 	char __attribute__((cleanup(ut_string_free))) *identifier = NULL;
 	char __attribute__((cleanup(ut_string_free))) *name = NULL;
 	char __attribute__((cleanup(ut_string_free))) *value = NULL;
 	struct folder_entity *entity;
 
-	ret = pomp_msg_read(msg, "%ms%ms%ms%ms%ms", &cmd, &folder, &identifier,
-			&name, &value);
+	ret = pomp_msg_read(msg, "%"PRIu32"%ms%ms%ms%ms", &seqnum, &folder,
+			&identifier, &name, &value);
 	if (ret < 0) {
-		cmd = folder = identifier = name = value = NULL;
+		folder = identifier = name = value = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}
@@ -65,7 +62,7 @@ static int set_property_command_handler(struct pomp_conn *conn,
 }
 
 static const struct command set_property_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_SET_PROPERTY,
 		.help = "Sets the value of the property PROPERTY to the value "
 				"PROPERTY_VALUE, for the entity whose name or "
 				"sha1 is ENTITY_IDENTIFIER from the folder "
@@ -102,7 +99,7 @@ static __attribute__((destructor)) void set_property_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(set_property_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

@@ -27,8 +27,7 @@ int firmwared_init(void);
 void firmwared_run(void);
 void firmwared_stop(void);
 int firmwared_notify(uint32_t msgid, const char *fmt, ...);
-#define firmwared_answer(c, m, f, ...) pomp_conn_send(c, pomp_msg_get_id(m), \
-		f, __VA_ARGS__)
+#define firmwared_answer pomp_conn_send
 struct io_mon *firmwared_get_mon(void);
 
 void firmwared_clean(void);

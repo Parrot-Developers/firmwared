@@ -23,21 +23,19 @@ ULOG_DECLARE_TAG(firmwared_command_show);
 #include "commands.h"
 #include "folders.h"
 
-#define COMMAND_NAME "SHOW"
-
 static int show_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	int ret;
 	struct folder_entity *entity;
-	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *folder_name = NULL;
 	char __attribute__((cleanup(ut_string_free))) *identifier = NULL;
 	char __attribute__((cleanup(ut_string_free))) *info = NULL;
 
-	ret = pomp_msg_read(msg, "%ms%ms%ms", &cmd, &folder_name, &identifier);
+	ret = pomp_msg_read(msg, "%"PRIu32"%ms%ms", &seqnum, &folder_name,
+			&identifier);
 	if (ret < 0) {
-		cmd = folder_name = identifier = NULL;
+		folder_name = identifier = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}
@@ -55,12 +53,13 @@ static int show_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
-	return firmwared_answer(conn, msg, "%s%s%s%s%s", "SHOW", folder_name,
-			folder_entity_get_sha1(entity), entity->name, info);
+	return firmwared_answer(conn, FWD_ANSWER_SHOW, "%"PRIu32"%s%s%s%s",
+			seqnum, folder_name, folder_entity_get_sha1(entity),
+			entity->name, info);
 }
 
 static const struct command show_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_SHOW,
 		.help = "Asks for all the information on a given entity of a "
 				"folder.",
 		.synopsis = "FOLDER IDENTIFIER",
@@ -85,7 +84,7 @@ static __attribute__((destructor)) void show_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(show_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

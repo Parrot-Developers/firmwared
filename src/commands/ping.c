@@ -18,16 +18,14 @@ ULOG_DECLARE_TAG(firmwared_command_ping);
 
 #include "commands.h"
 
-#define COMMAND_NAME "PING"
-
 static int ping_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
-	return firmwared_answer(conn, msg, "%s", "PONG");
+	return firmwared_answer(conn, FWD_ANSWER_PONG, "%"PRIu32, seqnum);
 }
 
 static const struct command ping_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_PING,
 		.help = "Asks for the server to answer with a PONG "
 				"notification.",
 		.synopsis = "",
@@ -52,7 +50,7 @@ static __attribute__((destructor)) void ping_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(ping_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

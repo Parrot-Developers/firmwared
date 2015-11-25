@@ -21,20 +21,17 @@ ULOG_DECLARE_TAG(firmwared_command_remount);
 #include "commands.h"
 #include "instances.h"
 
-#define COMMAND_NAME "REMOUNT"
-
 static int remount_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	int ret;
-	char __attribute__((cleanup(ut_string_free))) *cmd = NULL;
 	char __attribute__((cleanup(ut_string_free))) *identifier = NULL;
 	struct folder_entity *entity;
 	struct instance *instance;
 
-	ret = pomp_msg_read(msg, "%ms%ms", &cmd, &identifier);
+	ret = pomp_msg_read(msg, "%"PRIu32"%ms", &seqnum, &identifier);
 	if (ret < 0) {
-		cmd = identifier = NULL;
+		identifier = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
 		return ret;
 	}
@@ -50,11 +47,11 @@ static int remount_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
-	return firmwared_answer(conn, msg, "%s", "PONG");
+	return firmwared_answer(conn, FWD_ANSWER_REMOUNTED, "%"PRIu32, seqnum);
 }
 
 static const struct command remount_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_REMOUNT,
 		.help = "Asks to remount the union file system of an instance, "
 				"to take into account modifications in the "
 				"lower dir (e.g. rebuild of a final dir).",
@@ -80,7 +77,7 @@ static __attribute__((destructor)) void remount_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(remount_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }

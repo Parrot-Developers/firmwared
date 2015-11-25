@@ -18,10 +18,8 @@ ULOG_DECLARE_TAG(firmwared_command_commands);
 
 #include "commands.h"
 
-#define COMMAND_NAME "COMMANDS"
-
 static int commands_command_handler(struct pomp_conn *conn,
-		const struct pomp_msg *msg)
+		const struct pomp_msg *msg, uint32_t seqnum)
 {
 	const char *list;
 
@@ -29,11 +27,12 @@ static int commands_command_handler(struct pomp_conn *conn,
 	if (list == NULL)
 		return -errno;
 
-	return firmwared_answer(conn, msg, "%s%s", "COMMANDS", list);
+	return firmwared_answer(conn, FWD_ANSWER_COMMANDS, "%"PRIu32"%s",
+			seqnum, list);
 }
 
 static const struct command commands_command = {
-		.name = COMMAND_NAME,
+		.msgid = FWD_COMMAND_COMMANDS,
 		.help = "List the different commands registered so far.",
 		.synopsis = "",
 		.handler = commands_command_handler,
@@ -57,7 +56,7 @@ static __attribute__((destructor)) void commands_cleanup(void)
 
 	ULOGD("%s", __func__);
 
-	ret = command_unregister(COMMAND_NAME);
+	ret = command_unregister(commands_command.msgid);
 	if (ret < 0)
 		ULOGE("command_register: %s", strerror(-ret));
 }
