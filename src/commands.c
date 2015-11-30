@@ -208,7 +208,7 @@ const char *command_list(void)
 	return list;
 }
 
-static __attribute((destructor)) void commands_cleanup(void)
+static __attribute__((destructor)) void commands_cleanup(void)
 {
 	ut_string_free(&list);
 }
