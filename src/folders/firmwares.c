@@ -13,6 +13,7 @@
 #include <dirent.h>
 #include <fnmatch.h>
 
+#include <inttypes.h>
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
@@ -31,6 +32,8 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 #include <ut_string.h>
 #include <ut_file.h>
 #include <ut_process.h>
+
+#include <fwd.h>
 
 #include "preparation.h"
 #include "folders.h"
@@ -192,9 +195,10 @@ static void preparation_progress_sep_cb(struct io_src_sep *sep, char *chunk,
 		ULOGW("resetting firmware preparation timeout failed: %s",
 				strerror(-ret));
 
-	ret = firmwared_notify((uint32_t)-1, "%s%s%s%s",
-			"PREPARATION_PROGRESS", preparation->folder,
-			preparation->identification_string, chunk);
+	ret = firmwared_notify(FWD_ANSWER_PREPARE_PROGRESS,
+			FWD_FORMAT_ANSWER_PREPARE_PROGRESS, preparation->seqnum,
+			preparation->folder, preparation->identification_string,
+			chunk);
 	if (ret < 0)
 		ULOGE("firmwared_notify: %s", strerror(-ret));
 }
@@ -379,8 +383,8 @@ static void firmware_preparation_termination(struct io_src_pid *pid_src,
 
 	return;
 err:
-	firmwared_notify(preparation->msgid, "%s%d%s", "ERROR", -ret,
-			strerror(-ret));
+	firmwared_notify(FWD_ANSWER_ERROR, FWD_FORMAT_ANSWER_ERROR,
+			preparation->seqnum, -ret, strerror(-ret));
 
 	preparation->completion(preparation, NULL);
 }

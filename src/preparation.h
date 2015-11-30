@@ -30,7 +30,7 @@ struct preparation {
 
 	/* fields initialized by the folder_prepare function */
 	char *identification_string;
-	uint32_t msgid;
+	uint32_t seqnum;
 	/* functions the preparation will call */
 	/* error when entity is NULL with errno set */
 	preparation_completion_cb completion;
@@ -41,7 +41,7 @@ struct preparation {
 #define to_preparation(p) ut_container_of(p, struct preparation, node)
 
 int preparation_init(struct preparation *preparation,
-		const char *identification_string, uint32_t msgid,
+		const char *identification_string, uint32_t seqnum,
 		preparation_completion_cb completion);
 
 int preparation_match_str_identification_string(struct rs_node *node,

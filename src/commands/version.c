@@ -40,8 +40,8 @@ static int version_command_handler(struct pomp_conn *conn,
 		return -ENOMEM;
 	}
 
-	return firmwared_answer(conn, FWD_ANSWER_VERSION, "%"PRIu32"%s", seqnum,
-			version);
+	return firmwared_answer(conn, FWD_ANSWER_VERSION,
+			FWD_FORMAT_ANSWER_VERSION, seqnum, version);
 }
 
 static const struct command version_command = {

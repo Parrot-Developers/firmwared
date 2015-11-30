@@ -32,8 +32,8 @@ static int config_keys_command_handler(struct pomp_conn *conn,
 		return -errno;
 	}
 
-	return firmwared_answer(conn, FWD_ANSWER_CONFIG_KEYS, "%"PRIu32"%s",
-			seqnum, list);
+	return firmwared_answer(conn, FWD_ANSWER_CONFIG_KEYS,
+			FWD_FORMAT_ANSWER_CONFIG_KEYS, seqnum, list);
 }
 
 static const struct command config_keys_command = {

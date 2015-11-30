@@ -28,7 +28,8 @@ static int properties_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *list = NULL;
 	char __attribute__((cleanup(ut_string_free))) *folder = NULL;
 
-	ret = pomp_msg_read(msg, "%"PRIu32"%ms", &seqnum, &folder);
+	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_PROPERTIES_READ, &seqnum,
+			&folder);
 	if (ret < 0) {
 		folder = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
@@ -41,8 +42,8 @@ static int properties_command_handler(struct pomp_conn *conn,
 		return -errno;
 	}
 
-	return firmwared_answer(conn, FWD_COMMAND_PROPERTIES, "%"PRIu32"%s%s",
-			seqnum, folder, list);
+	return firmwared_answer(conn, FWD_ANSWER_PROPERTIES,
+			FWD_FORMAT_ANSWER_PROPERTIES, seqnum, folder, list);
 }
 
 static const struct command properties_command = {

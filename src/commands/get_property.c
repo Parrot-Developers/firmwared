@@ -39,9 +39,11 @@ static int get_property_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *property_name = NULL;
 	char __attribute__((cleanup(ut_string_free))) *value = NULL;
 	struct folder_entity *entity;
+	uint32_t msgid = pomp_msg_get_id(msg);
+	enum fwd_message ansid = fwd_message_command_answer(msgid);
 
-	ret = pomp_msg_read(msg, "%"PRIu32"%ms%ms%ms", &seqnum, &folder,
-			&identifier, &property_name);
+	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_GET_PROPERTY_READ, &seqnum,
+			&folder, &identifier, &property_name);
 	if (ret < 0) {
 		folder = identifier = property_name = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
@@ -57,8 +59,8 @@ static int get_property_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
-	return firmwared_notify(pomp_msg_get_id(msg), "%"PRIu32"%s%s%s%s",
-			seqnum, folder, identifier, property_name, value);
+	return firmwared_notify(ansid, FWD_FORMAT_ANSWER_GET_PROPERTY, seqnum,
+			folder, identifier, property_name, value);
 }
 
 static const struct command get_property_command = {

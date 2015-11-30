@@ -30,7 +30,8 @@ static int help_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *command_name = NULL;
 	const char *help;
 
-	ret = pomp_msg_read(msg, "%"PRIu32"%ms", &seqnum, &command_name);
+	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_HELP_READ, &seqnum,
+			&command_name);
 	if (ret < 0) {
 		command_name = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
@@ -44,8 +45,8 @@ static int help_command_handler(struct pomp_conn *conn,
 		return -EINVAL;
 	}
 
-	return firmwared_answer(conn, FWD_ANSWER_HELP, "%"PRIu32"%s%s", seqnum,
-			command_name, help);
+	return firmwared_answer(conn, FWD_ANSWER_HELP, FWD_FORMAT_ANSWER_HELP,
+			seqnum, command_name, help);
 }
 
 static const struct command help_command = {

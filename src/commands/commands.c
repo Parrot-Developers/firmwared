@@ -27,8 +27,8 @@ static int commands_command_handler(struct pomp_conn *conn,
 	if (list == NULL)
 		return -errno;
 
-	return firmwared_answer(conn, FWD_ANSWER_COMMANDS, "%"PRIu32"%s",
-			seqnum, list);
+	return firmwared_answer(conn, FWD_ANSWER_COMMANDS,
+			FWD_FORMAT_ANSWER_COMMANDS, seqnum, list);
 }
 
 static const struct command commands_command = {

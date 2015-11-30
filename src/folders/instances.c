@@ -55,6 +55,8 @@ ULOG_DECLARE_TAG(firmwared_instances);
 
 #include <ptspair.h>
 
+#include <fwd.h>
+
 #include "log.h"
 #include "process.h"
 #include "folders.h"
@@ -343,9 +345,10 @@ static void pid_src_cb(struct io_src_pid *pid_src, pid_t pid, int status)
 
 	i->state = INSTANCE_READY;
 
-	ret = firmwared_notify(i->killer_msgid, "%s%s%s", "DEAD",
-			instance_get_sha1(i), instance_get_name(i));
-	i->killer_msgid = (uint32_t) -1;
+	ret = firmwared_notify(FWD_ANSWER_DEAD, FWD_FORMAT_ANSWER_DEAD,
+			i->killer_seqnum, instance_get_sha1(i),
+			instance_get_name(i));
+	i->killer_seqnum = (uint32_t)-1;
 	if (ret < 0)
 		ULOGE("firmwared_notify : err=%d(%s)", ret, strerror(-ret));
 }
@@ -731,7 +734,7 @@ static int init_instance(struct instance *instance,
 	}
 	instance->time = time(NULL);
 	instance->state = INSTANCE_READY;
-	instance->killer_msgid = (uint32_t) -1;
+	instance->killer_seqnum = (uint32_t)-1;
 	instance->firmware_path = strdup(firmware_get_path(firmware));
 	instance->interface = strdup(config_get(CONFIG_CONTAINER_INTERFACE));
 	if (instance->firmware_path == NULL || instance->interface == NULL) {
@@ -990,7 +993,7 @@ int instance_start(struct instance *instance)
 	return 0;
 }
 
-int instance_kill(struct instance *instance, uint32_t killer_msgid)
+int instance_kill(struct instance *instance, uint32_t killer_seqnum)
 {
 	int ret;
 
@@ -1001,7 +1004,7 @@ int instance_kill(struct instance *instance, uint32_t killer_msgid)
 		return -ECHILD;
 
 	instance->state = INSTANCE_STOPPING;
-	instance->killer_msgid = killer_msgid;
+	instance->killer_seqnum = killer_seqnum;
 	ret = kill(io_src_pid_get_pid(&instance->pid_src), SIGUSR1);
 	if (ret < 0) {
 		ret = -errno;

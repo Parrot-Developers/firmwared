@@ -32,8 +32,8 @@ static int show_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *identifier = NULL;
 	char __attribute__((cleanup(ut_string_free))) *info = NULL;
 
-	ret = pomp_msg_read(msg, "%"PRIu32"%ms%ms", &seqnum, &folder_name,
-			&identifier);
+	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_SHOW_READ, &seqnum,
+			&folder_name, &identifier);
 	if (ret < 0) {
 		folder_name = identifier = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
@@ -53,7 +53,7 @@ static int show_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
-	return firmwared_answer(conn, FWD_ANSWER_SHOW, "%"PRIu32"%s%s%s%s",
+	return firmwared_answer(conn, FWD_ANSWER_SHOW, FWD_FORMAT_ANSWER_SHOW,
 			seqnum, folder_name, folder_entity_get_sha1(entity),
 			entity->name, info);
 }

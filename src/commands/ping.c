@@ -21,14 +21,15 @@ ULOG_DECLARE_TAG(firmwared_command_ping);
 static int ping_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg, uint32_t seqnum)
 {
-	return firmwared_answer(conn, FWD_ANSWER_PONG, "%"PRIu32, seqnum);
+	return firmwared_answer(conn, FWD_ANSWER_PONG, FWD_FORMAT_ANSWER_PONG,
+			seqnum);
 }
 
 static const struct command ping_command = {
 		.msgid = FWD_COMMAND_PING,
 		.help = "Asks for the server to answer with a PONG "
 				"notification.",
-		.synopsis = "",
+		.synopsis = "PING",
 		.handler = ping_command_handler,
 };
 

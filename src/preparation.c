@@ -14,7 +14,7 @@
 #include "preparation.h"
 
 int preparation_init(struct preparation *preparation,
-		const char *identification_string, uint32_t msgid,
+		const char *identification_string, uint32_t seqnum,
 		preparation_completion_cb completion)
 {
 	if (preparation == NULL ||
@@ -23,7 +23,7 @@ int preparation_init(struct preparation *preparation,
 		return -EINVAL;
 
 	/* no memset, the preparation implementation has filled some fields */
-	preparation->msgid = msgid;
+	preparation->seqnum = seqnum;
 	preparation->completion = completion;
 	preparation->identification_string = strdup(identification_string);
 	if (preparation->identification_string == NULL)

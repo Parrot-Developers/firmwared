@@ -38,7 +38,7 @@ struct instance {
 	/* caching of sha1 computation */
 	char sha1[2 * SHA_DIGEST_LENGTH + 1];
 	char *info;
-	uint32_t killer_msgid;
+	uint32_t killer_seqnum;
 
 	/* synchronization between monitor and pid 1 */
 	struct ut_process_sync sync;

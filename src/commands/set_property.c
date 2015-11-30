@@ -39,9 +39,11 @@ static int set_property_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *name = NULL;
 	char __attribute__((cleanup(ut_string_free))) *value = NULL;
 	struct folder_entity *entity;
+	uint32_t msgid = pomp_msg_get_id(msg);
+	enum fwd_message ansid = fwd_message_command_answer(msgid);
 
-	ret = pomp_msg_read(msg, "%"PRIu32"%ms%ms%ms%ms", &seqnum, &folder,
-			&identifier, &name, &value);
+	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_SET_PROPERTY_READ, &seqnum,
+			&folder, &identifier, &name, &value);
 	if (ret < 0) {
 		folder = identifier = name = value = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
@@ -57,8 +59,8 @@ static int set_property_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
-	return firmwared_notify(pomp_msg_get_id(msg), "%s%s%s%s%s",
-			"PROPERTY_SET", folder, identifier, name, value);
+	return firmwared_notify(ansid, FWD_FORMAT_ANSWER_PROPERTY_SET, seqnum,
+			folder, identifier, name, value);
 }
 
 static const struct command set_property_command = {

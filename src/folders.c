@@ -16,10 +16,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <limits.h>
+#include <inttypes.h>
 
 #include <ut_utils.h>
 #include <ut_string.h>
 #include <ut_file.h>
+
+#include <fwd.h>
 
 #include "preparation.h"
 #include "folders.h"
@@ -332,10 +335,10 @@ static int entity_completion(struct preparation *preparation,
 	ret = 0;
 out:
 	if (ret >= 0)
-		firmwared_notify(preparation->msgid, "%s%s%s%s", "PREPARED",
-				preparation->folder,
-				folder_entity_get_sha1(entity),
-				entity->name);
+		firmwared_notify(FWD_ANSWER_PREPARED,
+				FWD_FORMAT_ANSWER_PREPARED,
+				preparation->seqnum, preparation->folder,
+				folder_entity_get_sha1(entity), entity->name);
 
 	preparation->has_ended = true;
 
@@ -491,7 +494,7 @@ unsigned folder_get_count(const char *folder_name)
 }
 
 int folder_prepare(const char *folder_name, const char *identification_string,
-		uint32_t msgid)
+		uint32_t seqnum)
 {
 	int ret;
 	struct folder *folder;
@@ -504,7 +507,7 @@ int folder_prepare(const char *folder_name, const char *identification_string,
 	preparation = folder->ops.get_preparation();
 	if (preparation == NULL)
 		return -errno;
-	ret = preparation_init(preparation, identification_string, msgid,
+	ret = preparation_init(preparation, identification_string, seqnum,
 			entity_completion);
 	if (ret < 0)
 		goto err;

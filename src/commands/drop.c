@@ -18,6 +18,8 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_command_drop);
 
+#include <fwd.h>
+
 #include "commands.h"
 #include "firmwares.h"
 #include "instances.h"
@@ -32,8 +34,10 @@ static int drop_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *name = NULL;
 	char __attribute__((cleanup(ut_string_free))) *sha1 = NULL;
 	struct folder_entity *entity;
+	uint32_t msgid = pomp_msg_get_id(msg);
+	enum fwd_message ansid = fwd_message_command_answer(msgid);
 
-	ret = pomp_msg_read(msg, "%"PRIu32"%ms%ms", &seqnum, &folder,
+	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_DROP_READ, &seqnum, &folder,
 			&identifier);
 	if (ret < 0) {
 		folder = identifier = NULL;
@@ -57,8 +61,8 @@ static int drop_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
-	return firmwared_notify(pomp_msg_get_id(msg), "%s%s%s", folder, sha1,
-			name);
+	return firmwared_notify(ansid, FWD_FORMAT_ANSWER_DROPPED, seqnum,
+			folder, sha1, name);
 }
 
 static const struct command drop_command = {

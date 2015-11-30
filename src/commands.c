@@ -127,8 +127,9 @@ int command_invoke(struct pomp_conn *conn, const struct pomp_msg *msg)
 	ret = command_process(conn, msg, seqnum);
 	if (ret < 0) {
 		ULOGE("command_process: %s", strerror(-ret));
-		return firmwared_answer(conn, FWD_ANSWER_ERROR, "%"PRIu32"%d%s",
-				seqnum, -ret, strerror(-ret));
+		return firmwared_answer(conn, FWD_ANSWER_ERROR,
+				FWD_FORMAT_ANSWER_ERROR, seqnum, -ret,
+				strerror(-ret));
 	}
 
 	return 0;

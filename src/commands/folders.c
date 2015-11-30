@@ -28,8 +28,8 @@ static int folders_command_handler(struct pomp_conn *conn,
 	if (list == NULL)
 		return -errno;
 
-	return firmwared_answer(conn, FWD_ANSWER_FOLDERS, "%"PRIu32"%s", seqnum,
-			list);
+	return firmwared_answer(conn, FWD_ANSWER_FOLDERS,
+			FWD_FORMAT_ANSWER_FOLDERS, seqnum, list);
 }
 
 static const struct command folders_command = {

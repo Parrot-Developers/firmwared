@@ -70,7 +70,7 @@ struct folder_entity *folder_next(const struct folder *folder,
 		struct folder_entity *entity);
 unsigned folder_get_count(const char *folder);
 int folder_prepare(const char *folder, const char *identification_string,
-		uint32_t msgid);
+		uint32_t seqnum);
 int folders_reap_preparations(void);
 int folder_preparation_abort(const char *folder,
 		const char *identification_string);

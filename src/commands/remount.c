@@ -29,7 +29,8 @@ static int remount_command_handler(struct pomp_conn *conn,
 	struct folder_entity *entity;
 	struct instance *instance;
 
-	ret = pomp_msg_read(msg, "%"PRIu32"%ms", &seqnum, &identifier);
+	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_REMOUNT_READ, &seqnum,
+			&identifier);
 	if (ret < 0) {
 		identifier = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
@@ -47,7 +48,8 @@ static int remount_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
-	return firmwared_answer(conn, FWD_ANSWER_REMOUNTED, "%"PRIu32, seqnum);
+	return firmwared_answer(conn, FWD_ANSWER_REMOUNTED,
+			FWD_FORMAT_ANSWER_REMOUNTED, seqnum);
 }
 
 static const struct command remount_command = {

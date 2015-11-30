@@ -21,9 +21,12 @@ ULOG_DECLARE_TAG(firmwared_command_quit);
 static int quit_command_handler(struct pomp_conn *conn,
 		const struct pomp_msg *msg, uint32_t seqnum)
 {
+	uint32_t msgid = pomp_msg_get_id(msg);
+	enum fwd_message ansid = fwd_message_command_answer(msgid);
+
 	firmwared_stop();
 
-	return firmwared_notify(pomp_msg_get_id(msg), "%"PRIu32, seqnum);
+	return firmwared_notify(ansid, FWD_FORMAT_ANSWER_BYEBYE, seqnum);
 
 }
 

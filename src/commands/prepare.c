@@ -38,7 +38,7 @@ static int prepare_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *identification_string =
 			NULL;
 
-	ret = pomp_msg_read(msg, "%"PRIu32"%ms%ms", &seqnum, &folder,
+	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_PREPARE_READ, &seqnum, &folder,
 			&identification_string);
 	if (ret < 0) {
 		folder = identification_string = NULL;
@@ -46,9 +46,7 @@ static int prepare_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
-	// TODO how to send back seqnum ?
-	return folder_prepare(folder, identification_string,
-			pomp_msg_get_id(msg));
+	return folder_prepare(folder, identification_string, seqnum);
 }
 
 static const struct command prepare_command = {

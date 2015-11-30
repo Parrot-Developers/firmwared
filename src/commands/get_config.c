@@ -32,7 +32,8 @@ static int get_config_command_handler(struct pomp_conn *conn,
 	enum config_key key;
 	size_t len;
 
-	ret = pomp_msg_read(msg, "%"PRIu32"%ms", &seqnum, &config_key);
+	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_GET_CONFIG_READ, &seqnum,
+			&config_key);
 	if (ret < 0) {
 		config_key = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));
@@ -45,8 +46,9 @@ static int get_config_command_handler(struct pomp_conn *conn,
 	if (key == (enum config_key)-1)
 		return -ESRCH;
 
-	return firmwared_answer(conn, FWD_ANSWER_GET_CONFIG, "%"PRIu32"%s%s",
-			seqnum, config_key, config_get(key));
+	return firmwared_answer(conn, FWD_ANSWER_GET_CONFIG,
+			FWD_FORMAT_ANSWER_GET_CONFIG, seqnum, config_key,
+			config_get(key));
 }
 
 static const struct command get_config_command = {
