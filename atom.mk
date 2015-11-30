@@ -67,6 +67,9 @@ LOCAL_SRC_FILES := \
 LOCAL_LIBRARIES := \
 	libutils
 
+LOCAL_CFLAGS := -DFWD_INTERPRETER=\"$(TARGET_LOADER)\"
+LOCAL_LDFLAGS := -Wl,-e,$(LOCAL_MODULE)_main
+
 LOCAL_EXPORT_C_INCLUDES  := $(LOCAL_PATH)/include
 
 include $(BUILD_LIBRARY)
@@ -86,5 +89,8 @@ LOCAL_REQUIRED_MODULES := firmwared \
 LOCAL_COPY_FILES := \
 	man/fdc.1:usr/share/man/man1/ \
 	utils/fdc:usr/bin/fdc
+
+LOCAL_LIBRARIES := \
+	libfwd
 
 include $(BUILD_CUSTOM)

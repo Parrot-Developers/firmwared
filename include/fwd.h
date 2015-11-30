@@ -80,6 +80,16 @@ enum fwd_message fwd_message_from_str(const char *str);
 
 bool fwd_message_is_invalid(enum fwd_message message);
 
+/**
+ * Allows to retrieve the answer a client must wait for, in order to know if
+ * it's command has succeeded.
+ * @param command command to retrieve the waited answer for
+ * @return answer
+ */
+enum fwd_message fwd_message_command_answer(enum fwd_message command);
+
+void libfwd_main(void);
+
 #ifdef __cplusplus
 }
 #endif
