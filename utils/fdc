@@ -93,26 +93,15 @@ cmd_id=$(LIBFWD_MESSAGE=${command} ${libfwd})
 ans_id=$(LIBFWD_GET_ANSWER_ID= LIBFWD_MESSAGE=${command} ${libfwd})
 err_id=$(LIBFWD_MESSAGE=ERROR ${libfwd})
 format=$(LIBFWD_GET_MESSAGE_FORMAT= LIBFWD_MESSAGE=${command} ${libfwd})
-# TODO change commansds order to match enum fwd_message
+# order shall match enum fwd_message
 case "${command}" in
-	PING)
+	COMMANDS)
 		args=""
-		sed_command="s/.*/PONG/g"
+		sed_command="s/.*STR:'\([^']*\)'.*/\1 RESTART/g"
 		;;
-	FOLDERS)
+	CONFIG_KEYS)
 		args=""
-		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
-		;;
-	LIST)
-		folder=$2
-		args="${folder}"
-		sed_command="s/.*STR:'${folder}', U32:[0-9]*, STR:'\([^']*\)'.*/\1/g"
-		;;
-	SHOW)
-		folder=$2
-		identifier=$3
-		args="${folder} ${identifier}"
-		sed_command="s/.*STR:'//g"
+		sed_command="s/.*ID:${ans_id}.*STR:'\([^']*\)'.*/\1/g"
 		;;
 	DROP)
 		folder=$2
@@ -120,28 +109,21 @@ case "${command}" in
 		args="${folder} ${identifier}"
 		sed_command="s/.*/${identifier} dropped/g"
 		;;
-	PREPARE)
+	FOLDERS)
+		args=""
+		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
+		;;
+	GET_CONFIG)
+		config_key=$2
+		args="${config_key}"
+		sed_command="s#.*STR:'[^']*', STR:'\([^']*\)'.*#\1#g"
+		;;
+	GET_PROPERTY)
 		folder=$2
-		if [ "${folder}" = "firmwares" ]; then
-			timeout=-1
-			exit_command="tput cnorm"
-		fi
-		identification_string=$3
-		args="${folder} ${identification_string}"
-		sed_command[0]="s#.*ID:${ans_id}.*STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#new entity in \1 folder created\nsha1: \2\nname: \3#g"
-		sed_command[1]="s#.*STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#\3% done$(echo -e '\033[1A\033[?25l')#g"
-		;;
-	START)
-		format="%u%s"
-		identifier=$2
-		args="${identifier}"
-		sed_command="s/.*/${identifier} started/g"
-		;;
-	KILL)
-		format="%u%s"
-		identifier=$2
-		args="${identifier}"
-		sed_command="s/.*/${identifier} killed/g"
+		entity_identifier=$3
+		property_name=$4
+		args="${folder} ${entity_identifier} ${property_name}"
+		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
 		;;
 	HELP)
 		identifier=$(echo $2 | tr '[a-z]' '[A-Z]')
@@ -155,29 +137,53 @@ remount and start on an instance."
 		args="${identifier}"
 		sed_command="s/.*STR:'//g"
 		;;
-	VERSION)
-		args=""
-		sed_command="s/.*STR:'//g"
+	KILL)
+		format="%u%s"
+		identifier=$2
+		args="${identifier}"
+		sed_command="s/.*/${identifier} killed/g"
 		;;
-	QUIT)
-		args=""
-		sed_command="s/.*ID:${ans_id}.*/firmwared said bye bye/g"
+	LIST)
+		folder=$2
+		args="${folder}"
+		sed_command="s/.*STR:'${folder}', U32:[0-9]*, STR:'\([^']*\)'.*/\1/g"
 		;;
-	COMMANDS)
+	PING)
 		args=""
-		sed_command="s/.*STR:'\([^']*\)'.*/\1 RESTART/g"
+		sed_command="s/.*/PONG/g"
+		;;
+	PREPARE)
+		folder=$2
+		if [ "${folder}" = "firmwares" ]; then
+			timeout=-1
+			exit_command="tput cnorm"
+		fi
+		identification_string=$3
+		args="${folder} ${identification_string}"
+		sed_command[0]="s#.*ID:${ans_id}.*STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#new entity in \1 folder created\nsha1: \2\nname: \3#g"
+		sed_command[1]="s#.*STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#\3% done$(echo -e '\033[1A\033[?25l')#g"
 		;;
 	PROPERTIES)
 		folder=$2
 		args="${folder}"
 		sed_command="s/.*STR:'\([^']*\)'[^']*/\1/g"
 		;;
-	GET_PROPERTY)
-		folder=$2
-		entity_identifier=$3
-		property_name=$4
-		args="${folder} ${entity_identifier} ${property_name}"
-		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
+	QUIT)
+		args=""
+		sed_command="s/.*ID:${ans_id}.*/firmwared said bye bye/g"
+		;;
+	REMOUNT)
+		format="%u%s"
+		identifier=$2
+		args="${identifier}"
+		sed_command="s/.*/${identifier} remounted/g"
+		;;
+	RESTART)
+		identifier=$2
+		fdc kill $identifier || true
+		fdc remount $identifier
+		fdc start $identifier
+		exit 0
 		;;
 	SET_PROPERTY)
 		folder=$2
@@ -187,28 +193,22 @@ remount and start on an instance."
 		args="${folder} ${entity_identifier} ${property_name} ${property_value}"
 		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
 		;;
-	GET_CONFIG)
-		config_key=$2
-		args="${config_key}"
-		sed_command="s#.*STR:'[^']*', STR:'\([^']*\)'.*#\1#g"
+	SHOW)
+		folder=$2
+		identifier=$3
+		args="${folder} ${identifier}"
+		sed_command="s/.*STR:'//g"
 		;;
-	CONFIG_KEYS)
-		args=""
-		sed_command="s/.*ID:${ans_id}.*STR:'\([^']*\)'.*/\1/g"
-		;;
-	REMOUNT)
+	START)
 		format="%u%s"
 		identifier=$2
 		args="${identifier}"
-		sed_command="s/.*/${identifier} remounted/g"
+		sed_command="s/.*/${identifier} started/g"
 		;;
 # upper level commands
-	RESTART)
-		identifier=$2
-		fdc kill $identifier || true
-		fdc remount $identifier
-		fdc start $identifier
-		exit 0
+	VERSION)
+		args=""
+		sed_command="s/.*STR:'//g"
 		;;
 	*)
 		exit ${ERROR_INVALID_COMMAND}
