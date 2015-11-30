@@ -26,6 +26,7 @@
 int firmwared_init(void);
 void firmwared_run(void);
 void firmwared_stop(void);
+__attribute__ ((format (printf, 2, 3)))
 int firmwared_notify(uint32_t msgid, const char *fmt, ...);
 #define firmwared_answer pomp_conn_send
 struct io_mon *firmwared_get_mon(void);
