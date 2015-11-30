@@ -79,6 +79,8 @@ extern "C" {
 
 /* values must stay consecutive */
 enum fwd_message {
+	FWD_MESSAGE_INVALID,
+
 	/* commands, i.e. from client to server */
 	FWD_MESSAGE_FIRST,
 	FWD_COMMAND_FIRST = FWD_MESSAGE_FIRST,
@@ -133,7 +135,6 @@ enum fwd_message {
 
 	FWD_ANSWER_LAST = FWD_ANSWER_STARTED,
 	FWD_MESSAGE_LAST = FWD_ANSWER_LAST,
-	FWD_MESSAGE_INVALID = FWD_MESSAGE_LAST + 1,
 };
 
 const char *fwd_message_str(enum fwd_message message);
