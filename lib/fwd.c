@@ -136,6 +136,95 @@ const char *fwd_message_str(enum fwd_message message)
 	}
 }
 
+const char *fwd_message_format(enum fwd_message message)
+{
+	switch (message) {
+	/* commands, i.e. from client to server */
+	case FWD_COMMAND_COMMANDS:
+		return FWD_FORMAT_COMMAND_COMMANDS;
+	case FWD_COMMAND_CONFIG_KEYS:
+		return FWD_FORMAT_COMMAND_CONFIG_KEYS;
+	case FWD_COMMAND_DROP:
+		return FWD_FORMAT_COMMAND_DROP;
+	case FWD_COMMAND_FOLDERS:
+		return FWD_FORMAT_COMMAND_FOLDERS;
+	case FWD_COMMAND_GET_CONFIG:
+		return FWD_FORMAT_COMMAND_GET_CONFIG;
+	case FWD_COMMAND_GET_PROPERTY:
+		return FWD_FORMAT_COMMAND_GET_PROPERTY;
+	case FWD_COMMAND_HELP:
+		return FWD_FORMAT_COMMAND_HELP;
+	case FWD_COMMAND_KILL:
+		return FWD_FORMAT_COMMAND_KILL;
+	case FWD_COMMAND_LIST:
+		return FWD_FORMAT_COMMAND_LIST;
+	case FWD_COMMAND_PING:
+		return FWD_FORMAT_COMMAND_PING;
+	case FWD_COMMAND_PREPARE:
+		return FWD_FORMAT_COMMAND_PREPARE;
+	case FWD_COMMAND_PROPERTIES:
+		return FWD_FORMAT_COMMAND_PROPERTIES;
+	case FWD_COMMAND_QUIT:
+		return FWD_FORMAT_COMMAND_QUIT;
+	case FWD_COMMAND_REMOUNT:
+		return FWD_FORMAT_COMMAND_REMOUNT;
+	case FWD_COMMAND_SET_PROPERTY:
+		return FWD_FORMAT_COMMAND_SET_PROPERTY;
+	case FWD_COMMAND_SHOW:
+		return FWD_FORMAT_COMMAND_SHOW;
+	case FWD_COMMAND_START:
+		return FWD_FORMAT_COMMAND_START;
+	case FWD_COMMAND_VERSION:
+		return FWD_FORMAT_COMMAND_VERSION;
+	/* answers, i.e. from server to client */
+	/* acks */
+	case FWD_ANSWER_COMMANDS:
+		return FWD_FORMAT_ANSWER_COMMANDS;
+	case FWD_ANSWER_CONFIG_KEYS:
+		return FWD_FORMAT_ANSWER_CONFIG_KEYS;
+	case FWD_ANSWER_ERROR:
+		return FWD_FORMAT_ANSWER_ERROR;
+	case FWD_ANSWER_FOLDERS:
+		return FWD_FORMAT_ANSWER_FOLDERS;
+	case FWD_ANSWER_GET_CONFIG:
+		return FWD_FORMAT_ANSWER_GET_CONFIG;
+	case FWD_ANSWER_GET_PROPERTY:
+		return FWD_FORMAT_ANSWER_GET_PROPERTY;
+	case FWD_ANSWER_HELP:
+		return FWD_FORMAT_ANSWER_HELP;
+	case FWD_ANSWER_LIST:
+		return FWD_FORMAT_ANSWER_LIST;
+	case FWD_ANSWER_PONG:
+		return FWD_FORMAT_ANSWER_PONG;
+	case FWD_ANSWER_PROPERTIES:
+		return FWD_FORMAT_ANSWER_PROPERTIES;
+	case FWD_ANSWER_PROPERTY_SET:
+		return FWD_FORMAT_ANSWER_PROPERTY_SET;
+	case FWD_ANSWER_REMOUNTED:
+		return FWD_FORMAT_ANSWER_REMOUNTED;
+	case FWD_ANSWER_SHOW:
+		return FWD_FORMAT_ANSWER_SHOW;
+	case FWD_ANSWER_VERSION:
+		return FWD_FORMAT_ANSWER_VERSION;
+	/* notifications */
+	case FWD_ANSWER_BYEBYE:
+		return FWD_FORMAT_ANSWER_BYEBYE;
+	case FWD_ANSWER_DEAD:
+		return FWD_FORMAT_ANSWER_DEAD;
+	case FWD_ANSWER_DROPPED:
+		return FWD_FORMAT_ANSWER_DROPPED;
+	case FWD_ANSWER_PREPARED:
+		return FWD_FORMAT_ANSWER_PREPARED;
+	case FWD_ANSWER_PREPARE_PROGRESS:
+		return FWD_FORMAT_ANSWER_PREPARE_PROGRESS;
+	case FWD_ANSWER_STARTED:
+		return FWD_FORMAT_ANSWER_STARTED;
+
+	default:
+		return FWD_FORMAT_INVALID;
+	}
+}
+
 enum fwd_message fwd_message_from_str(const char *str)
 {
 	enum fwd_message m;
@@ -184,11 +273,15 @@ void libfwd_main(void)
 		_exit(EXIT_SUCCESS);
 	}
 
-	if (getenv("LIBFWD_GET_ANSWER_ID") != NULL)
-		result = fwd_message_command_answer(message);
-	else
-		result = message;
-	printf("%d\n", result);
+	if (getenv("LIBFWD_GET_MESSAGE_FORMAT") != NULL) {
+		puts(fwd_message_format(message));
+	} else {
+		if (getenv("LIBFWD_GET_ANSWER_ID") != NULL)
+			result = fwd_message_command_answer(message);
+		else
+			result = message;
+		printf("%d\n", result);
+	}
 
 	_exit(EXIT_SUCCESS);
 }
