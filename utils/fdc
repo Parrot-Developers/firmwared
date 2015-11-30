@@ -12,6 +12,26 @@ then
 	set -x
 fi
 
+# libfwd can be executed to retrieve the mapping between commands and their
+# expected completion answers
+# the problem here is to know where the libfwd.so is located, because it can be
+# installed in common paths or in a final dir of a workspace.
+# the latter case forces us to use the following trick to take into account the
+# LD_LIBRARY_PATH so that the good libfwd.so can be choosen
+find_libfwd_path () {
+	local firmwared=$(which firmwared)
+	# find the elf interpreter to which we will ask the path to libfwd.so
+	local interpreter=$(readelf -l ${firmwared} | sed 's/\]//g;
+		/Requesting program interpreter/!d;
+		s/.*Requesting program interpreter: \([^\]]*\)/\1/g')
+
+	# ask the loader to list all the dependencies
+	# preloading libfwd.so will force it into the dependencies list, even if
+	# the current interpreter (namely, bash) doesn't use it
+	libfwd=$(LD_PRELOAD=libfwd.so $interpreter \
+		--list  ${firmwared} | sed '/libfwd.so/!d; s/.*=> \(.*\) .*/\1/g')
+}
+
 usage() {
 	cat <<usage_here_document
 Usage : fdc COMMAND [arguments_list]
@@ -40,8 +60,10 @@ on_exit() {
 			# nothing to be done
 			;;
 		*)
-			echo "Failed with error "${status}
-			usage
+			if [ "${status}" -le 128 ]; then
+				echo "Failed with error "${status}
+				usage
+			fi # no else since we use signalling internally
 			;;
 	esac
 	if [ -n "${exit_command+x}" ]
@@ -63,43 +85,42 @@ else
 	socket=${FIRMWARED_SOCKET_PATH}
 fi
 
-seq_num=$$
+seqnum=$$
 
 command=$(echo $1 | tr '[a-z]' '[A-Z]')
-
+find_libfwd_path
+cmd_id=$(LIBFWD_MESSAGE=${command} ${libfwd})
+ans_id=$(LIBFWD_GET_ANSWER_ID= LIBFWD_MESSAGE=${command} ${libfwd})
+err_id=$(LIBFWD_MESSAGE=ERROR ${libfwd})
+format=$(LIBFWD_GET_MESSAGE_FORMAT= LIBFWD_MESSAGE=${command} ${libfwd})
+# TODO change commansds order to match enum fwd_message
 case "${command}" in
 	PING)
-		format="%s"
+		args=""
+		sed_command="s/.*/PONG/g"
+		;;
+	FOLDERS)
 		args=""
 		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
 		;;
-	FOLDERS)
-		format="%s"
-		args=""
-		sed_command="s/.*STR:'FOLDERS', STR:'\([^']*\)'.*/\1/g"
-		;;
 	LIST)
-		format="%s%s"
 		folder=$2
 		args="${folder}"
 		sed_command="s/.*STR:'${folder}', U32:[0-9]*, STR:'\([^']*\)'.*/\1/g"
 		;;
 	SHOW)
-		format="%s%s%s"
 		folder=$2
 		identifier=$3
 		args="${folder} ${identifier}"
 		sed_command="s/.*STR:'//g"
 		;;
 	DROP)
-		format="%s%s%s"
 		folder=$2
 		identifier=$3
 		args="${folder} ${identifier}"
 		sed_command="s/.*/${identifier} dropped/g"
 		;;
 	PREPARE)
-		format="%s%s%s"
 		folder=$2
 		if [ "${folder}" = "firmwares" ]; then
 			timeout=-1
@@ -107,17 +128,17 @@ case "${command}" in
 		fi
 		identification_string=$3
 		args="${folder} ${identification_string}"
-		sed_command[0]="s#.*STR:'PREPARED', STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#new entity in \1 folder created\nsha1: \2\nname: \3#g"
-		sed_command[1]="s#.*STR:'PREPARATION_PROGRESS', STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#\3% done$(echo -e '\033[1A\033[?25l')#g"
+		sed_command[0]="s#.*ID:${ans_id}.*STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#new entity in \1 folder created\nsha1: \2\nname: \3#g"
+		sed_command[1]="s#.*STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#\3% done$(echo -e '\033[1A\033[?25l')#g"
 		;;
 	START)
-		format="%s%s"
+		format="%u%s"
 		identifier=$2
 		args="${identifier}"
 		sed_command="s/.*/${identifier} started/g"
 		;;
 	KILL)
-		format="%s%s"
+		format="%u%s"
 		identifier=$2
 		args="${identifier}"
 		sed_command="s/.*/${identifier} killed/g"
@@ -131,33 +152,27 @@ case "${command}" in
 remount and start on an instance."
 			exit 0
 		fi
-		format="%s%s"
 		args="${identifier}"
 		sed_command="s/.*STR:'//g"
 		;;
 	VERSION)
-		format="%s"
 		args=""
 		sed_command="s/.*STR:'//g"
 		;;
 	QUIT)
-		format="%s"
 		args=""
-		sed_command="s/.*STR:'\([^']*\)'.*/firmwared said: \1/g"
+		sed_command="s/.*ID:${ans_id}.*/firmwared said bye bye/g"
 		;;
 	COMMANDS)
-		format="%s"
 		args=""
-		sed_command="s/.*STR:'COMMANDS', STR:'\([^']*\)'.*/\1 RESTART/g"
+		sed_command="s/.*STR:'\([^']*\)'.*/\1 RESTART/g"
 		;;
 	PROPERTIES)
-		format="%s%s"
 		folder=$2
 		args="${folder}"
-		sed_command="s/.*STR:'PROPERTIES', STR:'\([^']*\)'.*/\1/g"
+		sed_command="s/.*STR:'\([^']*\)'[^']*/\1/g"
 		;;
 	GET_PROPERTY)
-		format="%s%s%s%s"
 		folder=$2
 		entity_identifier=$3
 		property_name=$4
@@ -165,7 +180,6 @@ remount and start on an instance."
 		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
 		;;
 	SET_PROPERTY)
-		format="%s%s%s%s%s"
 		folder=$2
 		entity_identifier=$3
 		property_name=$4
@@ -174,18 +188,16 @@ remount and start on an instance."
 		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
 		;;
 	GET_CONFIG)
-		format="%s%s"
 		config_key=$2
 		args="${config_key}"
-		sed_command="s#.*STR:'[^']*', STR:'\([^']*\)', STR:'\([^']*\)'.*#\2#g"
+		sed_command="s#.*STR:'[^']*', STR:'\([^']*\)'.*#\1#g"
 		;;
 	CONFIG_KEYS)
-		format="%s"
 		args=""
-		sed_command="s/.*STR:'CONFIG_KEYS', STR:'\([^']*\)'.*/\1/g"
+		sed_command="s/.*ID:${ans_id}.*STR:'\([^']*\)'.*/\1/g"
 		;;
 	REMOUNT)
-		format="%s%s"
+		format="%u%s"
 		identifier=$2
 		args="${identifier}"
 		sed_command="s/.*/${identifier} remounted/g"
@@ -203,9 +215,9 @@ remount and start on an instance."
 		;;
 esac
 
-pomp_cmd="pomp-cli --timeout ${timeout} --dump --wait ${seq_num} unix:${socket}"
+pomp_cmd="pomp-cli --timeout ${timeout} --dump --wait ${ans_id} unix:${socket}"
 
-${pomp_cmd} ${seq_num} ${format} ${command} ${args} 2>&1 | while read line
+exec ${pomp_cmd} ${cmd_id} ${format} ${seqnum} ${args} 2>&1 | while read line
 do
 	if [ -n "$(echo ${line} | grep 'POMPCLI: event_cb :')" ];
 	then
@@ -215,9 +227,11 @@ do
 	then
 		exit ${ERROR_TIMEOUT}
 	fi
-	if [ -n "$(echo ${line} | grep 'STR:.ERROR.')" ];
+	if [ -n "$(echo ${line} | grep 'ID:'${err_id})" ];
 	then
-		sed_command="s/.*STR:'\([^']*\)'}/firmwared error: \1/g"
+		echo ${line} | sed "s#.*'\([^']*\)'.*#firmwared error: \1#g"
+		kill -INT $(ps --ppid $seqnum -o pid h)
+		exit ${ERROR_OTHER}
 	fi
 	echo ${line} | sed "${sed_command[0]}" | sed "${sed_command[1]-s/ / /}" | sed "s/'}$//g" | egrep -v '^[[:space:]]*$' || true
 done
