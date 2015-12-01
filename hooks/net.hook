@@ -71,7 +71,6 @@ then
 			ip link set ${stolen_interface} name ${target_name}
 		fi
 		if [ -n "${stolen_interface_ip}" ]; then
-			ip link set ${stolen_interface_ip} up
 			ip address add ${stolen_interface_ip} dev \
 					${target_name}
 		fi
