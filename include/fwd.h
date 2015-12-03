@@ -56,12 +56,12 @@ extern "C" {
  */
 #define FWD_FORMAT_ANSWER_COMMANDS "%" PRIu32 "%s"
 #define FWD_FORMAT_ANSWER_CONFIG_KEYS "%" PRIu32 "%s"
-#define FWD_FORMAT_ANSWER_ERROR "%" PRIu32 "%d%s"
+#define FWD_FORMAT_ANSWER_ERROR "%" PRIu32 "%" PRIi32 "%s"
 #define FWD_FORMAT_ANSWER_FOLDERS "%" PRIu32 "%s"
 #define FWD_FORMAT_ANSWER_GET_CONFIG "%" PRIu32 "%s%s"
 #define FWD_FORMAT_ANSWER_GET_PROPERTY "%" PRIu32 "%s%s%s%s"
 #define FWD_FORMAT_ANSWER_HELP "%" PRIu32 "%s%s"
-#define FWD_FORMAT_ANSWER_LIST "%" PRIu32 "%s%u%s"
+#define FWD_FORMAT_ANSWER_LIST "%" PRIu32 "%s%" PRIu32 "%s"
 #define FWD_FORMAT_ANSWER_PONG "%" PRIu32
 #define FWD_FORMAT_ANSWER_PROPERTIES "%" PRIu32 "%s%s"
 #define FWD_FORMAT_ANSWER_PROPERTY_SET "%" PRIu32 "%s%s%s%s"
