@@ -382,6 +382,25 @@ static int folder_register_property(const char *folder_name,
 	return rs_dll_enqueue(&folder->properties, &property->node);
 }
 
+static int preparation_destroy(struct rs_node *node)
+{
+	struct preparation *preparation = to_preparation(node);
+	struct folder *folder;
+
+	folder = folder_find(preparation->folder);
+	if (folder == NULL)
+		return -ENOENT;
+
+	/* TODO unregister sources from the monitor */
+	folder->ops.destroy_preparation(&preparation);
+
+	return 0;
+}
+
+static const struct rs_dll_vtable preparations_vtable = {
+	.remove = preparation_destroy,
+};
+
 int folders_init(void)
 {
 	int ret;
@@ -439,7 +458,7 @@ int folder_register(const struct folder *folder)
 	folders[i] = *folder;
 
 	rs_dll_init(&(folders[i].properties), NULL);
-	rs_dll_init(&(folders[i].preparations ), NULL);
+	rs_dll_init(&(folders[i].preparations), &preparations_vtable);
 	folders[i].name_property = name_property;
 	folders[i].sha1_property = sha1_property;
 	folder_register_property(folder->name, &folders[i].name_property);
@@ -992,21 +1011,12 @@ int folder_unregister(const char *folder_name)
 
 		return 0;
 	}
-	int destroy_preparation(struct rs_node *node)
-	{
-		struct preparation *preparation = to_preparation(node);
-
-		/* TODO unregister sources from the monitor */
-		folder->ops.destroy_preparation(&preparation);
-
-		return 0;
-	}
 
 	folder = folder_find(folder_name);
 	if (folder == NULL)
 		return -ENOENT;
 
-	rs_dll_remove_all_cb(&folder->preparations, destroy_preparation);
+	rs_dll_remove_all(&folder->preparations);
 	rs_dll_remove_all_cb(&folder->entities, destroy_entity);
 	rs_dll_remove_all(&folder->properties);
 
