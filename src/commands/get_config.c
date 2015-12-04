@@ -46,6 +46,7 @@ static int get_config_command_handler(struct pomp_conn *conn,
 	if (key == (enum config_key)-1)
 		return -ESRCH;
 
+	/* coverity[bad_printf_format_string] */
 	return firmwared_answer(conn, FWD_ANSWER_GET_CONFIG,
 			FWD_FORMAT_ANSWER_GET_CONFIG, seqnum, config_key,
 			config_get(key));

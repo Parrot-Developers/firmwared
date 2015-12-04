@@ -33,6 +33,7 @@ static int start_command_handler(struct pomp_conn *conn,
 	uint32_t msgid = pomp_msg_get_id(msg);
 	enum fwd_message ansid = fwd_message_command_answer(msgid);
 
+	/* coverity[bad_printf_format_string] */
 	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_START_READ, &seqnum,
 			&identifier);
 	if (ret < 0) {

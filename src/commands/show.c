@@ -32,6 +32,7 @@ static int show_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *identifier = NULL;
 	char __attribute__((cleanup(ut_string_free))) *info = NULL;
 
+	/* coverity[bad_printf_format_string] */
 	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_SHOW_READ, &seqnum,
 			&folder_name, &identifier);
 	if (ret < 0) {

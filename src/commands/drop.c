@@ -61,6 +61,7 @@ static int drop_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
+	/* coverity[bad_printf_format_string] */
 	return firmwared_notify(ansid, FWD_FORMAT_ANSWER_DROPPED, seqnum,
 			folder, sha1, name);
 }

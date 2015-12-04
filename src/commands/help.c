@@ -30,6 +30,7 @@ static int help_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *command_name = NULL;
 	const char *help;
 
+	/* coverity[bad_printf_format_string] */
 	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_HELP_READ, &seqnum,
 			&command_name);
 	if (ret < 0) {

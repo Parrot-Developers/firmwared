@@ -28,6 +28,7 @@ static int properties_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *list = NULL;
 	char __attribute__((cleanup(ut_string_free))) *folder = NULL;
 
+	/* coverity[bad_printf_format_string] */
 	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_PROPERTIES_READ, &seqnum,
 			&folder);
 	if (ret < 0) {

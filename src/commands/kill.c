@@ -31,6 +31,7 @@ static int kill_command_handler(struct pomp_conn *conn,
 	struct folder_entity *entity;
 	struct instance *instance;
 
+	/* coverity[bad_printf_format_string] */
 	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_KILL_READ, &seqnum, &identifier);
 	if (ret < 0) {
 		identifier = NULL;

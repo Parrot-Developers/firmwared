@@ -59,6 +59,7 @@ static int get_property_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
+	/* coverity[bad_printf_format_string] */
 	return firmwared_notify(ansid, FWD_FORMAT_ANSWER_GET_PROPERTY, seqnum,
 			folder, identifier, property_name, value);
 }

@@ -38,6 +38,7 @@ static int prepare_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *identification_string =
 			NULL;
 
+	/* coverity[bad_printf_format_string] */
 	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_PREPARE_READ, &seqnum, &folder,
 			&identification_string);
 	if (ret < 0) {

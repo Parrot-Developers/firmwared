@@ -67,6 +67,7 @@ static int list_command_handler(struct pomp_conn *conn,
 	unsigned count;
 	char __attribute__((cleanup(ut_string_free))) *list = NULL;
 
+	/* coverity[bad_printf_format_string] */
 	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_LIST_READ, &seqnum,
 			&folder_name);
 	if (ret < 0) {
