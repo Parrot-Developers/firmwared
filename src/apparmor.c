@@ -78,6 +78,7 @@ static int vload_profile(const char *command, const char *fmt, ...)
 	FILE *aa_parser_stdin;
 	va_list args;
 
+	// TODO replace with io_process
 	aa_parser_stdin = ut_process_vpopen(" %s 2>&1  | ulogger -p E -t fd-aa",
 			"we", command);
 	if (aa_parser_stdin == NULL) {
@@ -90,7 +91,6 @@ static int vload_profile(const char *command, const char *fmt, ...)
 	ret = vfprintf(aa_parser_stdin, fmt, args);
 	va_end(args);
 	if (ret < 0) {
-		ret = -EIO;
 		ULOGE("fprintf to apparmor_parser's stdin failed");
 		goto out;
 	}
