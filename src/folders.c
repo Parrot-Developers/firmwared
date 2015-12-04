@@ -300,8 +300,24 @@ static void print_folder_entities(struct rs_node *node)
 	ULOGN("%s", info);
 }
 
+static int destroy_folder_entities(struct rs_node *node)
+{
+	char *name;
+	struct folder_entity *entity = to_entity(node);
+
+	name = entity->name;
+	entity->folder->ops.drop(entity, true);
+
+	/* we have to free name after calling drop() in case it needs it */
+	ut_string_free(&name);
+
+	return 0;
+}
+
+
 static const struct rs_dll_vtable folder_vtable = {
 	.print = print_folder_entities,
+	.remove = destroy_folder_entities,
 };
 
 static int entity_completion(struct preparation *preparation,
@@ -997,27 +1013,13 @@ int folder_unregister(const char *folder_name)
 {
 	struct folder *folder;
 	struct folder *max = folders + FOLDERS_MAX - 1;
-	int destroy_entity(struct rs_node *node)
-	{
-		char *name;
-		struct folder_entity *entity = to_entity(node);
-
-		name = entity->name;
-
-		folder->ops.drop(entity, true);
-
-		/* we have to free name after calling drop() in case it needs it */
-		ut_string_free(&name);
-
-		return 0;
-	}
 
 	folder = folder_find(folder_name);
 	if (folder == NULL)
 		return -ENOENT;
 
 	rs_dll_remove_all(&folder->preparations);
-	rs_dll_remove_all_cb(&folder->entities, destroy_entity);
+	rs_dll_remove_all(&folder->entities);
 	rs_dll_remove_all(&folder->properties);
 
 	for (; folder < max; folder++)
