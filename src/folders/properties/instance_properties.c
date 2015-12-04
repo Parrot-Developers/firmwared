@@ -30,7 +30,8 @@ ULOG_DECLARE_TAG(firmwared_instance_properties);
 #include "instances.h"
 #include "../instances-private.h"
 
-static int get_id(struct folder_entity *entity, char **value)
+static int get_id(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	int ret;
 	struct instance *instance;
@@ -49,7 +50,8 @@ static int get_id(struct folder_entity *entity, char **value)
 	return 0;
 }
 
-static int get_pid(struct folder_entity *entity, char **value)
+static int get_pid(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	int ret;
 	struct instance *instance;
@@ -70,7 +72,8 @@ static int get_pid(struct folder_entity *entity, char **value)
 	return 0;
 }
 
-static int get_state(struct folder_entity *entity, char **value)
+static int get_state(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	struct instance *instance;
 
@@ -83,7 +86,8 @@ static int get_state(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static int get_firmware_path(struct folder_entity *entity, char **value)
+static int get_firmware_path(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	struct instance *instance;
 
@@ -96,7 +100,8 @@ static int get_firmware_path(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static int get_base_workspace(struct folder_entity *entity, char **value)
+static int get_base_workspace(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	struct instance *instance;
 
@@ -109,7 +114,8 @@ static int get_base_workspace(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static int get_root(struct folder_entity *entity, char **value)
+static int get_root(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	struct instance *instance;
 
@@ -122,7 +128,8 @@ static int get_root(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static int get_pts(struct folder_entity *entity, char **value,
+static int get_pts(struct folder_property *property,
+		struct folder_entity *entity, char **value,
 		enum pts_index pts_index)
 {
 	struct instance *instance;
@@ -136,17 +143,20 @@ static int get_pts(struct folder_entity *entity, char **value,
 	return *value == NULL ? -errno : 0;
 }
 
-static int get_inner_pts(struct folder_entity *entity, char **value)
+static int get_inner_pts(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
-	return get_pts(entity, value, PTSPAIR_BAR);
+	return get_pts(property, entity, value, PTSPAIR_BAR);
 }
 
-static int get_outer_pts(struct folder_entity *entity, char **value)
+static int get_outer_pts(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
-	return get_pts(entity, value, PTSPAIR_FOO);
+	return get_pts(property, entity, value, PTSPAIR_FOO);
 }
 
-static int get_time(struct folder_entity *entity, char **value)
+static int get_time(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	struct instance *instance;
 
@@ -162,7 +172,8 @@ static int get_time(struct folder_entity *entity, char **value)
 	return 0;
 }
 
-static int get_interface(struct folder_entity *entity, char **value)
+static int get_interface(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	struct instance *instance;
 
@@ -175,7 +186,8 @@ static int get_interface(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static int set_interface(struct folder_entity *entity, const char *value)
+static int set_interface(struct folder_property *property,
+		struct folder_entity *entity, const char *value)
 {
 	struct instance *instance;
 
@@ -192,7 +204,8 @@ static int set_interface(struct folder_entity *entity, const char *value)
 	return instance->interface == NULL ? -errno : 0;
 }
 
-static int get_stolen_interface(struct folder_entity *entity, char **value)
+static int get_stolen_interface(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	struct instance *instance;
 
@@ -208,7 +221,8 @@ static int get_stolen_interface(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static int set_stolen_interface(struct folder_entity *entity, const char *value)
+static int set_stolen_interface(struct folder_property *property,
+		struct folder_entity *entity, const char *value)
 {
 	struct instance *instance;
 
@@ -238,7 +252,8 @@ static char *get_argz_i(char *argz, size_t argz_len, int i)
 	return entry;
 }
 
-static int geti_cmdline(struct folder_entity *entity, unsigned index,
+static int geti_cmdline(struct folder_property *property,
+		struct folder_entity *entity, unsigned index,
 		char **value)
 {
 	struct instance *i;
@@ -260,7 +275,8 @@ static int geti_cmdline(struct folder_entity *entity, unsigned index,
 	return *value == NULL ? -errno : 0;
 }
 
-static int seti_cmdline(struct folder_entity *entity, unsigned index,
+static int seti_cmdline(struct folder_property *property,
+		struct folder_entity *entity, unsigned index,
 		const char *value)
 {
 	struct instance *i;

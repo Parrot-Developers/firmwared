@@ -41,15 +41,20 @@ struct folder_property {
 	/*
 	 * allocates the string stored in value which must be freed after usage
 	 */
-	int (*get)(struct folder_entity *entity, char **value);
-	int (*set)(struct folder_entity *entity, const char *value);
+	int (*get)(struct folder_property *property,
+			struct folder_entity *entity, char **value);
+	int (*set)(struct folder_property *property,
+			struct folder_entity *entity, const char *value);
 
 	/* array access functions */
 	/*
 	 * allocates the string stored in value which must be freed after usage
 	 */
-	int (*geti)(struct folder_entity *entity, unsigned index, char **value);
-	int (*seti)(struct folder_entity *entity, unsigned index,
+	int (*geti)(struct folder_property *property,
+			struct folder_entity *entity, unsigned index,
+			char **value);
+	int (*seti)(struct folder_property *property,
+			struct folder_entity *entity, unsigned index,
 			const char *value);
 };
 

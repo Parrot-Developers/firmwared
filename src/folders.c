@@ -258,7 +258,8 @@ static int folder_property_match_str_array_name(struct rs_node *node,
 	return false;
 }
 
-static int folder_entity_get_name(struct folder_entity *entity, char **value)
+static int folder_entity_get_name(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	if (entity == NULL || value == NULL)
 		return -EINVAL;
@@ -273,7 +274,8 @@ static const struct folder_property name_property = {
 		.get = folder_entity_get_name,
 };
 
-static int get_sha1(struct folder_entity *entity, char **value)
+static int get_sha1(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	const char *sha1;
 
@@ -674,10 +676,10 @@ static int property_get(struct folder_property *property,
 	int ret;
 
 	if (!folder_property_is_array(property))
-		return property->get(entity, value);
+		return property->get(property, entity, value);
 
 	for (i = 0; ; i++) {
-		ret = property->geti(entity, i, &suffix);
+		ret = property->geti(property, entity, i, &suffix);
 		if (ret < 0) {
 			ut_string_free(value);
 			ULOGE("property->geti: %s", strerror(-ret));
@@ -926,7 +928,7 @@ int folder_entity_get_property(struct folder_entity *entity, const char *name,
 		index = read_index(name);
 		if (index == -1)
 			return -EINVAL;
-		ret = property->geti(entity, index, value);
+		ret = property->geti(property, entity, index, value);
 		if (ret < 0) {
 			ULOGE("property->geti: %s", strerror(-ret));
 			return ret;
@@ -986,7 +988,7 @@ int folder_entity_set_property(struct folder_entity *entity, const char *name,
 		index = read_index(name);
 		if (index == -1)
 			return -EINVAL;
-		ret = property->seti(entity, index, value);
+		ret = property->seti(property, entity, index, value);
 		if (ret < 0) {
 			ULOGE("property->seti: %s", strerror(-ret));
 			return ret;
@@ -997,7 +999,7 @@ int folder_entity_set_property(struct folder_entity *entity, const char *name,
 					entity->folder->name, name);
 			return -EPERM;
 		}
-		ret = property->set(entity, value);
+		ret = property->set(property, entity, value);
 		if (ret < 0) {
 			ULOGE("property->set: %s", strerror(-ret));
 			return ret;

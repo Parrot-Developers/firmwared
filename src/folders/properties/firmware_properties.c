@@ -19,7 +19,8 @@ ULOG_DECLARE_TAG(firmwared_firmware_properties);
 #include "firmwares.h"
 #include "../firmwares-private.h"
 
-static int get_path(struct folder_entity *entity, char **value)
+static int get_path(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	struct firmware *firmware;
 
@@ -32,7 +33,8 @@ static int get_path(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static int get_product(struct folder_entity *entity, char **value)
+static int get_product(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	struct firmware *firmware;
 
@@ -51,7 +53,8 @@ static int get_product(struct folder_entity *entity, char **value)
 	return *value == NULL ? -errno : 0;
 }
 
-static int get_hardware(struct folder_entity *entity, char **value)
+static int get_hardware(struct folder_property *property,
+		struct folder_entity *entity, char **value)
 {
 	struct firmware *firmware;
 
