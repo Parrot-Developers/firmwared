@@ -37,7 +37,7 @@ struct folder_entity_ops {
 
 struct folder_property {
 	struct rs_node node;
-	const char *name;
+	char *name;
 	/*
 	 * allocates the string stored in value which must be freed after usage
 	 */
