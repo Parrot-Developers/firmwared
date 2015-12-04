@@ -242,18 +242,18 @@ static int folder_property_match_str_array_name(struct rs_node *node,
 {
 	const char *name = (const char *)data;
 	struct folder_property *property = to_property(node);
+
 	if (name == NULL || property->name == NULL)
-		return 0;
+		return false;
 
 	if (ut_string_match(property->name, name))
 		return true;
 
 	/* test if the name could be an array access in the form name[...] */
-	if (ut_string_match_prefix(name, property->name)) {
+	if (ut_string_match_prefix(name, property->name))
 		if (name[strlen(property->name)] == '[' &&
 				name[strlen(name) - 1] == ']')
 			return true;
-	}
 
 	return false;
 }
