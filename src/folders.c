@@ -9,6 +9,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif /* _GNU_SOURCE */
+#include <sys/time.h>
 
 #include <time.h>
 #include <errno.h>
@@ -163,8 +164,10 @@ static const char *pick_random_word(struct rs_dll *word_list)
 	int word_index;
 	struct word *word = NULL;
 	struct rs_node *word_node = NULL;
+	struct timeval tv;
 
-	word_index = (rand() % (rs_dll_get_count(word_list) - 1)) + 1;
+	gettimeofday(&tv, NULL);
+	word_index = ((tv.tv_usec * 77) % (rs_dll_get_count(word_list) - 1)) + 1;
 	while (word_index--)
 		word_node = rs_dll_next_from(word_list, word_node);
 
@@ -422,13 +425,8 @@ int folders_init(void)
 	int ret;
 	const char *resources_dir = config_get(CONFIG_RESOURCES_DIR);
 	const char *list_name;
-	time_t seed;
 
 	ULOGD("%s", __func__);
-
-	seed = time(NULL);
-	srand(seed);
-	ULOGI("random seed is %jd", (intmax_t)seed);
 
 	list_name = "names";
 	ret = load_words(resources_dir, list_name, &folders_names);
