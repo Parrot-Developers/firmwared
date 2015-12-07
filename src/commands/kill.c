@@ -51,13 +51,13 @@ static const struct command kill_command = {
 		.msgid = FWD_COMMAND_KILL,
 		.help = "Kills a running instance.",
 		.long_help = "Searches for the instance whose sha1 or name is "
-				"INSTANCE_IDENTIFIER and kills it. All the "
-				"processes are killed, the instance is still "
-				"registered and it's rw aufs layer is still "
-				"present. The instance must be in the STARTED "
-				"state.\nThe instance switches to the STOPPING "
-				"state, before switching back to the READY "
-				"state.",
+				"INSTANCE_IDENTIFIER and kills it. "
+				"All the processes are killed, the instance is "
+				"still registered and it's rw overlayfs layer "
+				"is still present. "
+				"The instance must be in the STARTED state.\n"
+				"The instance switches to the STOPPING state, "
+				"before switching back to the READY state.",
 		.synopsis = "INSTANCE_IDENTIFIER",
 		.handler = kill_command_handler,
 };
