@@ -39,6 +39,9 @@ entities types are named *folders*.
 
 ### Commands
 
+* *ADD\_PROPERTY* FOLDER NAME  
+  adds a custom property to the folder FOLDER. If name ends with [], the
+  property will be an array. Custom properties are all mutable.
 * *COMMANDS*  
   asks the server to list the currently registered commands
 * *CONFIG_KEYS*  
@@ -113,9 +116,11 @@ command and *notifications*, broadcast to all the clients currently listening.
 
 #### Acks
 
+* *PROPERTY\_ADDED* FOLDER PROPERTY  
+  answer to an *ADD\_PROPERTY* command  
 * *COMMANDS* LIST  
   answer to a *COMMANDS* command, LIST is a space-separated list of the commands
-  implemented in firmwared
+  implemented in firmwared  
 * *CONFIG\_KEYS* CONFIG\_KEYS\_LIST  
   answer to a *CONFIG\_KEYS* command, CONFIG\_KEYS\_LIST is a space-separated
   list of the configuration keys available in firmwared

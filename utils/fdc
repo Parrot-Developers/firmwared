@@ -95,6 +95,12 @@ err_id=$(LIBFWD_MESSAGE=ERROR ${libfwd})
 format=$(LIBFWD_GET_MESSAGE_FORMAT= LIBFWD_MESSAGE=${command} ${libfwd})
 # order shall match enum fwd_message
 case "${command}" in
+	ADD_PROPERTY)
+		folder=$2
+		name=$3
+		args="${folder} ${name}"
+		sed_command="s/.*STR:'\([^']*\)'.*/property \1 added/g"
+		;;
 	COMMANDS)
 		args=""
 		sed_command="s/.*STR:'\([^']*\)'.*/\1 RESTART/g"

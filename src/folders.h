@@ -99,6 +99,7 @@ int folder_entity_get_property(struct folder_entity *entity, const char *name,
 		char **value);
 int folder_entity_set_property(struct folder_entity *entity, const char *name,
 		const char *value);
+int folder_add_property(const char *folder_name, const char *name);
 int folder_unregister(const char *folder);
 void folders_cleanup(void);
 

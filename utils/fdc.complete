@@ -11,7 +11,7 @@ _fdc()
 	2)
 		local command=${COMP_WORDS[COMP_CWORD - 1]}
 		case ${command} in
-		list|properties|set_property|get_property|show|drop|prepare)
+		list|properties|set_property|get_property|show|drop|prepare|add_property)
 			local folders=$(fdc folders)
 			COMPREPLY=( $( compgen -W "${folders}" -- $cur ) )
 			return 0

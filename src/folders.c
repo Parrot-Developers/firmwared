@@ -26,6 +26,7 @@
 #include <fwd.h>
 
 #include "preparation.h"
+#include "properties/custom_property.h"
 #include "folders.h"
 #include "config.h"
 
@@ -319,7 +320,6 @@ static int destroy_folder_entities(struct rs_node *node)
 	return 0;
 }
 
-
 static const struct rs_dll_vtable folder_vtable = {
 	.print = print_folder_entities,
 	.remove = destroy_folder_entities,
@@ -422,6 +422,20 @@ static const struct rs_dll_vtable preparations_vtable = {
 	.remove = preparation_destroy,
 };
 
+static int property_destroy(struct rs_node *node)
+{
+	struct folder_property *property = to_property(node);
+
+	if (is_custom_property(property))
+		custom_property_delete(&property);
+
+	return 0;
+}
+
+static const struct rs_dll_vtable properties_vtable = {
+	.remove = property_destroy,
+};
+
 int folders_init(void)
 {
 	int ret;
@@ -473,7 +487,7 @@ int folder_register(const struct folder *folder)
 
 	folders[i] = *folder;
 
-	rs_dll_init(&(folders[i].properties), NULL);
+	rs_dll_init(&(folders[i].properties), &properties_vtable);
 	rs_dll_init(&(folders[i].preparations), &preparations_vtable);
 	folders[i].name_property = name_property;
 	folders[i].sha1_property = sha1_property;
@@ -1007,6 +1021,34 @@ int folder_entity_set_property(struct folder_entity *entity, const char *name,
 	}
 
 	return 0;
+}
+
+int folder_add_property(const char *folder_name, const char *name)
+{
+	int ret;
+	struct rs_node *node;
+	struct folder_property *property;
+	struct folder *folder;
+
+	folder = folder_find(folder_name);
+	if (folder == NULL) {
+		ULOGE("folder %s doesn't exist", folder_name);
+		return -ENOENT;
+	}
+	/* refuse repetitions */
+	node = rs_dll_find_match(&folder->properties,
+			folder_property_match_str_array_name, name);
+	if (node != NULL)
+		return -EEXIST;
+
+	property = custom_property_new(name);
+	if (property == NULL) {
+		ret = -errno;
+		ULOGE("custom_property: %m");
+		return ret;
+	}
+
+	return folder_register_property(folder->name, property);
 }
 
 int folder_unregister(const char *folder_name)

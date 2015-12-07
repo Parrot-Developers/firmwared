@@ -27,6 +27,7 @@ const char fwd_interp[] __attribute__((section(".interp"))) = FWD_INTERPRETER;
  * of carefully and precisely reflected in the fdc.answers generation command
  */
 static const enum fwd_message fwd_command_answer_pair[] = {
+		[FWD_COMMAND_ADD_PROPERTY] = FWD_ANSWER_PROPERTY_ADDED,
 		[FWD_COMMAND_COMMANDS] =     FWD_ANSWER_COMMANDS,
 		[FWD_COMMAND_CONFIG_KEYS] =  FWD_ANSWER_CONFIG_KEYS,
 		[FWD_COMMAND_DROP] =         FWD_ANSWER_DROPPED,
@@ -51,6 +52,8 @@ const char *fwd_message_str(enum fwd_message message)
 {
 	switch (message) {
 	/* commands, i.e. from client to server */
+	case FWD_COMMAND_ADD_PROPERTY:
+		return "ADD_PROPERTY";
 	case FWD_COMMAND_COMMANDS:
 		return "COMMANDS";
 	case FWD_COMMAND_CONFIG_KEYS:
@@ -109,6 +112,8 @@ const char *fwd_message_str(enum fwd_message message)
 		return "PONG";
 	case FWD_ANSWER_PROPERTIES:
 		return "PROPERTIES";
+	case FWD_ANSWER_PROPERTY_ADDED:
+		return "PROPERTY_ADDED";
 	case FWD_ANSWER_PROPERTY_SET:
 		return "PROPERTY_SET";
 	case FWD_ANSWER_REMOUNTED:
@@ -140,6 +145,8 @@ const char *fwd_message_format(enum fwd_message message)
 {
 	switch (message) {
 	/* commands, i.e. from client to server */
+	case FWD_COMMAND_ADD_PROPERTY:
+		return FWD_FORMAT_COMMAND_ADD_PROPERTY;
 	case FWD_COMMAND_COMMANDS:
 		return FWD_FORMAT_COMMAND_COMMANDS;
 	case FWD_COMMAND_CONFIG_KEYS:
@@ -198,6 +205,8 @@ const char *fwd_message_format(enum fwd_message message)
 		return FWD_FORMAT_ANSWER_PONG;
 	case FWD_ANSWER_PROPERTIES:
 		return FWD_FORMAT_ANSWER_PROPERTIES;
+	case FWD_ANSWER_PROPERTY_ADDED:
+		return FWD_FORMAT_ANSWER_PROPERTY_ADDED;
 	case FWD_ANSWER_PROPERTY_SET:
 		return FWD_FORMAT_ANSWER_PROPERTY_SET;
 	case FWD_ANSWER_REMOUNTED:
