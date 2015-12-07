@@ -9,22 +9,73 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <argz.h>
 
 #include <ut_string.h>
 #include <rs_node.h>
 #include <rs_dll.h>
 
+#include "utils.h"
 #include "custom_property.h"
 
 #define ULOG_TAG firmwared_custom_property
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_custom_property);
 
-static int custom_property_get(struct folder_property *property,
-		struct folder_entity *entity, char **value)
-{
+struct custom_property_storage {
+	struct rs_node node;
+	struct folder_property *property;
+	struct folder_entity *entity;
+	char *argz;
+	size_t argz_len;
+};
 
-	return -ENOSYS;
+#define to_custom_property_storage(n) ut_container_of(n, \
+		struct custom_property_storage, node)
+
+static struct rs_dll custom_property_storages;
+
+static struct custom_property_storage *next_from(struct rs_dll *dll,
+		struct custom_property_storage *from)
+{
+	struct rs_node *node = NULL;
+
+	node = rs_dll_next_from(&custom_property_storages, &from->node);
+	if (node == NULL)
+		return NULL;
+
+	return to_custom_property_storage(node);
+}
+
+static struct custom_property_storage *find_or_create(
+		struct folder_property *property,
+		struct folder_entity *entity)
+{
+	struct custom_property_storage *storage = NULL;
+
+	if (property == NULL || entity == NULL) {
+		errno = ENOENT;
+		return NULL;
+	}
+
+	/* return the property storage if found */
+	while ((storage = next_from(&custom_property_storages, storage)))
+		if (ut_string_match(property->name, storage->property->name)
+				&& ut_string_match(entity->name,
+						storage->entity->name))
+			return storage;
+
+	/* otherwise, allocate it and store it */
+	storage = calloc(sizeof(struct custom_property_storage), 1);
+	if (storage == NULL)
+		return NULL;
+
+	storage->entity = entity;
+	storage->property = property;
+
+	rs_dll_enqueue(&custom_property_storages, &storage->node);
+
+	return storage;
 }
 
 static int custom_property_set(struct folder_property *property,
@@ -35,11 +86,48 @@ static int custom_property_set(struct folder_property *property,
 }
 
 static int custom_property_geti(struct folder_property *property,
-		struct folder_entity *entity, unsigned index,
-		char **value)
+		struct folder_entity *entity, unsigned i, char **value)
 {
+	int ret;
+	size_t count;
+	struct custom_property_storage *s = find_or_create(property, entity);
 
-	return -ENOSYS;
+	if (s == NULL) {
+		ret = -errno;
+		ULOGE("find_or_create: %m");
+		return ret;
+	}
+
+	count = argz_count(s->argz, s->argz_len);
+	if (i > count)
+			return -ERANGE;
+
+	if (i == count) {
+		*value = NULL;
+		return 0;
+	}
+
+	*value = strdup(get_argz_i(s->argz, s->argz_len, i));
+
+	return *value == NULL ? -errno : 0;
+}
+
+static int custom_property_get(struct folder_property *property,
+		struct folder_entity *entity, char **value)
+{
+	int ret;
+
+	ret = custom_property_geti(property, entity, 0, value);
+	if (ret < 0)
+		return ret;
+
+	if (*value == NULL) {
+		*value = strdup("");
+		if (*value == NULL)
+			return -errno;
+	}
+
+	return 0;
 }
 
 static int custom_property_seti(struct folder_property *property,
@@ -49,6 +137,20 @@ static int custom_property_seti(struct folder_property *property,
 
 	return -ENOSYS;
 }
+
+static int custom_property_remove(struct rs_node *n)
+{
+	struct custom_property_storage *storage = to_custom_property_storage(n);
+
+	memset(storage, 0, sizeof(*storage));
+	free(storage);
+
+	return 0;
+}
+
+static const struct rs_dll_vtable custom_property_storage_vtable = {
+		.remove = custom_property_remove,
+};
 
 bool is_custom_property(const struct folder_property *property)
 {
@@ -126,6 +228,7 @@ static __attribute__((constructor)) void custom_property_init(void)
 {
 	ULOGD("%s", __func__);
 
+	rs_dll_init(&custom_property_storages, &custom_property_storage_vtable);
 }
 
 static __attribute__((destructor)) void custom_property_cleanup(void)
