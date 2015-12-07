@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 
 #include <string.h>
+#include <argz.h>
 
 #define ULOG_TAG firmwared_utils
 #include <ulog.h>
@@ -46,5 +47,16 @@ bool is_directory(const char *path)
 	}
 
 	return S_ISDIR(buf.st_mode);
+}
+
+char *get_argz_i(char *argz, size_t argz_len, int i)
+{
+	char *entry = NULL;
+
+	for (entry = argz_next(argz, argz_len, entry);
+			entry != NULL && i != 0;
+			entry = argz_next(argz, argz_len, entry), i--);
+
+	return entry;
 }
 

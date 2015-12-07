@@ -28,6 +28,7 @@ ULOG_DECLARE_TAG(firmwared_instance_properties);
 
 #include "instance_properties.h"
 #include "instances.h"
+#include "utils.h"
 #include "../instances-private.h"
 
 static int get_id(struct folder_property *property,
@@ -240,16 +241,6 @@ static int set_stolen_interface(struct folder_property *property,
 	// TODO validate the input
 
 	return instance->stolen_interface == NULL ? -errno : 0;
-}
-
-static char *get_argz_i(char *argz, size_t argz_len, int i)
-{
-	char *entry = NULL;
-
-	for (entry = argz_next(argz, argz_len, entry); entry != NULL && i != 0;
-			entry = argz_next(argz, argz_len, entry), i--);
-
-	return entry;
 }
 
 static int geti_cmdline(struct folder_property *property,
