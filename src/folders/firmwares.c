@@ -313,6 +313,7 @@ static struct firmware *firmware_new(const char *path)
 		ret = asprintf(&firmware->path, "%s/%s",
 				firmware_repository_path, path);
 		if (ret == -1) {
+			firmware->path = NULL;
 			ULOGE("asprintf error");
 			errno = -ENOMEM;
 			goto err;
