@@ -43,7 +43,6 @@ struct instance {
 	/* synchronization between monitor and pid 1 */
 	struct ut_process_sync sync;
 
-	char *base_workspace;
 	/* all 3 dirs must be subdirs of base_workspace dir */
 	char *ro_mount_point;
 	char *rw_dir;

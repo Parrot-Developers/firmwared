@@ -297,6 +297,23 @@ static const struct folder_property sha1_property = {
 		.get = get_sha1,
 };
 
+static int get_base_workspace(struct folder_property *property,
+		struct folder_entity *entity, char **value)
+{
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+
+	*value = strdup(folder_entity_get_base_workspace(entity));
+
+	return *value == NULL ? -errno : 0;
+}
+
+static const struct folder_property base_workspace_property = {
+		.name = "base_workspace",
+		.get = get_base_workspace,
+};
+
 static void print_folder_entities(struct rs_node *node)
 {
 	struct folder_entity *e = ut_container_of(node, typeof(*e), node);
@@ -316,13 +333,16 @@ static int do_drop(struct folder_entity *entity, bool only_unregister)
 static int destroy_folder_entities(struct rs_node *node)
 {
 	char *name;
+	char *base_workspace;
 	struct folder_entity *entity = to_entity(node);
 
 	name = entity->name;
+	base_workspace = entity->base_workspace;
 	do_drop(entity, true);
 
 	/* we have to free name after calling drop() in case it needs it */
 	ut_string_free(&name);
+	ut_string_free(&base_workspace);
 
 	return 0;
 }
@@ -498,8 +518,11 @@ int folder_register(const struct folder *folder)
 	rs_dll_init(&(folders[i].preparations), &preparations_vtable);
 	folders[i].name_property = name_property;
 	folders[i].sha1_property = sha1_property;
+	folders[i].base_workspace_property = base_workspace_property;
 	folder_register_property(folder->name, &folders[i].name_property);
 	folder_register_property(folder->name, &folders[i].sha1_property);
+	folder_register_property(folder->name,
+			&folders[i].base_workspace_property);
 
 	return rs_dll_init(&(folders[i].entities), &folder_vtable);
 }
@@ -876,6 +899,26 @@ const char *folder_entity_get_sha1(struct folder_entity *entity)
 		return NULL;
 
 	return entity->folder->ops.sha1(entity);
+}
+
+const char *folder_entity_get_base_workspace(struct folder_entity *entity)
+{
+	int ret;
+
+	if (entity->base_workspace == NULL) {
+		ret = asprintf(&entity->base_workspace, "%s/%s/%s",
+				config_get(CONFIG_MOUNT_PATH),
+				entity->folder->name,
+				folder_entity_get_sha1(entity));
+		if (ret < 0) {
+			entity->base_workspace = NULL;
+			ULOGE("asprintf base_workspace error");
+			ret = -ENOMEM;
+			return NULL;
+		}
+	}
+
+	return entity->base_workspace;
 }
 
 int folder_register_properties(const char *folder,

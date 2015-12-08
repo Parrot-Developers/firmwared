@@ -101,20 +101,6 @@ static int get_firmware_path(struct folder_property *property,
 	return *value == NULL ? -errno : 0;
 }
 
-static int get_base_workspace(struct folder_property *property,
-		struct folder_entity *entity, char **value)
-{
-	struct instance *instance;
-
-	if (entity == NULL || value == NULL)
-		return -EINVAL;
-	instance = to_instance(entity);
-
-	*value = strdup(instance->base_workspace);
-
-	return *value == NULL ? -errno : 0;
-}
-
 static int get_root(struct folder_property *property,
 		struct folder_entity *entity, char **value)
 {
@@ -289,10 +275,6 @@ struct folder_property instance_properties[] = {
 		{
 				.name = "firmware_path",
 				.get = get_firmware_path,
-		},
-		{
-				.name = "base_workspace",
-				.get = get_base_workspace,
 		},
 		{
 				.name = "root",

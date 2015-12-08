@@ -126,7 +126,6 @@ static const char *instance_sha1(struct folder_entity *entity)
 
 static void clean_paths(struct instance *instance)
 {
-	ut_string_free(&instance->base_workspace);
 	ut_string_free(&instance->ro_mount_point);
 	ut_string_free(&instance->rw_dir);
 	ut_string_free(&instance->union_mount_point);
@@ -143,7 +142,7 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 			NULL,
 			config_get(CONFIG_MOUNT_HOOK),
 			action,
-			instance->base_workspace,
+			folder_entity_get_base_workspace(&instance->entity),
 			instance->ro_mount_point,
 			instance->rw_dir,
 			instance->union_mount_point,
@@ -258,25 +257,17 @@ static int instance_drop(struct folder_entity *entity, bool only_unregister)
 static int init_paths(struct instance *instance)
 {
 	int ret;
+	const char *base_workspace = folder_entity_get_base_workspace(
+			&instance->entity);
 
-	ret = asprintf(&instance->base_workspace, "%s/%s",
-			config_get(CONFIG_MOUNT_PATH),
-			instance_get_sha1(instance));
-	if (ret < 0) {
-		instance->base_workspace = NULL;
-		ULOGE("asprintf base_workspace error");
-		ret = -ENOMEM;
-		goto err;
-	}
-	ret = asprintf(&instance->ro_mount_point, "%s/ro",
-			instance->base_workspace);
+	ret = asprintf(&instance->ro_mount_point, "%s/ro", base_workspace);
 	if (ret < 0) {
 		instance->ro_mount_point = NULL;
 		ULOGE("asprintf ro_mount_point error");
 		ret = -ENOMEM;
 		goto err;
 	}
-	ret = asprintf(&instance->rw_dir, "%s/rw", instance->base_workspace);
+	ret = asprintf(&instance->rw_dir, "%s/rw", base_workspace);
 	if (ret < 0) {
 		instance->rw_dir = NULL;
 		ULOGE("asprintf rw_dir error");
@@ -284,7 +275,7 @@ static int init_paths(struct instance *instance)
 		goto err;
 	}
 	ret = asprintf(&instance->union_mount_point, "%s/union",
-			instance->base_workspace);
+			base_workspace);
 	if (ret < 0) {
 		instance->union_mount_point = NULL;
 		ULOGE("asprintf union_mount_point error");
@@ -719,6 +710,7 @@ static int init_instance(struct instance *instance,
 		return -ESRCH;
 	firmware = firmware_from_entity(firmware_entity);
 
+	instance->entity.folder = folder_find(INSTANCES_FOLDER_NAME);
 	instance->id = ut_bit_field_claim_free_index(&indices);
 	if (instance->id == UT_BIT_FIELD_INVALID_INDEX) {
 		ULOGE("ut_bit_field_claim_free_index: No free index");
@@ -772,7 +764,8 @@ static int init_instance(struct instance *instance,
 		goto err;
 	}
 	if (!config_get_bool(CONFIG_DISABLE_APPARMOR)) {
-		ret = apparmor_load_profile(instance->base_workspace,
+		ret = apparmor_load_profile(folder_entity_get_base_workspace(
+						&instance->entity),
 				instance_get_sha1(instance));
 		if (ret < 0) {
 			ULOGE("apparmor_load_profile: %s", strerror(-ret));

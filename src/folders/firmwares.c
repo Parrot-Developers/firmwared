@@ -302,6 +302,7 @@ static struct firmware *firmware_new(const char *path)
 	if (firmware == NULL)
 		return NULL;
 
+	firmware->entity.folder = folder_find(FIRMWARES_FOLDER_NAME);
 	if (ut_file_is_dir(path)) {
 		firmware->path = strdup(path);
 		if (path == NULL) {

@@ -23,6 +23,7 @@ struct folder_entity {
 	struct rs_node node;
 	struct folder *folder;
 	char *name;
+	char *base_workspace;
 };
 
 struct folder;
@@ -65,6 +66,7 @@ struct folder {
 	struct rs_dll properties;
 	struct folder_property name_property;
 	struct folder_property sha1_property;
+	struct folder_property base_workspace_property;
 	struct rs_dll preparations;
 };
 
@@ -92,6 +94,7 @@ struct folder_entity *folder_find_entity(const char *folder,
 char *folder_list_properties(const char *folder_name);
 const char *folders_list(void);
 const char *folder_entity_get_sha1(struct folder_entity *entity);
+const char *folder_entity_get_base_workspace(struct folder_entity *entity);
 int folder_register_properties(const char *folder,
 		struct folder_property *properties);
 /* string stored in value in output must be freed after usage */
