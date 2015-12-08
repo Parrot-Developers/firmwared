@@ -161,7 +161,8 @@ void apparmor_remove_all_firmwared_profiles(void)
 		return;
 	}
 	while (count--) {
-		if ((dot = strchr(namelist[count]->d_name, '.')) != NULL)
+		dot = strchr(namelist[count]->d_name, '.');
+		if (dot != NULL)
 			*dot = '\0';
 		apparmor_remove_profile(namelist[count]->d_name +
 				strlen(PROFILE_NAME_PREFIX));
