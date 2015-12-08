@@ -80,3 +80,44 @@ int argz_property_geti(const char *argz, size_t argz_len, unsigned index,
 	return *value == NULL ? -errno : 0;
 }
 
+int argz_property_seti(char **argz, size_t *argz_len, unsigned index,
+		const char *value)
+{
+	size_t count;
+	char *entry;
+	char *before;
+
+	if (ut_string_is_invalid(value))
+		return -EINVAL;
+
+	count = argz_count(*argz, *argz_len);
+
+	if (index > count) {
+		ULOGE("index %u above array size %ju", index, (uintmax_t)count);
+		return -ERANGE;
+	}
+
+	if (index == count) {
+		/* truncation required at the same size the cmdline has */
+		if (ut_string_match(value, "nil"))
+			return 0;
+
+		/* append */
+		return -argz_add(argz, argz_len, value);
+	}
+
+	/* truncate */
+	entry = get_argz_i(*argz, *argz_len, index);
+	if (ut_string_match(value, "nil")) {
+		/* changing the size suffices */
+		*argz_len = entry - *argz;
+		return 0;
+	}
+
+	/* delete and insert */
+	argz_delete(argz, argz_len, entry);
+	entry = NULL; /* /!\ entry is now invalid */
+	before = get_argz_i(*argz, *argz_len, index);
+
+	return -argz_insert(argz, argz_len, before, value);
+}

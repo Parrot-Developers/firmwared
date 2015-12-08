@@ -263,43 +263,13 @@ static int seti_cmdline(struct folder_property *property,
 		const char *value)
 {
 	struct instance *i;
-	size_t count;
-	char *entry;
-	char *before;
 
-	if (entity == NULL || ut_string_is_invalid(value))
+	if (entity == NULL)
 		return -EINVAL;
+
 	i = to_instance(entity);
-	count = argz_count(i->command_line, i->command_line_len);
 
-	if (index > count) {
-		ULOGE("index %u above array size %ju", index, (uintmax_t)count);
-		return -ERANGE;
-	}
-
-	if (index == count) {
-		/* truncation required at the same size the cmdline has */
-		if (strcmp(value, "nil") == 0)
-			return 0;
-
-		/* append */
-		return -argz_add(&i->command_line, &i->command_line_len, value);
-	}
-
-	/* truncate */
-	entry = get_argz_i(i->command_line, i->command_line_len, index);
-	if (strcmp(value, "nil") == 0) {
-		/* changing the size suffices */
-		i->command_line_len = entry - i->command_line;
-		return 0;
-	}
-
-	/* delete and insert */
-	argz_delete(&i->command_line, &i->command_line_len, entry);
-	entry = NULL; /* /!\ entry is now invalid */
-	before = get_argz_i(i->command_line, i->command_line_len, index);
-
-	return argz_insert(&i->command_line, &i->command_line_len, before,
+	return argz_property_seti(&i->command_line, &i->command_line_len, index,
 			value);
 }
 

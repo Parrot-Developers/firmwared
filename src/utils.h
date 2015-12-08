@@ -16,5 +16,7 @@ bool is_directory(const char *path);
 char *get_argz_i(char *argz, size_t argz_len, int i);
 int argz_property_geti(const char *argz, size_t argz_len, unsigned index,
 		char **value);
+int argz_property_seti(char **argz, size_t *argz_len, unsigned index,
+		const char *value);
 
 #endif /* UTILS_H_ */

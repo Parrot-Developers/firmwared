@@ -115,47 +115,14 @@ static int custom_property_seti(struct folder_property *property,
 		struct folder_entity *entity, unsigned index,
 		const char *value)
 {
-	size_t count;
-	char *entry;
-	char *before;
 	struct custom_property_storage *s = find_or_create(property, entity);
 
-	count = argz_count(s->argz, s->argz_len);
-
-	if (index > count) {
-		ULOGE("index %u above array size %ju", index, (uintmax_t)count);
-		return -ERANGE;
-	}
-
-	if (index == count) {
-		/* truncation required at the same size the cmdline has */
-		if (strcmp(value, "nil") == 0)
-			return 0;
-
-		/* append */
-		return -argz_add(&s->argz, &s->argz_len, value);
-	}
-
-	/* truncate */
-	entry = get_argz_i(s->argz, s->argz_len, index);
-	if (strcmp(value, "nil") == 0) {
-		/* changing the size suffices */
-		s->argz_len = entry - s->argz;
-		return 0;
-	}
-
-	/* delete and insert */
-	argz_delete(&s->argz, &s->argz_len, entry);
-	entry = NULL; /* /!\ entry is now invalid */
-	before = get_argz_i(s->argz, s->argz_len, index);
-
-	return argz_insert(&s->argz, &s->argz_len, before, value);
+	return argz_property_seti(&s->argz, &s->argz_len, index, value);
 }
 
 static int custom_property_set(struct folder_property *property,
 		struct folder_entity *entity, const char *value)
 {
-
 	return custom_property_seti(property, entity, 0, value);
 }
 
