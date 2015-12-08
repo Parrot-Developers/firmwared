@@ -60,3 +60,23 @@ char *get_argz_i(char *argz, size_t argz_len, int i)
 	return entry;
 }
 
+int argz_property_geti(const char *argz, size_t argz_len, unsigned index,
+		char **value)
+{
+	size_t count;
+
+	if (value == NULL)
+		return -EINVAL;
+
+	count = argz_count(argz, argz_len);
+	if (index > count)
+			return -ERANGE;
+
+	if (index == count)
+		*value = strdup("nil");
+	else
+		*value = strdup(get_argz_i(argz, argz_len, index));
+
+	return *value == NULL ? -errno : 0;
+}
+

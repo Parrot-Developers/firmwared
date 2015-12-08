@@ -248,22 +248,14 @@ static int geti_cmdline(struct folder_property *property,
 		char **value)
 {
 	struct instance *i;
-	size_t count;
 
-	if (entity == NULL || value == NULL)
+	if (entity == NULL)
 		return -EINVAL;
+
 	i = to_instance(entity);
-	count = argz_count(i->command_line, i->command_line_len);
-	if (index > count)
-			return -ERANGE;
 
-	if (index == count)
-		*value = strdup("nil");
-	else
-		*value = strdup(get_argz_i(i->command_line, i->command_line_len,
-				index));
-
-	return *value == NULL ? -errno : 0;
+	return argz_property_geti(i->command_line, i->command_line_len, index,
+			value);
 }
 
 static int seti_cmdline(struct folder_property *property,

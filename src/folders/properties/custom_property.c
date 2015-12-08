@@ -82,7 +82,6 @@ static int custom_property_geti(struct folder_property *property,
 		struct folder_entity *entity, unsigned i, char **value)
 {
 	int ret;
-	size_t count;
 	struct custom_property_storage *s = find_or_create(property, entity);
 
 	if (s == NULL) {
@@ -91,18 +90,7 @@ static int custom_property_geti(struct folder_property *property,
 		return ret;
 	}
 
-	count = argz_count(s->argz, s->argz_len);
-	if (i > count)
-			return -ERANGE;
-
-	if (i == count) {
-		*value = NULL;
-		return 0;
-	}
-
-	*value = strdup(get_argz_i(s->argz, s->argz_len, i));
-
-	return *value == NULL ? -errno : 0;
+	return argz_property_geti(s->argz, s->argz_len, i, value);
 }
 
 static int custom_property_get(struct folder_property *property,
