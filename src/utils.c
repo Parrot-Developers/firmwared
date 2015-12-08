@@ -15,6 +15,8 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_utils);
 
+#include <ut_string.h>
+
 #include "utils.h"
 
 char *buffer_to_string(const unsigned char *src, size_t len, char *dst)
@@ -49,7 +51,7 @@ bool is_directory(const char *path)
 	return S_ISDIR(buf.st_mode);
 }
 
-char *get_argz_i(char *argz, size_t argz_len, int i)
+char *get_argz_i(const char *argz, size_t argz_len, int i)
 {
 	char *entry = NULL;
 
