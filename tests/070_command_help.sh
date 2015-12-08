@@ -9,8 +9,8 @@ fi
 
 set -e
 
-answer=$(fdc help help)
-expected="Command HELP
-Synopsis: HELP COMMAND
-Overview: Sends back a little help on the command COMMAND."
+answer=$(fdc help folders)
+expected="Command FOLDERS
+Synopsis: FOLDERS
+Overview: Asks the server to list the currently registered folders."
 [ "${answer}" = "${expected}" ]
