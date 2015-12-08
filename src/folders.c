@@ -356,13 +356,6 @@ static int entity_completion(struct preparation *preparation,
 			struct folder_entity *entity)
 {
 	int ret;
-	struct folder *folder;
-
-	folder = folder_find(preparation->folder);
-	if (folder == NULL) {
-		ret = -ENOENT;
-		goto out;
-	}
 
 	if (entity == NULL) {
 		ULOGW("%*s creation failed for identification string %s",
