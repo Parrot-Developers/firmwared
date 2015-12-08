@@ -39,8 +39,8 @@ static int prepare_command_handler(struct pomp_conn *conn,
 			NULL;
 
 	/* coverity[bad_printf_format_string] */
-	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_PREPARE_READ, &seqnum, &folder,
-			&identification_string);
+	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_PREPARE_READ, &seqnum,
+			&folder, &identification_string);
 	if (ret < 0) {
 		folder = identification_string = NULL;
 		ULOGE("pomp_msg_read: %s", strerror(-ret));

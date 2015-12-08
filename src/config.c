@@ -281,7 +281,8 @@ static struct config configs[CONFIG_NB] = {
 				.valid = valid_yes_no,
 		},
 		[CONFIG_HOST_INTERFACE_PREFIX] = {
-				.env = CONFIG_KEYS_PREFIX"HOST_INTERFACE_PREFIX",
+				.env = CONFIG_KEYS_PREFIX
+					"HOST_INTERFACE_PREFIX",
 				.default_value = HOST_INTERFACE_PREFIX,
 				.valid = valid_interface_prefix,
 		},
