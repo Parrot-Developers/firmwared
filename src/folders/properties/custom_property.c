@@ -47,6 +47,33 @@ static struct custom_property_storage *next_from(struct rs_dll *dll,
 	return to_custom_property_storage(node);
 }
 
+static struct custom_property_storage *custom_property_storage_new(
+		struct folder_entity *entity, struct folder_property *property)
+{
+	struct custom_property_storage *storage = NULL;
+
+	storage = calloc(sizeof(struct custom_property_storage), 1);
+	if (storage == NULL)
+		return NULL;
+
+	storage->entity = entity;
+	storage->property = property;
+
+	return storage;
+}
+
+static void custom_property_storage_delete(
+		struct custom_property_storage **storage)
+{
+	if (storage == NULL || *storage == NULL)
+		return;
+
+	ut_string_free(&(*storage)->argz);
+	memset(*storage, 0, sizeof(**storage));
+	free(*storage);
+	*storage = NULL;
+}
+
 static struct custom_property_storage *find_or_create(
 		struct folder_property *property,
 		struct folder_entity *entity)
@@ -66,12 +93,9 @@ static struct custom_property_storage *find_or_create(
 			return storage;
 
 	/* otherwise, allocate it and store it */
-	storage = calloc(sizeof(struct custom_property_storage), 1);
+	storage = custom_property_storage_new(entity, property);
 	if (storage == NULL)
 		return NULL;
-
-	storage->entity = entity;
-	storage->property = property;
 
 	rs_dll_enqueue(&custom_property_storages, &storage->node);
 
@@ -130,8 +154,7 @@ static int custom_property_remove(struct rs_node *n)
 {
 	struct custom_property_storage *storage = to_custom_property_storage(n);
 
-	memset(storage, 0, sizeof(*storage));
-	free(storage);
+	custom_property_storage_delete(&storage);
 
 	return 0;
 }
@@ -139,6 +162,18 @@ static int custom_property_remove(struct rs_node *n)
 static const struct rs_dll_vtable custom_property_storage_vtable = {
 		.remove = custom_property_remove,
 };
+
+static struct custom_property_storage *first_storage_for(
+		const struct folder_entity *entity)
+{
+	struct custom_property_storage *storage = NULL;
+
+	while ((storage = next_from(&custom_property_storages, storage)))
+		if (ut_string_match(entity->name, storage->entity->name))
+			return storage;
+
+	return NULL;
+}
 
 bool is_custom_property(const struct folder_property *property)
 {
@@ -192,10 +227,14 @@ err:
 	return NULL;
 }
 
-int custom_property_cleanup_values(const struct folder_entity *entity)
+void custom_property_cleanup_values(const struct folder_entity *entity)
 {
+	struct custom_property_storage *storage;
 
-	return -ENOSYS;
+	while ((storage = first_storage_for(entity)) != NULL) {
+		rs_dll_remove(&custom_property_storages, &storage->node);
+		custom_property_storage_delete(&storage);
+	}
 }
 
 void custom_property_delete(struct folder_property **property)

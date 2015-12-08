@@ -306,13 +306,20 @@ static void print_folder_entities(struct rs_node *node)
 	ULOGN("%s", info);
 }
 
+static int do_drop(struct folder_entity *entity, bool only_unregister)
+{
+	custom_property_cleanup_values(entity);
+
+	return entity->folder->ops.drop(entity, only_unregister);
+}
+
 static int destroy_folder_entities(struct rs_node *node)
 {
 	char *name;
 	struct folder_entity *entity = to_entity(node);
 
 	name = entity->name;
-	entity->folder->ops.drop(entity, true);
+	do_drop(entity, true);
 
 	/* we have to free name after calling drop() in case it needs it */
 	ut_string_free(&name);
@@ -348,7 +355,7 @@ static int entity_completion(struct preparation *preparation,
 	/* folder_store transfers the ownership of the entity to the folder */
 	ret = folder_store(preparation->folder, entity);
 	if (ret < 0) {
-		folder->ops.drop(entity, false);
+		do_drop(entity, false);
 		ULOGE("folder_store: %s", strerror(-ret));
 		goto out;
 	}
@@ -644,7 +651,7 @@ int folder_drop(const char *folder_name, struct folder_entity *entity)
 	entity = to_entity(node);
 	name = entity->name;
 
-	ret = folder->ops.drop(entity, false);
+	ret = do_drop(entity, false);
 
 	/* we have to free name after calling drop() in case it needs it */
 	ut_string_free(&name);
