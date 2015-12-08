@@ -57,7 +57,9 @@ static const struct command add_property_command = {
 		.msgid = FWD_COMMAND_ADD_PROPERTY,
 		.help = "Adds the custom property PROPERTY to the folder "
 				"FOLDER.",
-		.long_help = "The initial value will be \"\".",
+		.long_help = "The initial value will be \"\". "
+				"If the property name ends with [], the "
+				"property will be an array.",
 		.synopsis = "FOLDER PROPERTY_NAME",
 		.handler = add_property_command_handler,
 };
