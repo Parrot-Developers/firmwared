@@ -23,7 +23,7 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_commands);
 
-#define COMMANDS_MAX FWD_COMMAND_LAST + 1
+#define COMMANDS_MAX (FWD_COMMAND_LAST + 1)
 
 static struct command commands[COMMANDS_MAX];
 
