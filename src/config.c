@@ -345,20 +345,20 @@ static int lua_error_to_errno(int error)
 		return 0;
 
 	case LUA_ERRRUN:
-		return ENOEXEC;
+		return -ENOEXEC;
 
 	case LUA_ERRMEM:
-		return ENOMEM;
+		return -ENOMEM;
 
 	case LUA_ERRFILE:
-		return EIO;
+		return -EIO;
 
 	case LUA_ERRGCMM:
 	case LUA_ERRERR:
 	case LUA_YIELD:
 	case LUA_ERRSYNTAX:
 	default:
-		return EINVAL;
+		return -EINVAL;
 	}
 }
 
@@ -449,7 +449,7 @@ int config_init(const char *path)
 		ULOGI("loading configuration from \"%s\"", path);
 		ret = luaL_dofile(l, path);
 		if (ret != LUA_OK) {
-			ret = -lua_error_to_errno(ret);
+			ret = lua_error_to_errno(ret);
 			ULOGE("reading config file: %s", lua_tostring(l, -1));
 			goto out;
 		}
