@@ -692,6 +692,7 @@ static int property_get(struct folder_property *property,
 	if (!folder_property_is_array(property))
 		return property->get(property, entity, value);
 
+	/* TODO doesn't work get_property cmdline[] return only [0] */
 	for (i = 0; ; i++) {
 		ret = property->geti(property, entity, i, &suffix);
 		if (ret < 0) {
@@ -898,7 +899,12 @@ static int read_index(const char *name)
 		return -1;
 	}
 
+	errno = 0;
 	index = strtol(bracket + 1, &endptr, 0);
+	if (errno != 0)
+		return -1;
+	if (bracket + 1 == endptr)
+		return -1;
 	if (*endptr != ']') {
 		ULOGE("invalid array access near '%s'", bracket);
 		return -1;
