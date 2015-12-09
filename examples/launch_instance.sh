@@ -30,8 +30,6 @@ fi
 
 set -e
 
-. out/sphinx-base/staging/native-wrapper.sh
-
 # defaults to the first firmware found
 firmware=${firmware:-$(fdc list firmwares | sed 's/\[.*//g')}
 
