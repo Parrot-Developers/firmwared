@@ -7,6 +7,8 @@ Asks firmwared to prepare and launch a firmware instance.
 If the "firmware" environment variable is set, it will be used as the firmware,
 otherwise, the first firmware found in the firmwared registered firmwares list
 will be used.
+If the "hardware" environment variable is set, it will be used to set the
+ro.hardware property value passed to boxinit, via it's command-line.
 
 usage: ${0/*\//} [wifi_config [eth0_name]]
 	Where wifi_config has the form:
@@ -73,8 +75,15 @@ console_pts=$(fdc get_property instances $instance inner_pts)
 console_pts=${console_pts#/dev}
 # pass it as an argument to boxinit
 fdc set_property instances $instance cmdline[1] ro.boot.console=${console_pts}
-# set the ro.hardware property, retrieved from the firmware's properties
-hardware=$(fdc get_property firmwares $firmware hardware)
+# set the ro.hardware property
+# the list of supported hardware corresponds to the list of the
+# /etc/default.${ro.hardware}.prop the firmware contains.
+# so we list them and take the first one unless the user has given us other
+# instructions
+if [ -z "${hardware+x}" ]; then
+	mount_point=$(fdc get_property firmwares ${firmware} base_workspace)
+	hardware=$(ls ${mount_point}/etc/default.*.prop | head -n1 | sed 's#.*/default\.\([^.]*\)\.prop#\1#g')
+fi
 fdc set_property instances $instance cmdline[2] ro.hardware=${hardware}
 # the first nil command-line argument ends the array, it is needed to get rid of
 # the parameters which were already registered in the command-line
