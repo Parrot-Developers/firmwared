@@ -16,10 +16,6 @@ struct firmware {
 	struct folder_entity entity;
 	char *path;
 	char sha1[2 * SHA_DIGEST_LENGTH + 1];
-
-	/* both are retrieved from /etc/build.prop */
-	char *product;
-	char *hardware;
 };
 
 #define to_firmware(p) ut_container_of(p, struct firmware, entity)

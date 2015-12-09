@@ -160,8 +160,6 @@ static void firmware_delete(struct firmware **firmware)
 
 	unmount_firmware(f);
 	ut_string_free(&f->path);
-	ut_string_free(&f->hardware);
-	ut_string_free(&f->product);
 	free(f);
 	*firmware = NULL;
 }
