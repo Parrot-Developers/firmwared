@@ -221,25 +221,6 @@ static void preparation_progress_sep_cb(struct io_src_sep *sep, char *chunk,
 		ULOGE("firmwared_notify: %s", strerror(-ret));
 }
 
-static int get_build_prop(struct firmware *firmware, const char *argz,
-		size_t argz_len, char **out, const char *property)
-{
-	if (out == NULL)
-		return -EINVAL;
-
-	*out = envz_get(argz, argz_len, property);
-	if (*out == NULL) {
-		ULOGI("property \"%s\" not found", property);
-		return 0;
-	}
-	*out = strdup(*out);
-	if (*out == NULL)
-		return -errno;
-	ULOGD("%s read from build.prop : %s", property, *out);
-
-	return 0;
-}
-
 /* mounts the firmware so that the client can retrieve informations if needed */
 static int mount_firmware(struct firmware *firmware)
 {
