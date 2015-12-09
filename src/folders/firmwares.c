@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <fnmatch.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <inttypes.h>
 #include <errno.h>
@@ -131,6 +133,23 @@ static const char *firmware_sha1(struct folder_entity *entity)
 	return compute_sha1(firmware);
 }
 
+static void unmount_firmware(struct firmware *firmware)
+{
+	int ret;
+	struct io_process process;
+	const char *mount_dir =
+			folder_entity_get_base_workspace(&firmware->entity);
+
+	ret = io_process_init_prepare_launch_and_wait(&process,
+			&process_default_parameters, NULL, "/bin/umount",
+			mount_dir, NULL);
+	if (ret < 0)
+		ULOGE("umount %s failed: %m", mount_dir);
+	else if (process.status != 0)
+		ULOGE("umount %s exited with status %d", mount_dir,
+				process.status);
+}
+
 static void firmware_delete(struct firmware **firmware)
 {
 	struct firmware *f;
@@ -139,6 +158,7 @@ static void firmware_delete(struct firmware **firmware)
 		return;
 	f = *firmware;
 
+	unmount_firmware(f);
 	ut_string_free(&f->path);
 	ut_string_free(&f->hardware);
 	ut_string_free(&f->product);
@@ -222,68 +242,41 @@ static int get_build_prop(struct firmware *firmware, const char *argz,
 	return 0;
 }
 
-static int extract_firmware_info(struct firmware *firmware, char *props)
+/* mounts the firmware so that the client can retrieve informations if needed */
+static int mount_firmware(struct firmware *firmware)
 {
 	int ret;
-	char __attribute__((cleanup(ut_string_free)))*argz = NULL;
-	size_t argz_len = 0;
-
-	ret = argz_create_sep(props, '\n', &argz, &argz_len);
-	if (ret != 0) {
-		argz = NULL;
-		return ret;
-	}
-
-	ret = get_build_prop(firmware, argz, argz_len, &firmware->product,
-			"ro.build.alchemy.product");
-	if (ret < 0)
-		return ret;
-
-	return get_build_prop(firmware, argz, argz_len, &firmware->hardware,
-			"ro.hardware");
-}
-
-/* mounts the firmware to read some informations it contains */
-static int read_firmware_info(struct firmware *firmware)
-{
-	int ret;
+	int ret2;
 	struct io_process process;
-	char mount_dir[] = "/tmp/firmwared_firmwareXXXXXX";
-	char __attribute__((cleanup(ut_string_free)))*props = NULL;
+	const char *mount_dir =
+			folder_entity_get_base_workspace(&firmware->entity);
 
-	if (mkdtemp(mount_dir) == NULL)
-		return -errno;
-
+	mkdir(mount_dir, 0755);
 	if (ut_file_is_dir(firmware->path)) {
 		ret = io_process_init_prepare_launch_and_wait(&process,
 				&process_default_parameters, NULL, "/bin/mount",
-				"-o", "ro", "--bind", firmware->path, mount_dir,
+				"--bind", firmware->path, mount_dir,
 				NULL);
+		/*
+		 * The remount is necessary to make this bind mount read-only.
+		 * Trying to pass the ro option directly to the previous command
+		 * won't work, according to the man page, the mount options of
+		 * the bind mount will be the same as those of the original
+		 * mount.
+		 */
+		ret2 = io_process_init_prepare_launch_and_wait(&process,
+				&process_default_parameters, NULL, "/bin/mount",
+				"-o", "ro,remount,bind", firmware->path,
+				mount_dir, NULL);
+		if (ret2 < 0)
+			ULOGW("remounting %s read-only failed: %s", mount_dir,
+					strerror(-ret2));
 	} else {
 		ret = io_process_init_prepare_launch_and_wait(&process,
 				&process_default_parameters, NULL, "/bin/mount",
 				"-o", "ro,loop", firmware->path, mount_dir,
 				NULL);
 	}
-	if (ret < 0) {
-		ULOGE("io_process_init_prepare_launch_and_wait: %s",
-				strerror(-ret));
-		goto out;
-	}
-
-	ret = ut_file_to_string("%s/etc/build.prop", &props, mount_dir);
-	if (ret < 0) {
-		props = NULL;
-		ULOGE("ut_file_to_vstring: %s", strerror(-ret));
-		goto out;
-	}
-
-	ret = extract_firmware_info(firmware, props);
-out:
-	io_process_init_prepare_launch_and_wait(&process,
-			&process_default_parameters, NULL, "/bin/umount",
-			mount_dir, NULL);
-	rmdir(mount_dir);
 
 	return ret;
 }
@@ -326,7 +319,7 @@ static struct firmware *firmware_new(const char *path)
 	if (sha1 == NULL)
 		goto err;
 
-	ret = read_firmware_info(firmware);
+	ret = mount_firmware(firmware);
 	if (ret < 0)
 		ULOGW("read_firmware_info failed: %s\n", strerror(-ret));
 
