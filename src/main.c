@@ -67,7 +67,7 @@ static void clean_subsystems(void)
 	folders_cleanup();
 }
 
-static void initial_cleanup_mount_points(void)
+static void initial_cleanup_mount_points(const char *entity_folder)
 {
 	int ret;
 	char __attribute__((cleanup(ut_string_free)))*line = NULL;
@@ -86,8 +86,8 @@ static void initial_cleanup_mount_points(void)
 	regmatch_t matches[3];
 	const char *path;
 
-	ret = asprintf(&str_regex, "^[^ ]+ (%s/?[a-f0-9]+/[a-z]+) .*$",
-			mount_path);
+	ret = asprintf(&str_regex, "^[^ ]+ (%s/?%s/[a-f0-9]+(/[a-z]+)?) .*$",
+			mount_path, entity_folder);
 	if (ret == -1) {
 		str_regex = NULL;
 		ULOGE("asprintf error\n");
@@ -124,7 +124,8 @@ static void initial_cleanup_mount_points(void)
 
 static void initial_cleanup(void)
 {
-	initial_cleanup_mount_points();
+	initial_cleanup_mount_points("firmwares");
+	initial_cleanup_mount_points("instances");
 	apparmor_remove_all_firmwared_profiles();
 }
 
