@@ -28,7 +28,13 @@ then
 	# mount the ro layer and remount it with a rw layer on top
 	if [ -d "${firmware}" ];
 	then
-		mount -o ro --bind ${firmware} ${ro_mount_point}
+		mount --bind ${firmware} ${ro_mount_point}
+		# The remount is necessary to make this bind mount read-only.
+		# Trying to pass the ro option directly to the previous command
+		# won't work, according to the man page, the mount options of
+		# the bind mount will be the same as those of the original
+		# mount.
+		mount -o ro,remount,bind ${firmware} ${ro_mount_point}
 	else
 		mount -o ro,loop ${firmware} ${ro_mount_point}
 	fi
