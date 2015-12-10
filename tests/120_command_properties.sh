@@ -10,5 +10,5 @@ fi
 set -eu
 
 answer=$(fdc properties firmwares)
-expected="name sha1 path product hardware"
+expected="name sha1 base_workspace path post_prepare_instance_command"
 [ "${answer}" = "${expected}" ]
