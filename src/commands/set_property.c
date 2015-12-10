@@ -78,7 +78,11 @@ static const struct command set_property_command = {
 				"this position and the array will grow "
 				"accordingly. If PROPERTY_VALUE is \"nil\", "
 				"then the array will be truncated before the "
-				"i-th index.",
+				"i-th index."
+				"All the array's content can be set at once "
+				"whithout the brackets."
+				"In this case, the space character will be "
+				"used as a separator.",
 		.synopsis = "FOLDER ENTITY_IDENTIFIER PROPERTY_NAME "
 				"PROPERTY_VALUE",
 		.handler = set_property_command_handler,
