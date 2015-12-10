@@ -31,6 +31,6 @@ fdc prepare firmwares ${PWD}/example_firmware.ext2
 firmware=$(fdc list firmwares)
 firmware=${firmware%[*}
 
-answer=$(fdc get_property firmwares ${firmware} product)
-expected=dragonfly
+answer=$(fdc get_property firmwares ${firmware} sha1)
+expected=2915c77028cccee9b2820e4c9df06a8a413b0252
 [ "${answer}" = "${expected}" ]
