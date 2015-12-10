@@ -61,6 +61,15 @@ if [ -z "${firmware}" ]; then
 	exit 1
 fi
 
+path=$(fdc get_property firmwares ${firmware} path)
+if [ -d "${path}" ]; then
+	# the circonvoluted work to find the path to apply-perms is needed because
+	# we don't know whether we are in a sphinx workspace, or if the binary
+	# package is used
+	apply_perms=$(dirname $(which fdc ))/../libexec/sphinx/apply-perms
+	fdc set_property firmwares ${firmware} post_prepare_instance_command ${apply_perms}
+fi
+
 # create an instance and store it's name for future use
 instance=$(fdc prepare instances ${firmware} | tail -n 1 | sed 's/.*: //g');
 
