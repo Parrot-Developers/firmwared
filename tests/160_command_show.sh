@@ -31,7 +31,7 @@ fdc prepare firmwares ${PWD}/example_firmware.ext2
 firmware=$(fdc list firmwares)
 firmware=${firmware%[*}
 
-pattern='[a-z0-9_]+: .*'
+pattern='[a-z0-9_]+:.*'
 fdc show firmwares ${firmware} | while read line
 do
 	[[ ${line} =~ ${pattern} ]]
