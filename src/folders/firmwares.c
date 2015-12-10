@@ -527,6 +527,11 @@ int firmwares_init(void)
 
 	ULOGD("%s", __func__);
 
+	ret = ut_file_mkdir("%s/" FIRMWARES_FOLDER_NAME, 0755,
+			config_get(CONFIG_MOUNT_PATH));
+	if (ret < 0 && ret != -EEXIST)
+		ULOGW("couldn't mkdir the firmwares mount path");
+
 	firmware_folder.name = FIRMWARES_FOLDER_NAME;
 	memcpy(&firmware_folder.ops, &firmware_ops, sizeof(firmware_ops));
 	ret = folder_register(&firmware_folder);
