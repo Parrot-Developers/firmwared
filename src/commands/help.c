@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <string.h>
 #include <inttypes.h>
+#include <ctype.h>
 
 #include <libpomp.h>
 
@@ -30,6 +31,7 @@ static int help_command_handler(struct pomp_conn *conn,
 	char __attribute__((cleanup(ut_string_free))) *command_name = NULL;
 	enum fwd_message command_id;
 	const char *help;
+	char *p;
 
 	/* coverity[bad_printf_format_string] */
 	ret = pomp_msg_read(msg, FWD_FORMAT_COMMAND_HELP_READ, &seqnum,
@@ -40,6 +42,8 @@ static int help_command_handler(struct pomp_conn *conn,
 		return ret;
 	}
 
+	for (p = command_name; *p != '\0'; p++)
+		*p = toupper(*p);
 	command_id = fwd_message_from_str(command_name);
 	help = command_get_help(command_id);
 	if (help == NULL) {
