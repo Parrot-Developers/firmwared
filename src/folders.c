@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <inttypes.h>
+#include <argz.h>
 
 #include <ut_utils.h>
 #include <ut_string.h>
@@ -715,7 +716,6 @@ static int property_get(struct folder_property *property,
 	if (!folder_property_is_array(property))
 		return property->get(property, entity, value);
 
-	/* TODO doesn't work get_property cmdline[] return only [0] */
 	for (i = 0; ; i++) {
 		ret = property->geti(property, entity, i, &suffix);
 		if (ret < 0) {
@@ -1020,6 +1020,9 @@ int folder_entity_set_property(struct folder_entity *entity, const char *name,
 	bool is_array_access;
 	struct rs_node *property_node;
 	struct folder_property *property;
+	char __attribute__((cleanup(ut_string_free))) *argz = NULL;
+	size_t argz_len = 0;
+	char *entry = 0;
 
 	if (entity == NULL || ut_string_is_invalid(name) ||
 			ut_string_is_invalid(value))
@@ -1034,11 +1037,8 @@ int folder_entity_set_property(struct folder_entity *entity, const char *name,
 	}
 	property = to_property(property_node);
 	is_array_access = name[strlen(name) - 1] == ']';
-	if (is_array_access != folder_property_is_array(property)) {
-		if (is_array_access)
-			ULOGE("non-array property accessed as an array one");
-		else
-			ULOGE("array property accessed as a non-array one");
+	if (is_array_access && !folder_property_is_array(property)) {
+		ULOGE("non-array property accessed as an array one");
 		return -EINVAL;
 	}
 
@@ -1057,15 +1057,50 @@ int folder_entity_set_property(struct folder_entity *entity, const char *name,
 			return ret;
 		}
 	} else {
-		if (property->set == NULL) {
-			ULOGE("property %s.%s is read-only",
-					entity->folder->name, name);
-			return -EPERM;
-		}
-		ret = property->set(property, entity, value);
-		if (ret < 0) {
-			ULOGE("property->set: %s", strerror(-ret));
-			return ret;
+		if (folder_property_is_array(property)) {
+			if (property->seti == NULL) {
+				ULOGE("property %s.%s[] is read-only",
+						entity->folder->name, name);
+				return -EPERM;
+			}
+			argz = strdup(value);
+			if (argz == NULL) {
+				ret = -errno;
+				ULOGE("strdup:%m");
+				return ret;
+			}
+			ret = -argz_create_sep(value, ' ', &argz, &argz_len);
+			if (ret < 0) {
+				ULOGE("argz_create_sep:%s", strerror(-ret));
+				return ret;
+			}
+			index = 0;
+			while ((entry = argz_next(argz, argz_len, entry))) {
+				ret = property->seti(property, entity, index,
+						entry);
+				if (ret < 0) {
+					ULOGE("property->seti: %s",
+							strerror(-ret));
+					return ret;
+				}
+				index++;
+			}
+			ret = property->seti(property, entity, index, "nil");
+			if (ret < 0) {
+				ULOGE("property->seti: %s", strerror(-ret));
+				return ret;
+			}
+		} else {
+			if (property->set == NULL) {
+				ULOGE("property %s.%s is read-only",
+						entity->folder->name, name);
+				return -EPERM;
+			}
+			ret = property->set(property, entity, value);
+			if (ret < 0) {
+				ULOGE("property->set: %s", strerror(-ret));
+				return ret;
+			}
 		}
 	}
 
