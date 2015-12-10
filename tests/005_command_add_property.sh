@@ -14,9 +14,12 @@ on_exit() {
 	# we don't want to fail here, to guarantee the cleanup
 	set +e
 	rm example_firmware.ext2
-	if [ ${status} -ne 0 ] && [ -n "${firmware}" ]; then
+	if [ -n "${firmware}" ]; then
 		fdc drop firmwares ${firmware}
 	fi
+	# there is no other way to remove the foo property
+	fdc quit
+	sleep 1.5
 	exit ${status}
 }
 
