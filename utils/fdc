@@ -94,41 +94,36 @@ ans_id=$(LIBFWD_GET_ANSWER_ID= LIBFWD_MESSAGE=${command} ${libfwd})
 err_id=$(LIBFWD_MESSAGE=ERROR ${libfwd})
 format=$(LIBFWD_GET_MESSAGE_FORMAT= LIBFWD_MESSAGE=${command} ${libfwd})
 # order shall match enum fwd_message
+# variable assignations, even when not read afterwards, allow the shell to
+# produce an error automatically when the corresponding parameter is undefined
 case "${command}" in
 	ADD_PROPERTY)
 		folder=$2
 		name=$3
-		args="${folder} ${name}"
 		sed_command="s/.*STR:'\([^']*\)'.*/property \1 added/g"
 		;;
 	COMMANDS)
-		args=""
 		sed_command="s/.*STR:'\([^']*\)'.*/\1 RESTART/g"
 		;;
 	CONFIG_KEYS)
-		args=""
 		sed_command="s/.*ID:${ans_id}.*STR:'\([^']*\)'.*/\1/g"
 		;;
 	DROP)
 		folder=$2
 		identifier=$3
-		args="${folder} ${identifier}"
 		sed_command="s/.*/${identifier} dropped/g"
 		;;
 	FOLDERS)
-		args=""
 		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
 		;;
 	GET_CONFIG)
 		config_key=$2
-		args="${config_key}"
 		sed_command="s#.*STR:'[^']*', STR:'\([^']*\)'.*#\1#g"
 		;;
 	GET_PROPERTY)
 		folder=$2
 		entity_identifier=$3
 		property_name=$4
-		args="${folder} ${entity_identifier} ${property_name}"
 		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
 		;;
 	HELP)
@@ -140,22 +135,18 @@ case "${command}" in
 remount and start on an instance."
 			exit 0
 		fi
-		args="${identifier}"
 		sed_command="s/.*STR:'//g"
 		;;
 	KILL)
 		format="%u%s"
 		identifier=$2
-		args="${identifier}"
 		sed_command="s/.*/${identifier} killed/g"
 		;;
 	LIST)
 		folder=$2
-		args="${folder}"
 		sed_command="s/.*STR:'${folder}', U32:[0-9]*, STR:'\([^']*\)'.*/\1/g"
 		;;
 	PING)
-		args=""
 		sed_command="s/.*/PONG/g"
 		;;
 	PREPARE)
@@ -165,23 +156,19 @@ remount and start on an instance."
 			exit_command="tput cnorm"
 		fi
 		identification_string=$3
-		args="${folder} ${identification_string}"
 		sed_command[0]="s#.*ID:${ans_id}.*STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#new entity in \1 folder created\nsha1: \2\nname: \3#g"
 		sed_command[1]="s#.*STR:'\([^']*\)', STR:'\([^']*\)', STR:'\([^']*\)'.*#\3% done$(echo -e '\033[1A\033[?25l')#g"
 		;;
 	PROPERTIES)
 		folder=$2
-		args="${folder}"
 		sed_command="s/.*STR:'\([^']*\)'[^']*/\1/g"
 		;;
 	QUIT)
-		args=""
 		sed_command="s/.*ID:${ans_id}.*/firmwared said bye bye/g"
 		;;
 	REMOUNT)
 		format="%u%s"
 		identifier=$2
-		args="${identifier}"
 		sed_command="s/.*/${identifier} remounted/g"
 		;;
 	RESTART)
@@ -196,24 +183,20 @@ remount and start on an instance."
 		entity_identifier=$3
 		property_name=$4
 		property_value=$5
-		args="${folder} ${entity_identifier} ${property_name} ${property_value}"
 		sed_command="s/.*STR:'\([^']*\)'.*/\1/g"
 		;;
 	SHOW)
 		folder=$2
 		identifier=$3
-		args="${folder} ${identifier}"
 		sed_command="s/.*STR:'//g"
 		;;
 	START)
 		format="%u%s"
 		identifier=$2
-		args="${identifier}"
 		sed_command="s/.*/${identifier} started/g"
 		;;
 # upper level commands
 	VERSION)
-		args=""
 		sed_command="s/.*STR:'//g"
 		;;
 	*)
@@ -223,7 +206,9 @@ esac
 
 pomp_cmd="pomp-cli --timeout ${timeout} --dump --wait ${ans_id} unix:${socket}"
 
-exec ${pomp_cmd} ${cmd_id} ${format} ${seqnum} ${args} 2>&1 | while read line
+shift
+
+exec ${pomp_cmd} ${cmd_id} ${format} ${seqnum} "$@" 2>&1 | while read line
 do
 	if [ -n "$(echo ${line} | grep 'POMPCLI: event_cb :')" ];
 	then
