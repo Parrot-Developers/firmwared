@@ -703,6 +703,7 @@ static int init_instance(struct instance *instance,
 	int ret;
 	struct folder_entity *firmware_entity;
 	struct firmware *firmware;
+	const char *command;
 
 	firmware_entity = folder_find_entity(FIRMWARES_FOLDER_NAME,
 			firmware_identifier);
@@ -776,6 +777,16 @@ static int init_instance(struct instance *instance,
 	if (ret < 0) {
 		ULOGE("init_command_line: %s", strerror(-ret));
 		goto err;
+	}
+
+	command = firmware_get_post_prepare_instance_command(firmware);
+	if (command != NULL) {
+		/* TODO this blocks too much time */
+		ret = ut_process_vsystem("root=%s firmware_path=%s %s",
+				instance->union_mount_point,
+				instance->firmware_path, command);
+		if (ret != 0)
+			ULOGW("%s returned status %d", command, ret);
 	}
 
 	return 0;
