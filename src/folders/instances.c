@@ -150,7 +150,6 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 			instance_get_sha1(instance),
 			only_unregister ? "true" : "false",
 			config_get(CONFIG_PREVENT_REMOVAL),
-			config_get(CONFIG_USE_AUFS),
 			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS),
 			NULL /* NULL guard */);
 	if (ret < 0)

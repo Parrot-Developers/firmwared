@@ -155,18 +155,6 @@ is set, it's value is used as the path to the socket used to control firmwared,
 defaults to
 .BR /var/run/firmwared.sock .
 .TP
-.B FIRMWARED_USE_AUFS
-If
-.RB $ FIRMWARED_USE_AUFS
-is set to
-.BR y ,
-aufs will be used instead of overlayfs.
-This option is here if one doesn't want to upgrade it's kernel to a version in
-which, overlayfs support has been integrated.
-Using this option is strongly discouraged since it forces to disable AppArmor.
-Defaults to
-.BR n .
-.TP
 .B FIRMWARED_VERBOSE_HOOK_SCRIPTS
 If
 .RB $ FIRMWARED_VERBOSE_HOOK_SCRIPTS

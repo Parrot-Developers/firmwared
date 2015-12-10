@@ -11,8 +11,7 @@ firmware=$6
 sha1=$7
 only_unregister=$8
 prevent_removal=$9
-use_aufs=$10
-verbose=$11
+verbose=$10
 
 if [ "${verbose}" = "y" ]; then
 	set -x
@@ -38,14 +37,9 @@ then
 	else
 		mount -o ro,loop ${firmware} ${ro_mount_point}
 	fi
-	if [ "${use_aufs}" = "y" ]; then
-		mount -t aufs -o br=${rw_dir}:${ro_mount_point} ${sha1} \
-			${union_mount_point}
-	else
-		mount -t overlay -o \
-			lowerdir=${ro_mount_point},upperdir=${rw_dir},workdir=${workdir} \
-			firmwared_${sha1} ${union_mount_point}
-	fi
+	mount -t overlay -o \
+		lowerdir=${ro_mount_point},upperdir=${rw_dir},workdir=${workdir} \
+		firmwared_${sha1} ${union_mount_point}
 
 elif [ "${action}" = "remount" ];
 then

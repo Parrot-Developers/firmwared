@@ -62,7 +62,7 @@ entities types are named *folders*.
   sends back a little help on the command COMMAND
 * *KILL* INSTANCE\_IDENTIFIER  
   kills an instance, all the processes are killed, the instance is still
-  registered and it's rw aufs layer is still present  
+  registered and it's rw overlayfs layer is still present  
   the instance must be in the *STARTED* state.  
   the instance switches to the *STOPPING* state, before switching back to the
   *READY* state

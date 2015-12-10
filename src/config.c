@@ -88,10 +88,6 @@ ULOG_DECLARE_TAG(firmwared_config);
 #define DISABLE_APPARMOR "n"
 #endif /* DISABLE_APPARMOR */
 
-#ifndef USE_AUFS
-#define USE_AUFS "n"
-#endif /* USE_AUFS */
-
 #ifndef VERBOSE_HOOK_SCRIPTS
 #define VERBOSE_HOOK_SCRIPTS "n"
 #endif /* VERBOSE_HOOK_SCRIPTS */
@@ -326,11 +322,6 @@ static struct config configs[CONFIG_NB] = {
 				.default_value = SOCKET_PATH_DEFAULT,
 				.valid = valid_accessible,
 		},
-		[CONFIG_USE_AUFS] = {
-				.env = CONFIG_KEYS_PREFIX"USE_AUFS",
-				.default_value = USE_AUFS,
-				.valid = valid_yes_no,
-		},
 		[CONFIG_VERBOSE_HOOK_SCRIPTS] = {
 				.env = CONFIG_KEYS_PREFIX"VERBOSE_HOOK_SCRIPTS",
 				.default_value = VERBOSE_HOOK_SCRIPTS,
@@ -419,14 +410,6 @@ static int read_config(lua_State *l)
 
 static int check_config(void)
 {
-	if (!config_get_bool(CONFIG_DISABLE_APPARMOR)
-			&& config_get_bool(CONFIG_USE_AUFS)) {
-		ULOGE("AuFS isn't supported by firmwared's AppArmor integration"
-				" you should disable AppArmor or better, "
-				"use OverlayFS");
-		return -EINVAL;
-	}
-
 	if (config_get_bool(CONFIG_DISABLE_APPARMOR))
 		ULOGW("AppArmor disabled, this is dangerous");
 
