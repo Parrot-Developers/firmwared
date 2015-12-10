@@ -38,6 +38,10 @@ folder they must apply to.
 .\" generated with the command :
 .\" for c in $(fdc commands | sed "s/ /\n/g" | sort); do fdc help $c | egrep -v "^Command " | sed "s/Synopsis:/.TP\n.B/g" | sed "s/Overview: /- /g"; done
 .TP
+.B ADD_PROPERTY FOLDER PROPERTY_NAME
+- Adds the custom property PROPERTY to the folder FOLDER.
+The initial value will be "". If the property name ends with [], the property will be an array.
+.TP
 .B COMMANDS
 - List the different commands registered so far.
 .TP
@@ -57,21 +61,21 @@ The CONFIG_KEY is case insensitive. Use the CONFIG_KEYS command to list the avai
 .TP
 .B GET_PROPERTY FOLDER ENTITY_IDENTIFIER PROPERTY_NAME
 - Retrieves the value of the property PROPERTY for the entity whose name or sha1 is ENTITY_IDENTIFIER from the folder FOLDER.
-If the property is an array, both indexed and non-indexed accesses are allowed. In the non indexed case, all the content of the array will be retrieved, in the indexed access case, one must suffix the property name with [i] to retrieve the i-th value.
+If the property is an array, both indexed and non-indexed accesses are allowed. In the non indexed case, all the content of the array will be retrieved, in the indexed access case, one must suffix the property name with [i] to retrieve the i-th value
 .TP
 .B HELP COMMAND
 - Sends back a little help on the command COMMAND.
 .TP
 .B KILL INSTANCE_IDENTIFIER
 - Kills a running instance.
-Searches for the instance whose sha1 or name is INSTANCE_IDENTIFIER and kills it. All the processes are killed, the instance is still registered and it's rw aufs layer is still present. The instance must be in the STARTED state.
+Searches for the instance whose sha1 or name is INSTANCE_IDENTIFIER and kills it. All the processes are killed, the instance is still registered and it's rw overlayfs layer is still present. The instance must be in the STARTED state.
 The instance switches to the STOPPING state, before switching back to the READY state.
 .TP
 .B LIST FOLDER
 - List all the items in the folder FOLDER.
 FOLDER is one of folders listed in an answer to a FOLDERS command.
 .TP
-.B PING
+.B PING PING
 - Asks for the server to answer with a PONG notification.
 .TP
 .B PREPARE FOLDER IDENTIFICATION_STRING
@@ -93,7 +97,7 @@ If FOLDER equals to instance, then IDENTIFICATION_STRING must be either a sha1 o
 .TP
 .B SET_PROPERTY FOLDER ENTITY_IDENTIFIER PROPERTY_NAME PROPERTY_VALUE
 - Sets the value of the property PROPERTY to the value PROPERTY_VALUE, for the entity whose name or sha1 is ENTITY_IDENTIFIER from the folder FOLDER.
-If the property is an array, append [i] to the property name to set the i-th item's value. If i is the index of a non nil element, it will be replaced, if i is the index after the last non-nil element, it will be stored in this position and the array will grow accordingly. If PROPERTY_VALUE is "nil", then the array will be truncated before the i-th index.
+If the property is an array, append [i] to the property name to set the i-th item's value. If i is the index of a non nil element, it will be replaced, if i is the index after the last non-nil element, it will be stored in this position and the array will grow accordingly. If PROPERTY_VALUE is "nil", then the array will be truncated before the i-th index.All the array's content can be set at once whithout the brackets.In this case, the space character will be used as a separator.
 .TP
 .B SHOW FOLDER IDENTIFIER
 - Asks for all the information on a given entity of a folder.
