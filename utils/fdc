@@ -151,8 +151,8 @@ remount and start on an instance."
 		;;
 	PREPARE)
 		folder=$2
+		timeout=-1
 		if [ "${folder}" = "firmwares" ]; then
-			timeout=-1
 			exit_command="tput cnorm"
 		fi
 		identification_string=$3
