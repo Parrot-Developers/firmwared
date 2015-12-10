@@ -581,6 +581,16 @@ const char *firmware_get_name(const struct firmware *firmware)
 	return firmware->entity.name;
 }
 
+const char *firmware_get_post_prepare_instance_command(
+		const struct firmware *firmware)
+{
+	errno = EINVAL;
+	if (firmware == NULL)
+		return NULL;
+
+	return firmware->post_prepare_instance_command;
+}
+
 void firmwares_cleanup(void)
 {
 	ULOGD("%s", __func__);
