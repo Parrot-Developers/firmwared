@@ -388,16 +388,16 @@ static int setup_chroot(struct instance *instance)
 {
 	int ret;
 
-	ret = chdir(instance->union_mount_point);
-	if (ret < 0) {
-		ret = -errno;
-		ULOGE("chdir(/): %m");
-		return ret;
-	}
 	ret = chroot(instance->union_mount_point);
 	if (ret == -1) {
 		ret = -errno;
 		ULOGE("chroot(%s): %m", instance->union_mount_point);
+		return ret;
+	}
+	ret = chdir("/");
+	if (ret < 0) {
+		ret = -errno;
+		ULOGE("chdir(/): %m");
 		return ret;
 	}
 
