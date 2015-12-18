@@ -386,19 +386,28 @@ static int setup_container(struct instance *instance)
 
 static int setup_chroot(struct instance *instance)
 {
-	int ret;
+	int chroot_ret;
+	int chdir_ret;
 
-	ret = chroot(instance->union_mount_point);
-	if (ret == -1) {
-		ret = -errno;
-		ULOGE("chroot(%s): %m", instance->union_mount_point);
-		return ret;
+	/*
+	 * coverity groans about chdir not being called before we read the errno
+	 * value, which triggers implicitly a call to __errno_location()
+	 * hence, we don't retrieve this value before calling chdir, but because
+	 * of this, the corresponding errno is lost
+	 */
+	chroot_ret = chroot(instance->union_mount_point);
+	chdir_ret = chdir("/");
+	if (chroot_ret == -1) {
+		 /* dummy value, since errno is overwritten by chdir_ret */
+		chroot_ret = -ECANCELED;
+		ULOGE("chroot in %s failed, unknown error",
+				instance->union_mount_point);
+		return chroot_ret;
 	}
-	ret = chdir("/");
-	if (ret < 0) {
-		ret = -errno;
+	if (chdir_ret < 0) {
+		chdir_ret = -errno;
 		ULOGE("chdir(/): %m");
-		return ret;
+		return chdir_ret;
 	}
 
 	return 0;
