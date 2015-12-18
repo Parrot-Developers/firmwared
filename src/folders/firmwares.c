@@ -230,7 +230,9 @@ static int mount_firmware(struct firmware *firmware)
 	const char *mount_dir =
 			folder_entity_get_base_workspace(&firmware->entity);
 
-	mkdir(mount_dir, 0755);
+	ret = mkdir(mount_dir, 0755);
+	if (ret == -1 && errno != EEXIST)
+		ULOGW("mkdir: %m");
 	if (ut_file_is_dir(firmware->path)) {
 		ret = io_process_init_prepare_launch_and_wait(&process,
 				&process_default_parameters, NULL, "/bin/mount",
