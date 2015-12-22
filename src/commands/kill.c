@@ -45,7 +45,7 @@ static int kill_command_handler(struct pomp_conn *conn,
 		return -errno;
 	instance = instance_from_entity(entity);
 
-	return instance_kill(instance, pomp_msg_get_id(msg));
+	return instance_kill(instance, seqnum);
 }
 
 static const struct command kill_command = {
