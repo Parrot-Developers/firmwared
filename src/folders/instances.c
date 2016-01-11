@@ -129,6 +129,8 @@ static void clean_paths(struct instance *instance)
 	ut_string_free(&instance->ro_mount_point);
 	ut_string_free(&instance->rw_dir);
 	ut_string_free(&instance->union_mount_point);
+	ut_string_free(&instance->x11_mount_point);
+	ut_string_free(&instance->nvidia_mount_point);
 }
 
 static int invoke_mount_helper(struct instance *instance, const char *action,
@@ -146,6 +148,10 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 			instance->ro_mount_point,
 			instance->rw_dir,
 			instance->union_mount_point,
+			config_get(CONFIG_X11_PATH),
+			instance->x11_mount_point,
+			config_get(CONFIG_NVIDIA_PATH),
+			instance->nvidia_mount_point,
 			instance->firmware_path,
 			instance_get_sha1(instance),
 			only_unregister ? "true" : "false",
@@ -278,6 +284,22 @@ static int init_paths(struct instance *instance)
 	if (ret < 0) {
 		instance->union_mount_point = NULL;
 		ULOGE("asprintf union_mount_point error");
+		ret = -ENOMEM;
+		goto err;
+	}
+	ret = asprintf(&instance->x11_mount_point, "%s/x11",
+            instance->union_mount_point);
+	if (ret < 0) {
+		instance->x11_mount_point = NULL;
+		ULOGE("asprintf x11_mount_point error");
+		ret = -ENOMEM;
+		goto err;
+	}
+	ret = asprintf(&instance->nvidia_mount_point, "%s/nvidia",
+            instance->union_mount_point);
+	if (ret < 0) {
+		instance->nvidia_mount_point = NULL;
+		ULOGE("asprintf nvidia_mount_point error");
 		ret = -ENOMEM;
 		goto err;
 	}
