@@ -71,6 +71,24 @@ static int set_post_prepare_instance_command(struct folder_property *property,
 	return firmware->post_prepare_instance_command == NULL ? -errno : 0;
 }
 
+static int get_uuid(struct folder_property *property,
+		struct folder_entity *entity, char **value)
+{
+	struct firmware *firmware;
+	const char *uuid;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	firmware = to_firmware(entity);
+
+	uuid = firmware_get_uuid(firmware);
+	if (uuid == NULL)
+		return -errno;
+	*value = strdup(uuid);
+
+	return *value == NULL ? -errno : 0;
+}
+
 struct folder_property firmware_properties[] = {
 		{
 				.name = "path",
@@ -80,6 +98,10 @@ struct folder_property firmware_properties[] = {
 				.name = "post_prepare_instance_command",
 				.get = get_post_prepare_instance_command,
 				.set = set_post_prepare_instance_command,
+		},
+		{
+				.name = "uuid",
+				.get = get_uuid,
 		},
 		{ /* NULL guard */
 				.name = NULL,
