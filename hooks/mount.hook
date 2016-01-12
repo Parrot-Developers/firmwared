@@ -7,15 +7,11 @@ base_workspace=$2
 ro_mount_point=$3
 rw_dir=$4
 union_mount_point=$5
-x11_path=$6
-x11_mount_point=$7
-nvidia_path=$8
-nvidia_mount_point=$9
-firmware=$10
-sha1=$11
-only_unregister=$12
-prevent_removal=$13
-verbose=$14
+firmware=$6
+sha1=$7
+only_unregister=$8
+prevent_removal=$9
+verbose=$10
 
 if [ "${verbose}" = "y" ]; then
 	set -x
@@ -45,35 +41,13 @@ then
 		lowerdir=${ro_mount_point},upperdir=${rw_dir},workdir=${workdir} \
 		firmwared_${sha1} ${union_mount_point}
 
-	# create X11 mount point
-    mkdir -p ${x11_mount_point}
-
-	# mount the X11 path
-	if [ -d "${x11_path}" ];
-	then
-		mount -o ro --bind ${x11_path} ${x11_mount_point}
-	else
-		mount -o ro,loop ${x11_path} ${x11_mount_point}
-	fi
-
-	# create NVIDIA mount point
-    mkdir -p ${nvidia_mount_point}
-
-	# mount the NVIDIA path
-	if [ -d "${nvidia_path}" ];
-	then
-		mount -o ro --bind ${nvidia_path} ${nvidia_mount_point}
-	else
-		mount -o ro,loop ${nvidia_path} ${nvidia_mount_point}
-	fi
-
 elif [ "${action}" = "remount" ];
 then
 	mount -oremount ${union_mount_point}
 elif [ "${action}" = "clean" ];
 then
 	# unmount
-	umount ${x11_mount_point} ${union_mount_point} ${ro_mount_point}
+	umount ${union_mount_point} ${ro_mount_point}
 	# optionally remove the artifacts
 	if [ ! "${prevent_removal}" = "y" ];
 	then

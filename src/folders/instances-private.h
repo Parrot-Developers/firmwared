@@ -47,9 +47,6 @@ struct instance {
 	char *ro_mount_point;
 	char *rw_dir;
 	char *union_mount_point;
-    /* all 2 dirs must be subdirs of union_mount_point dir */
-	char *x11_mount_point;
-	char *nvidia_mount_point;
 
 	/* foo is the external pts, bar will be passed to the pid 1 */
 	struct ptspair ptspair;
