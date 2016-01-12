@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Uses the fixstat.sh script to change the owner and permissions of all the
+# files in the union fs of an instance.
+# Designed to be used as the value of the post_prepare_instance_hook value.
+# mandatory environment variables :
+# root: root of the union fs in which the perms will be applied
+# firmwared_path: path to the original final directory
+
+set -eu
+
+# set -x
+
+root=$1
+firmware_path=$2
+
+verbose=$3
+
+if [ "${verbose}" = "y" ]; then
+	set -x
+fi
+
+if ! [ -d ${firmware_path} ]; then
+	exit 0
+fi
+
+cd ${root}
+find ! -name '.' -printf "%P\n" | ${firmware_path}/../fixstat.sh | while read line
+do
+	# tokenize the line at each semicolon
+	file=${line%%;*}
+	line=${line#${file};}
+	mode=${line%%;*}
+	line=${line#${mode};}
+	uid=${line%%;*}
+	line=${line#${uid};}
+	gid=${line%%;*}
+
+	# remove the "blabla=" prefixes
+	mode=${mode#mode=}
+	uid=${uid#uid=}
+	gid=${gid#gid=}
+
+	# in mode, only the last 3 digits are meaningful
+	mode=${mode:$((${#mode}-3)):3}
+
+	# the parsing is done, now apply
+	if [ ! -L "${file}" ]; then
+		chmod ${mode} ${file}
+	fi
+	chown --no-dereference ${uid}:${gid} ${file}
+done

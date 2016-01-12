@@ -19,8 +19,6 @@ struct firmware *firmware_from_entity(struct folder_entity *entity);
 const char *firmware_get_path(const struct firmware *firmware);
 const char *firmware_get_sha1(const struct firmware *firmware);
 const char *firmware_get_name(const struct firmware *firmware);
-const char *firmware_get_post_prepare_instance_command(
-		const struct firmware *firmware);
 const char *firmware_get_uuid(struct firmware *firmware);
 void firmwares_cleanup(void);
 

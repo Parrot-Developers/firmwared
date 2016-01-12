@@ -181,6 +181,26 @@ static int invoke_net_helper(struct instance *i, const char *action)
 			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS));
 }
 
+static int invoke_apply_perms_helper(struct instance *instance)
+{
+	int ret;
+	struct io_process process;
+
+	/* TODO this blocks too much time */
+	ret = io_process_init_prepare_launch_and_wait(&process,
+			&process_default_parameters,
+			NULL,
+			config_get(CONFIG_APPLY_PERMS_HOOK),
+			instance->union_mount_point,
+			instance->firmware_path,
+			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS),
+			NULL /* NULL guard */);
+	if (ret < 0)
+		return ret;
+
+	return process.status == 0 ? 0 : -ECANCELED;
+}
+
 static void clean_mount_points(struct instance *instance, bool only_unregister)
 {
 	int ret;
@@ -711,7 +731,6 @@ static int init_instance(struct instance *instance,
 	int ret;
 	struct folder_entity *firmware_entity;
 	struct firmware *firmware;
-	const char *command;
 
 	firmware_entity = folder_find_entity(FIRMWARES_FOLDER_NAME,
 			firmware_identifier);
@@ -787,15 +806,9 @@ static int init_instance(struct instance *instance,
 		goto err;
 	}
 
-	command = firmware_get_post_prepare_instance_command(firmware);
-	if (command != NULL) {
-		/* TODO this blocks too much time */
-		ret = ut_process_vsystem("root=%s firmware_path=%s %s",
-				instance->union_mount_point,
-				instance->firmware_path, command);
-		if (ret != 0)
-			ULOGW("%s returned status %d", command, ret);
-	}
+	ret = invoke_apply_perms_helper(instance);
+	if (ret < 0)
+		ULOGW("invoke_apply_perms_helper failed: %d", ret);
 
 	return 0;
 err:

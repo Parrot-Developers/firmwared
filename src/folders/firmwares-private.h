@@ -16,7 +16,6 @@ struct firmware {
 	struct folder_entity entity;
 	char *path;
 	char *uuid;
-	char *post_prepare_instance_command;
 	char sha1[2 * SHA_DIGEST_LENGTH + 1];
 };
 

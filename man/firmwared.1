@@ -34,6 +34,13 @@ security profile pattern, used for protecting the host pc, from potentially
 harmful behavior of the instances, defaults to
 .RB $ FIRMWARED_RESOURCES_DIR/firmwared.apparmor.profile .
 .TP
+.B FIRMWARED_APPLY_PERMS_HOOK
+If
+.RB $ FIRMWARED_APPLY_PERMS_HOOK
+is set, it's value is used as the path to the helper executable responsible of
+applying the right permission and ownership to the firmware's files, defaults to
+.BR /usr/libexec/firmwared/apply-perms.hook .
+.TP
 .B FIRMWARED_CONTAINER_INTERFACE
 If
 .RB $ FIRMWARED_CONTAINER_INTERFACE

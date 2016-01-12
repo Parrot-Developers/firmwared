@@ -64,6 +64,10 @@ ULOG_DECLARE_TAG(firmwared_config);
 	"firmwared.apparmor.profile"
 #endif /* APPARMOR_PROFILE_DEFAULT */
 
+#ifndef APPLY_PERMS_HOOK_DEFAULT
+#define APPLY_PERMS_HOOK_DEFAULT  "/usr/libexec/firmwared/apply-perms.hook"
+#endif /* APPLY_PERMS_HOOK_DEFAULT */
+
 #ifndef CONTAINER_INTERFACE
 #define CONTAINER_INTERFACE "eth0"
 #endif /* CONTAINER_INTERFACE */
@@ -255,6 +259,11 @@ static struct config configs[CONFIG_NB] = {
 				.env = CONFIG_KEYS_PREFIX"APPARMOR_PROFILE",
 				.default_value = APPARMOR_PROFILE_DEFAULT,
 				.valid = valid_accessible,
+		},
+		[CONFIG_APPLY_PERMS_HOOK] = {
+				.env = CONFIG_KEYS_PREFIX"APPLY_PERMS_HOOK",
+				.default_value = APPLY_PERMS_HOOK_DEFAULT,
+				.valid = valid_executable,
 		},
 		[CONFIG_CONTAINER_INTERFACE] = {
 				.env = CONFIG_KEYS_PREFIX"CONTAINER_INTERFACE",
