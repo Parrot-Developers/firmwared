@@ -24,8 +24,6 @@
 
 #include <openssl/sha.h>
 
-#include <blkid/blkid.h>
-
 #define ULOG_TAG firmwared_firmwares
 #include <ulog.h>
 ULOG_DECLARE_TAG(firmwared_firmwares);
@@ -526,34 +524,6 @@ static int index_firmwares(void)
 	return res;
 }
 
-static void free_blkid_probe(blkid_probe *pr)
-{
-	if (pr == NULL || *pr == NULL)
-		return;
-
-	blkid_free_probe(*pr);
-}
-
-static char *read_uuid(const char *path)
-{
-	blkid_probe __attribute__((cleanup(free_blkid_probe)))pr;
-	const char *uuid = NULL;
-	int ret;
-
-	pr = blkid_new_probe_from_filename(path);
-	if (pr == NULL)
-		return strdup("");
-
-	ret = blkid_do_probe(pr);
-	if (ret == -1)
-		return strdup("");
-	ret = blkid_probe_lookup_value(pr, "UUID", &uuid, NULL);
-	if (ret == -1)
-		return strdup("");
-
-	return strdup(uuid);
-}
-
 int firmwares_init(void)
 {
 	int ret;
@@ -631,14 +601,18 @@ const char *firmware_get_post_prepare_instance_command(
 
 const char *firmware_get_uuid(struct firmware *firmware)
 {
-	const char *p;
+	const char *path;
 
 	errno = EINVAL;
 	if (firmware == NULL)
 		return NULL;
-	p = firmware_get_path(firmware);
-	if (firmware->uuid == NULL)
-		firmware->uuid = ut_file_is_dir(p) ? strdup("") : read_uuid(p);
+	path = firmware_get_path(firmware);
+	if (firmware->uuid == NULL) {
+		if (ut_file_is_dir(path))
+			firmware->uuid = strdup("");
+		else
+			firmware->uuid = fwd_read_uuid(path);
+	}
 
 	return firmware->uuid;
 }

@@ -164,6 +164,14 @@ enum fwd_message fwd_message_command_answer(enum fwd_message command);
  */
 const char *fwd_message_format(enum fwd_message message);
 
+/**
+ * Reads the uuid of a firmware.
+ * @param path Path to a firmware
+ * @return Newly allocated string, which must be freed after usage. Returns ""
+ * if no uuid could be retrieved, or NULL on error, with errno set.
+ */
+char *fwd_read_uuid(const char *path);
+
 void libfwd_main(void);
 
 #ifdef __cplusplus

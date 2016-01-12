@@ -9,6 +9,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+#include <blkid/blkid.h>
 
 #include <ut_string.h>
 
@@ -47,6 +50,14 @@ static const enum fwd_message fwd_command_answer_pair[] = {
 		[FWD_COMMAND_START] =        FWD_ANSWER_STARTED,
 		[FWD_COMMAND_VERSION] =      FWD_ANSWER_VERSION,
 };
+
+static void free_blkid_probe(blkid_probe *pr)
+{
+	if (pr == NULL || *pr == NULL)
+		return;
+
+	blkid_free_probe(*pr);
+}
 
 const char *fwd_message_str(enum fwd_message message)
 {
@@ -260,6 +271,26 @@ enum fwd_message fwd_message_command_answer(enum fwd_message command)
 		return FWD_MESSAGE_INVALID;
 
 	return fwd_command_answer_pair[command];
+}
+
+char *fwd_read_uuid(const char *path)
+{
+	blkid_probe __attribute__((cleanup(free_blkid_probe)))pr;
+	const char *uuid = NULL;
+	int ret;
+
+	pr = blkid_new_probe_from_filename(path);
+	if (pr == NULL)
+		return strdup("");
+
+	ret = blkid_do_probe(pr);
+	if (ret == -1)
+		return strdup("");
+	ret = blkid_probe_lookup_value(pr, "UUID", &uuid, NULL);
+	if (ret == -1)
+		return strdup("");
+
+	return strdup(uuid);
 }
 
 const char libfwd_usage[] = "usage: [LIBFWD_GET_ANSWER_ID=] "
