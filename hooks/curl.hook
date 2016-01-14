@@ -3,39 +3,49 @@
 set -e
 set -u
 
-url=$1
-firmware_repository=$2
-
-verbose=$3
+verbose=$5
 
 if [ "${verbose}" = "y" ]; then
 	set -x
 fi
+
+action=$1
+url=$2
+firmware_repository=$3
+uuid=$4
+
+curl_command="curl --location --silent"
+
+export LANG=C
 
 # accept path without the file:// prefix /!\ it must be an absolute path
 if [ -f "${url}" ]; then
 	url="file://${url}"
 fi
 
-export LANG=C
+if [ "${action}" = "uuid" ]; then
+	tmp_file=$(mktemp --tmpdir=${firmware_repository})
+	${curl_command} ${url} --output ${tmp_file} --range 0-2047
+	uuid=$(blkid -c /dev/null -o value -s UUID ${tmp_file})
+	rm -f ${tmp_file}
 
-# retrieve the size of the file with HEAD
-# curl --head could have been used, but it keeps \r and is a PITA with redirects
-size=$(HEAD ${url})
-size=${size##*Content-Length: }
-size=${size%%[[:space:]]*}
+	echo "uuid=${uuid}"
+elif [ "${action}" = "fetch" ]; then
+	# retrieve the size of the file with HEAD
+	# curl --head could have been used, but it keeps \r and is a PITA with redirects
+	size=$(HEAD ${url})
+	size=${size##*Content-Length: }
+	size=${size%%[[:space:]]*}
 
-file=${url##*/}
-dest=${firmware_repository}/${file}.firmware
-if [ -e "${dest}" ]; then
-	echo "Destination file ${dest} already exist. Aborting" 1>&2
-	# if we don't do that, the io_process context will be cleaned before
-	# the hook's logs are processed
-	sleep .1
-	exit 1
+	file=${url##*/}
+	dest="${firmware_repository}/${file}.${uuid}.firmware"
+
+	${curl_command} ${url} --output - | pv --numeric --size ${size} 2>&1 > "${dest}"
+	echo "destination_file=${dest##*/}"
+	# in order to get sure the curl.hook has the time to echo the destination
+	# file path and firmwared has the time to read it, we sleep an infinite
+	# amount of time. firmwared will kill the process with SIGUSR1 when ready
+	sleep 4294967295
 fi
-curl_command="curl --location --silent"
-
-${curl_command} ${url} --output - | pv --numeric --size ${size} 2>&1 > ${dest}
 
 exit 0

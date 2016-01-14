@@ -68,6 +68,7 @@ ULOG_DECLARE_TAG(firmwared_firmwares);
 struct firmware_preparation {
 	struct preparation preparation;
 	struct io_process process;
+	char *destination_file;
 };
 
 static struct folder firmware_folder;
@@ -183,6 +184,45 @@ static int firmware_drop(struct folder_entity *entity, bool only_unregister)
 	return 0;
 }
 
+static struct firmware *get_from_uuid(const char *uuid)
+{
+	struct folder *folder = folder_find(FIRMWARES_FOLDER_NAME);
+	struct folder_entity *entity = NULL;
+	struct firmware *firmware;
+
+	for (entity = folder_next(folder, entity);
+			entity != NULL;
+			entity = folder_next(folder, entity)) {
+		firmware = firmware_from_entity(entity);
+		if (ut_string_match(uuid, firmware_get_uuid(firmware)))
+			return firmware;
+	}
+
+	return NULL;
+}
+
+static struct firmware *get_from_path(const char *path)
+{
+	struct folder *folder = folder_find(FIRMWARES_FOLDER_NAME);
+	struct folder_entity *entity = NULL;
+	struct firmware *firmware;
+
+	for (entity = folder_next(folder, entity);
+			entity != NULL;
+			entity = folder_next(folder, entity)) {
+		firmware = firmware_from_entity(entity);
+		if (ut_string_match(path, firmware_get_path(firmware)))
+			return firmware;
+	}
+
+	return NULL;
+}
+
+static bool uuid_already_registered(const char *uuid)
+{
+	return get_from_uuid(uuid) != NULL;
+}
+
 static void preparation_progress_sep_cb(struct io_src_sep *sep, char *chunk,
 		unsigned len)
 {
@@ -214,12 +254,21 @@ static void preparation_progress_sep_cb(struct io_src_sep *sep, char *chunk,
 		ULOGW("resetting firmware preparation timeout failed: %s",
 				strerror(-ret));
 
-	ret = firmwared_notify(FWD_ANSWER_PREPARE_PROGRESS,
-			FWD_FORMAT_ANSWER_PREPARE_PROGRESS, preparation->seqnum,
-			preparation->folder, preparation->identification_string,
-			chunk);
-	if (ret < 0)
-		ULOGE("firmwared_notify: %s", strerror(-ret));
+	if (ut_string_match_prefix(chunk, "destination_file=")) {
+		firmware_preparation->destination_file = strdup(chunk + 17);
+		/*
+		 * here the hook is stuck in a sleep, waiting for us to say it
+		 * it can nicely die
+		 */
+		io_process_signal(process, SIGUSR1);
+	} else {
+		ret = firmwared_notify(FWD_ANSWER_PREPARE_PROGRESS,
+		FWD_FORMAT_ANSWER_PREPARE_PROGRESS, preparation->seqnum,
+				preparation->folder,
+				preparation->identification_string, chunk);
+		if (ret < 0)
+			ULOGE("firmwared_notify: %s", strerror(-ret));
+	}
 }
 
 /* mounts the firmware so that the client can retrieve informations if needed */
@@ -331,23 +380,20 @@ static void firmware_preparation_termination(struct io_process *process,
 	preparation = &firmware_preparation->preparation;
 
 	if (status != 0) {
-		ULOGE("curl hook execution status is non-zero, "
-				"please keep in mind that relative paths "
-				"aren't accepted");
-		ret = -EINVAL;
-		goto err;
+		if (WIFSIGNALED(status)) {
+			ULOGD("curl hook terminated on signal %s",
+					strsignal(WTERMSIG(status)));
+		} else {
+			if (WTERMSIG(status) != SIGUSR1) {
+				ULOGE("curl hook error, use absolute paths");
+				ret = -EINVAL;
+				goto err;
+			}
+		}
 	}
 
-	ret = asprintf(&file_path, "%s"FIRMWARE_SUFFIX,
-			basename(preparation->identification_string));
-	if (ret < 0) {
-		file_path = NULL;
-		ULOGC("asprintf failure");
-		ret = -ENOMEM;
-		goto err;
-	}
 	// TODO the following may block a long time
-	firmware = firmware_new(file_path);
+	firmware = firmware_new(firmware_preparation->destination_file);
 
 	preparation->completion(preparation, &firmware->entity);
 
@@ -364,14 +410,43 @@ static int firmware_preparation_start(struct preparation *preparation)
 	int ret;
 	struct firmware_preparation *firmware_preparation;
 	struct firmware *firmware;
+	char buf[0x200] = {0};
+	char *pbuf = &buf[0];
+	const char *uuid = buf + 5;
+	const char *id = preparation->identification_string;
 
-	if (ut_file_is_dir(preparation->identification_string)) {
-		firmware = firmware_new(preparation->identification_string);
+	if (ut_file_is_dir(id)) {
+		firmware = get_from_path(id);
+		if (firmware == NULL)
+			firmware = firmware_new(id);
 		return preparation->completion(preparation, &firmware->entity);
 	}
 
 	firmware_preparation = ut_container_of(preparation,
 			struct firmware_preparation, preparation);
+
+	ret = ut_process_read_from_output(&pbuf, 0x200, "\"%s\" \"%s\" "
+			"\"%s\" \"%s\" \"%s\" \"%s\"",
+			config_get(CONFIG_CURL_HOOK),
+			"uuid",
+			id,
+			config_get(CONFIG_REPOSITORY_PATH),
+			"", /* we don't know uuid yet, of course */
+			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS));
+	if (ret < 0) {
+		ULOGE("uuid retrieval failed");
+		return ret;
+	}
+
+	ut_string_rstrip(pbuf);
+	/*
+	 * the uuid corresponds to an already registered firmware, nothing to
+	 * do and we consider it a success
+	 */
+	if (uuid_already_registered(uuid)) {
+		firmware = get_from_uuid(uuid);
+		return preparation->completion(preparation, &firmware->entity);
+	}
 
 	ret = io_process_init_prepare_and_launch(&firmware_preparation->process,
 			&(struct io_process_parameters){
@@ -386,8 +461,10 @@ static int firmware_preparation_start(struct preparation *preparation)
 			},
 			firmware_preparation_termination,
 			config_get(CONFIG_CURL_HOOK),
-			preparation->identification_string,
+			"fetch",
+			id,
 			config_get(CONFIG_REPOSITORY_PATH),
+			uuid,
 			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS),
 			NULL);
 	if (ret < 0)
@@ -409,7 +486,7 @@ static void firmware_preparation_abort(struct preparation *preparation)
 	ULOGE("[%s] abort preparation of '%s'", preparation->folder,
 			preparation->identification_string);
 
-	io_process_kill(process);
+	io_process_signal(process, SIGUSR1);
 }
 
 static struct preparation *firmware_get_preparation(void)
@@ -434,6 +511,7 @@ static void firmware_destroy_preparation(struct preparation **preparation)
 	firmware_preparation = ut_container_of(*preparation,
 			struct firmware_preparation, preparation);
 
+	ut_string_free(&firmware_preparation->destination_file);
 	memset(firmware_preparation, 0, sizeof(*firmware_preparation));
 	free(firmware_preparation);
 	*preparation = NULL;

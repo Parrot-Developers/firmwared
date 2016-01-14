@@ -356,7 +356,8 @@ static const struct rs_dll_vtable folder_vtable = {
 static int entity_completion(struct preparation *preparation,
 			struct folder_entity *entity)
 {
-	int ret;
+	struct folder *folder;
+	int ret = 0;
 
 	if (entity == NULL) {
 		ULOGW("%*s creation failed for identification string %s",
@@ -366,6 +367,11 @@ static int entity_completion(struct preparation *preparation,
 		ret = -EINVAL;
 		goto out;
 	}
+
+	/* if already prepared, nothing to be done */
+	folder = folder_find(preparation->folder);
+	if (find_entity(folder, folder_entity_get_sha1(entity)))
+		goto out;
 	/* folder_store transfers the ownership of the entity to the folder */
 	ret = folder_store(preparation->folder, entity);
 	if (ret < 0) {
