@@ -2,10 +2,11 @@
 
 # Uses the fixstat.sh script to change the owner and permissions of all the
 # files in the union fs of an instance.
-# Designed to be used as the value of the post_prepare_instance_hook value.
-# mandatory environment variables :
-# root: root of the union fs in which the perms will be applied
-# firmwared_path: path to the original final directory
+# Designed to be used as the value of the post_prepare_instance_hook config key.
+# arguments :
+# $1: root of the union fs in which the perms will be applied
+# $2: path to the original final directory
+# $3: verbosity
 
 set -eu
 

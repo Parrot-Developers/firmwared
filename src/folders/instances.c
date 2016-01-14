@@ -181,7 +181,7 @@ static int invoke_net_helper(struct instance *i, const char *action)
 			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS));
 }
 
-static int invoke_apply_perms_helper(struct instance *instance)
+static int invoke_post_prepare_instance_helper(struct instance *instance)
 {
 	int ret;
 	struct io_process process;
@@ -190,7 +190,7 @@ static int invoke_apply_perms_helper(struct instance *instance)
 	ret = io_process_init_prepare_launch_and_wait(&process,
 			&process_default_parameters,
 			NULL,
-			config_get(CONFIG_APPLY_PERMS_HOOK),
+			config_get(CONFIG_POST_PREPARE_INSTANCE_HOOK),
 			instance->union_mount_point,
 			instance->firmware_path,
 			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS),
@@ -806,9 +806,9 @@ static int init_instance(struct instance *instance,
 		goto err;
 	}
 
-	ret = invoke_apply_perms_helper(instance);
+	ret = invoke_post_prepare_instance_helper(instance);
 	if (ret < 0)
-		ULOGW("invoke_apply_perms_helper failed: %d", ret);
+		ULOGW("invoke_post_prepare_instance_helper failed: %d", ret);
 
 	return 0;
 err:
