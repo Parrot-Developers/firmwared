@@ -314,17 +314,15 @@ err:
 	return NULL;
 }
 
-static void firmware_preparation_termination(struct io_src_pid *pid_src,
+static void firmware_preparation_termination(struct io_process *process,
 		pid_t pid, int status)
 {
 	int ret;
 	struct firmware_preparation *firmware_preparation;
 	struct preparation *preparation;
-	struct io_process *process;
 	struct firmware *firmware;
 	char __attribute__((cleanup(ut_string_free)))*file_path = NULL;
 
-	process = ut_container_of(pid_src, struct io_process, pid_src);
 	firmware_preparation = ut_container_of(process,
 			struct firmware_preparation, process);
 	io_mon_remove_source(firmwared_get_mon(),
