@@ -263,8 +263,8 @@ static void preparation_progress_sep_cb(struct io_src_sep *sep, char *chunk,
 		io_process_signal(process, SIGUSR1);
 	} else {
 		ret = firmwared_notify(FWD_ANSWER_PREPARE_PROGRESS,
-		FWD_FORMAT_ANSWER_PREPARE_PROGRESS, preparation->seqnum,
-				preparation->folder,
+				FWD_FORMAT_ANSWER_PREPARE_PROGRESS,
+				preparation->seqnum, preparation->folder,
 				preparation->identification_string, chunk);
 		if (ret < 0)
 			ULOGE("firmwared_notify: %s", strerror(-ret));
@@ -392,7 +392,7 @@ static void firmware_preparation_termination(struct io_process *process,
 		}
 	}
 
-	// TODO the following may block a long time
+	/* TODO the following may block a long time */
 	firmware = firmware_new(firmware_preparation->destination_file);
 
 	preparation->completion(preparation, &firmware->entity);

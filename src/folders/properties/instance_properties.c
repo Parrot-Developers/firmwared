@@ -186,7 +186,7 @@ static int set_interface(struct folder_property *property,
 
 	instance->interface = strdup(value);
 
-	// TODO validate the input
+	/* TODO validate the input */
 
 	return instance->interface == NULL ? -errno : 0;
 }
@@ -224,7 +224,7 @@ static int set_stolen_interface(struct folder_property *property,
 
 	instance->stolen_interface = strdup(value);
 
-	// TODO validate the input
+	/* TODO validate the input */
 
 	return instance->stolen_interface == NULL ? -errno : 0;
 }

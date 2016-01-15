@@ -169,7 +169,7 @@ static const char *pick_random_word(struct rs_dll *word_list)
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
-	word_index = ((tv.tv_usec * 77) % (rs_dll_get_count(word_list) - 1)) + 1;
+	word_index = (tv.tv_usec * 77) % (rs_dll_get_count(word_list) - 1) + 1;
 	while (word_index--)
 		word_node = rs_dll_next_from(word_list, word_node);
 
@@ -722,7 +722,7 @@ static int property_get(struct folder_property *property,
 	if (!folder_property_is_array(property))
 		return property->get(property, entity, value);
 
-	for (i = 0; ; i++) {
+	for (i = 0;; i++) {
 		ret = property->geti(property, entity, i, &suffix);
 		if (ret < 0) {
 			ut_string_free(value);

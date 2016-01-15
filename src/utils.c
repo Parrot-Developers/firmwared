@@ -57,7 +57,8 @@ char *get_argz_i(const char *argz, size_t argz_len, int i)
 
 	for (entry = argz_next(argz, argz_len, entry);
 			entry != NULL && i != 0;
-			entry = argz_next(argz, argz_len, entry), i--);
+			entry = argz_next(argz, argz_len, entry), i--)
+		;
 
 	return entry;
 }

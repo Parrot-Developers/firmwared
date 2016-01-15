@@ -308,8 +308,10 @@ static struct config configs[CONFIG_NB] = {
 				.valid = valid_executable,
 		},
 		[CONFIG_POST_PREPARE_INSTANCE_HOOK] = {
-				.env = CONFIG_KEYS_PREFIX"POST_PREPARE_INSTANCE_HOOK",
-				.default_value = POST_PREPARE_INSTANCE_HOOK_DEFAULT,
+				.env = CONFIG_KEYS_PREFIX
+					"POST_PREPARE_INSTANCE_HOOK",
+				.default_value =
+					POST_PREPARE_INSTANCE_HOOK_DEFAULT,
 				.valid = valid_executable,
 		},
 		[CONFIG_PREVENT_REMOVAL] = {

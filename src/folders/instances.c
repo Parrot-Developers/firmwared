@@ -418,7 +418,7 @@ static int setup_chroot(struct instance *instance)
 	chroot_ret = chroot(instance->union_mount_point);
 	chdir_ret = chdir("/");
 	if (chroot_ret == -1) {
-		 /* dummy value, since errno is overwritten by chdir_ret */
+		/* dummy value, since errno is overwritten by chdir_ret */
 		chroot_ret = -ECANCELED;
 		ULOGE("chroot in %s failed, unknown error",
 				instance->union_mount_point);
@@ -453,7 +453,7 @@ static void launch_pid_1(struct instance *instance, int fd)
 
 	/* prepare the command-line */
 	argc = argz_count(instance->command_line, instance->command_line_len);
-	argv = calloc(argc + 1,  sizeof (*argv));
+	argv = calloc(argc + 1,  sizeof(*argv));
 	if (argv == NULL) {
 		ULOGE("calloc: %m");
 		_exit(EXIT_FAILURE);
@@ -787,7 +787,7 @@ static int init_instance(struct instance *instance,
 	}
 
 	ret = ut_process_sync_init(&instance->sync, true);
-	if (ret < 0){
+	if (ret < 0) {
 		ULOGE("ut_process_sync_init: %s", strerror(-ret));
 		goto err;
 	}
