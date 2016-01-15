@@ -40,6 +40,10 @@ elif [ "${action}" = "fetch" ]; then
 	file=${url##*/}
 	dest="${firmware_repository}/${file}.${uuid}.firmware"
 
+	if [ -e "${dest}" ]; then
+		echo "firmware already exist" > /dev/stderr
+	fi
+
 	${curl_command} ${url} --output - | pv --numeric --size ${size} 2>&1 > "${dest}"
 	echo "destination_file=${dest##*/}"
 	# in order to get sure the curl.hook has the time to echo the destination
