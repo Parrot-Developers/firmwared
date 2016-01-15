@@ -12,7 +12,6 @@
 #include <stdbool.h>
 
 char *buffer_to_string(const unsigned char *src, size_t len, char *dst);
-bool is_directory(const char *path);
 char *get_argz_i(const char *argz, size_t argz_len, int i);
 int argz_property_geti(const char *argz, size_t argz_len, unsigned index,
 		char **value);

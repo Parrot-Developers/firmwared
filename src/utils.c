@@ -35,22 +35,6 @@ char *buffer_to_string(const unsigned char *src, size_t len, char *dst)
 	return dst;
 }
 
-// TODO move to ut_file
-bool is_directory(const char *path)
-{
-	int ret;
-	struct stat buf;
-
-	memset(&buf, 0, sizeof(buf));
-	ret = stat(path, &buf);
-	if (ret < 0) {
-		ULOGE("stat: %m");
-		return false;
-	}
-
-	return S_ISDIR(buf.st_mode);
-}
-
 char *get_argz_i(const char *argz, size_t argz_len, int i)
 {
 	char *entry = NULL;
