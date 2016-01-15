@@ -160,15 +160,12 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 
 static int invoke_net_helper(struct instance *i, const char *action)
 {
-	/*
-	 * here, sadly, we can't use the io_process module, because the netlink
-	 * message subscription that pidwatch tries to create, fails with an
-	 * ECONNREFUSED error. This seems to be related to the namespaces, but I
-	 * haven't the time to investigate it for now
-	 */
-	return ut_process_vsystem("\"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%"PRIu8
-			"\" \"%s\" \"%d\" \"%jd\" \"%s\" 2>&1 | "
-			"ulogger -p D -t fd-net",
+	int ret;
+	struct io_process process;
+
+	ret = io_process_init_prepare_launch_and_wait(&process,
+			&process_default_parameters,
+			NULL,
 			config_get(CONFIG_NET_HOOK),
 			action,
 			i->interface,
@@ -178,7 +175,12 @@ static int invoke_net_helper(struct instance *i, const char *action)
 			config_get(CONFIG_NET_FIRST_TWO_BYTES),
 			NET_BITS,
 			(intmax_t)io_src_pid_get_pid(&i->pid_src),
-			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS));
+			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS),
+			NULL /* NULL guard */);
+	if (ret < 0)
+		return ret;
+
+	return process.status == 0 ? 0 : -ECANCELED;
 }
 
 static int invoke_post_prepare_instance_helper(struct instance *instance)
