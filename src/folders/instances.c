@@ -70,10 +70,10 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include "properties/instance_properties.h"
 
 /*
- * this hardcoded value could be a modifiable parameter, but it really adds to
+ * this hardcoded value could be a modifiable parameter, but it really adds to*
  * much complexity to the code and so isn't worth the effort
  */
-#define NET_BITS 24
+#define NET_BITS "24"
 
 static ut_bit_field indices;
 
@@ -160,9 +160,13 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 
 static int invoke_net_helper(struct instance *i, const char *action)
 {
+	char pid[10]; /* max is 1 << 22 -> 7 digits in base 10 */
+	char id[10]; /* max is 255 */
 	int ret;
 	struct io_process process;
 
+	snprintf(pid, 10, "%jd", (intmax_t)io_src_pid_get_pid(&i->pid_src));
+	snprintf(id, 10, "%"PRIu8, i->id);
 	ret = io_process_init_prepare_launch_and_wait(&process,
 			&process_default_parameters,
 			NULL,
@@ -171,10 +175,10 @@ static int invoke_net_helper(struct instance *i, const char *action)
 			i->interface,
 			i->stolen_interface == NULL ? "" : i->stolen_interface,
 			config_get(CONFIG_HOST_INTERFACE_PREFIX),
-			i->id,
+			id,
 			config_get(CONFIG_NET_FIRST_TWO_BYTES),
 			NET_BITS,
-			(intmax_t)io_src_pid_get_pid(&i->pid_src),
+			pid,
 			config_get(CONFIG_VERBOSE_HOOK_SCRIPTS),
 			NULL /* NULL guard */);
 	if (ret < 0)
