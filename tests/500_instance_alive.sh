@@ -45,6 +45,7 @@ fdc start ${instance}
 id=$(fdc get_property instances ${instance} id)
 net_first_two_bytes=$(fdc get_config net_first_two_bytes)
 address=${net_first_two_bytes}${id}.1
+sleep .5
 adb connect ${address}:9050
 
 adb -s ${address}:9050 shell cat /etc/build.prop | grep mykonos3_sim_pc
