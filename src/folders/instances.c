@@ -44,7 +44,6 @@
 ULOG_DECLARE_TAG(firmwared_instances);
 
 #include <io_mon.h>
-#include <io_src_pid.h>
 #include <io_process.h>
 
 #include <ut_utils.h>
@@ -165,7 +164,7 @@ static int invoke_net_helper(struct instance *i, const char *action)
 	int ret;
 	struct io_process process;
 
-	snprintf(pid, 10, "%jd", (intmax_t)io_src_pid_get_pid(&i->pid_src));
+	snprintf(pid, 10, "%jd", (intmax_t)i->pid);
 	snprintf(id, 10, "%"PRIu8, i->id);
 	ret = io_process_init_prepare_launch_and_wait(&process,
 			&process_default_parameters,
@@ -235,9 +234,10 @@ static void clean_instance(struct instance *i, bool only_unregister)
 		apparmor_remove_profile(instance_get_sha1(i));
 	ut_process_sync_clean(&i->sync);
 	io_mon_remove_sources(firmwared_get_mon(),
-			io_src_pid_get_source(&i->pid_src), &i->ptspair_src,
+			&i->monitoring_src, &i->ptspair_src,
 			NULL /* guard */);
-	io_src_pid_clean(&i->pid_src);
+	io_src_close_fd(&i->monitoring_src);
+	io_src_clean(&i->monitoring_src);
 	io_src_clean(&i->ptspair_src);
 
 	ptspair_clean(&i->ptspair);
@@ -338,13 +338,20 @@ err:
 	return ret;
 }
 
-static void pid_src_cb(struct io_src_pid *pid_src, pid_t pid, int status)
+static void monitoring_src_cb(struct io_src *src)
 {
 	int ret;
 	int program_status;
-	struct instance *i = ut_container_of(pid_src, typeof(*i), pid_src);
+	struct instance *i = ut_container_of(src, typeof(*i), monitoring_src);
 
-	ret = waitpid(pid, &program_status, WNOHANG);
+	char buf[1];
+	ret = TEMP_FAILURE_RETRY(read(src->fd, buf, 1));
+	if (ret != 1) {
+		ULOGE("%s read error: fd=%d ret=%d msg=%s",
+				__func__, src->fd, ret, strerror(errno));
+	}
+
+	ret = waitpid(i->pid, &program_status, 0);
 	if (ret < 0) {
 		ULOGE("waitpid : err=%d(%s)", ret, strerror(-ret));
 		return;
@@ -510,6 +517,17 @@ static void launch_pid_1(struct instance *instance, int fd)
 	_exit(EXIT_FAILURE);
 }
 
+static void handle_instance_death(struct instance *instance)
+{
+	ssize_t ret;
+	ret = TEMP_FAILURE_RETRY(write(instance->fd, (char[]){1}, 1));
+	if (ret != 1) {
+		ULOGE("%s write error: fd=%d ret=%ld msg=%s",
+				__func__, instance->fd, ret, strerror(errno));
+	}
+	close(instance->fd);
+}
+
 __attribute__((noreturn))
 static void launch_instance(struct instance *instance)
 {
@@ -523,6 +541,8 @@ static void launch_instance(struct instance *instance)
 	sigset_t mask;
 	struct signalfd_siginfo si;
 	int status;
+
+	io_src_close_fd(&instance->monitoring_src);
 
 	ret = prctl(PR_SET_PDEATHSIG, SIGKILL);
 	if (ret < 0)
@@ -655,6 +675,7 @@ static void launch_instance(struct instance *instance)
 
 	ULOGI("instance %s terminated with status %d", instance_name, status);
 
+	handle_instance_death(instance);
 	_exit(EXIT_SUCCESS);
 }
 
@@ -737,6 +758,7 @@ static int init_instance(struct instance *instance,
 	int ret;
 	struct folder_entity *firmware_entity;
 	struct firmware *firmware;
+	int pipefd[2];
 
 	firmware_entity = folder_find_entity(FIRMWARES_FOLDER_NAME,
 			firmware_identifier);
@@ -777,15 +799,26 @@ static int init_instance(struct instance *instance,
 		ULOGE("io_src_init: %s", strerror(-ret));
 		goto err;
 	}
-	ret = io_src_pid_init(&instance->pid_src, pid_src_cb);
+
+	/* create a signalling mechanism for the child processes */
+	ret = pipe2(pipefd, O_CLOEXEC);
 	if (ret < 0) {
-		ULOGE("io_src_pid_init: %s", strerror(-ret));
+		ULOGE("pipe2: %s", strerror(-ret));
+		goto err;
+	}
+	instance->fd = pipefd[1]; /* write end of the pipe */
+
+	ret = io_src_init(&instance->monitoring_src,
+			pipefd[0] /* read end of the pipe */,
+			IO_IN, monitoring_src_cb);
+	if (ret < 0) {
+		ULOGE("io_src_init: %s", strerror(-ret));
 		goto err;
 	}
 
 	ret = io_mon_add_sources(firmwared_get_mon(),
 			&instance->ptspair_src,
-			io_src_pid_get_source(&instance->pid_src),
+			&instance->monitoring_src,
 			NULL /* guard */);
 	if (ret < 0) {
 		ULOGE("io_mon_add_sources: %s", strerror(-ret));
@@ -985,12 +1018,9 @@ int instance_start(struct instance *instance)
 		launch_instance(instance); /* in child */
 	/* in parent */
 	/* the pid must be set before being used, e.g. in invoke_net_helper() */
-	ret = io_src_pid_set_pid(&instance->pid_src, pid);
-	if (ret < 0) {
-		kill(pid, SIGKILL);
-		ULOGE("io_src_pid_set_pid: %s", strerror(-ret));
-		return ret;
-	}
+	instance->pid = pid;
+	close(instance->fd);
+
 	/*
 	 * wait until the child as setup it's network container, so that we can
 	 * assign it's network interfaces to it
@@ -1028,7 +1058,7 @@ int instance_kill(struct instance *instance, uint32_t killer_seqnum)
 
 	instance->state = INSTANCE_STOPPING;
 	instance->killer_seqnum = killer_seqnum;
-	ret = kill(io_src_pid_get_pid(&instance->pid_src), SIGUSR1);
+	ret = kill(instance->pid, SIGUSR1);
 	if (ret < 0) {
 		ret = -errno;
 		ULOGE("kill: %m");

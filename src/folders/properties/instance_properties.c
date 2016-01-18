@@ -62,7 +62,7 @@ static int get_pid(struct folder_property *property,
 		return -EINVAL;
 	instance = to_instance(entity);
 
-	pid = io_src_pid_get_pid(&instance->pid_src);
+	pid = instance->pid;
 	ret = asprintf(value, "%jd", (intmax_t)pid);
 	if (ret < 0) {
 		*value = NULL;

@@ -16,7 +16,6 @@
 #include <openssl/sha.h>
 
 #include <io_src.h>
-#include <io_src_pid.h>
 
 #include <ut_process.h>
 
@@ -33,7 +32,9 @@ enum instance_state {
 struct instance {
 	struct folder_entity entity;
 
-	struct io_src_pid pid_src;
+	pid_t pid;
+	int fd;
+	struct io_src monitoring_src;
 	enum instance_state state;
 	/* caching of sha1 computation */
 	char sha1[2 * SHA_DIGEST_LENGTH + 1];
