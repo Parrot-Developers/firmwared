@@ -37,6 +37,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <dlfcn.h>
+#include <libgen.h>
+
 #include <openssl/sha.h>
 
 #define ULOG_TAG firmwared_instances
@@ -68,6 +71,10 @@ ULOG_DECLARE_TAG(firmwared_instances);
 #include "apparmor.h"
 #include "instances-private.h"
 #include "properties/instance_properties.h"
+
+#ifndef POST_PREPARATION_TIMEOUT
+#define POST_PREPARATION_TIMEOUT 10000
+#endif /* POST_PREPARATION_TIMEOUT */
 
 /*
  * this hardcoded value could be a modifiable parameter, but it really adds to*
@@ -129,6 +136,9 @@ static void clean_paths(struct instance *instance)
 	ut_string_free(&instance->ro_mount_point);
 	ut_string_free(&instance->rw_dir);
 	ut_string_free(&instance->union_mount_point);
+	ut_string_free(&instance->x11_mount_point);
+	ut_string_free(&instance->nvidia_mount_point);
+	ut_string_free(&instance->nvidia_path);
 }
 
 static int invoke_mount_helper(struct instance *instance, const char *action,
@@ -146,6 +156,10 @@ static int invoke_mount_helper(struct instance *instance, const char *action,
 			instance->ro_mount_point,
 			instance->rw_dir,
 			instance->union_mount_point,
+			config_get(CONFIG_X11_PATH),
+			instance->x11_mount_point,
+			instance->nvidia_path ? instance->nvidia_path : "",
+			instance->nvidia_mount_point,
 			instance->firmware_path,
 			instance_get_sha1(instance),
 			only_unregister ? "true" : "false",
@@ -191,10 +205,13 @@ static int invoke_post_prepare_instance_helper(struct instance *instance)
 {
 	int ret;
 	struct io_process process;
+	struct io_process_parameters parameters = process_default_parameters;
+
+	parameters.timeout = POST_PREPARATION_TIMEOUT;
 
 	/* TODO this blocks too much time */
 	ret = io_process_init_prepare_launch_and_wait(&process,
-			&process_default_parameters,
+			&parameters,
 			NULL,
 			config_get(CONFIG_POST_PREPARE_INSTANCE_HOOK),
 			instance->union_mount_point,
@@ -280,6 +297,70 @@ static int instance_drop(struct folder_entity *entity, bool only_unregister)
 	return 0;
 }
 
+static int get_nvidia_path(char **nvidia_path)
+{
+	int ret = 0;
+	const char *filename = "libGL.so.1";
+	const char *fnname = "glHint";
+	void *dl_handle;
+	void *sym;
+	Dl_info dl_info;
+	const char *config_nvidia_path;
+	char *tmp;
+	char *dir;
+
+	*nvidia_path = NULL;
+
+	/* give priority to user-specified path */
+	config_nvidia_path = config_get(CONFIG_NVIDIA_PATH);
+	if (!ut_string_is_invalid(config_nvidia_path)) {
+		*nvidia_path = strdup(config_nvidia_path);
+		if (*nvidia_path == NULL) {
+			ret = -errno;
+			ULOGE("calloc: %s", strerror(-ret));
+		}
+		return ret;
+	}
+
+	/* load the dynamic library file */
+	dl_handle = dlopen(filename, RTLD_LAZY|RTLD_LOCAL);
+	if (dl_handle == NULL) {
+		ULOGW("Failed to load library %s: %s", filename, dlerror());
+		return ret;
+	}
+
+	/* find the address where the symbol is loaded into memory */
+	sym = dlsym(dl_handle, fnname);
+	if (sym == NULL) {
+		ULOGW("Failed to resolve %s: %s", fnname, dlerror());
+		goto out;
+	}
+
+	/*
+	 * resolve file where the function pointer is located. If the substring
+	 * "nvidia" is located in the pathname of the shared object that contains
+	 * the address, return the duplicate of the directory.
+	 */
+	if (dladdr(sym, &dl_info) == 0) {
+		ULOGW("Failed to resolve %p: %s", sym, dlerror());
+		goto out;
+	}
+	if (strstr(dl_info.dli_fname, "nvidia") != NULL) {
+		tmp = strdup(dl_info.dli_fname);
+		if (tmp == NULL) {
+			ret = -errno;
+			ULOGE("calloc: %s", strerror(-ret));
+			goto out;
+		}
+		dir = dirname(tmp);
+		*nvidia_path = memmove(tmp, dir, strlen(dir) + 1);
+	}
+
+out:
+	dlclose(dl_handle);
+	return ret;
+}
+
 static int init_paths(struct instance *instance)
 {
 	int ret;
@@ -306,6 +387,27 @@ static int init_paths(struct instance *instance)
 		instance->union_mount_point = NULL;
 		ULOGE("asprintf union_mount_point error");
 		ret = -ENOMEM;
+		goto err;
+	}
+	ret = asprintf(&instance->x11_mount_point, "%s/simulator/x11",
+			instance->union_mount_point);
+	if (ret < 0) {
+		instance->x11_mount_point = NULL;
+		ULOGE("asprintf x11_mount_point error");
+		ret = -ENOMEM;
+		goto err;
+	}
+	ret = asprintf(&instance->nvidia_mount_point, "%s/simulator/nvidia",
+			instance->union_mount_point);
+	if (ret < 0) {
+		instance->nvidia_mount_point = NULL;
+		ULOGE("asprintf nvidia_mount_point error");
+		ret = -ENOMEM;
+		goto err;
+	}
+	ret = get_nvidia_path(&instance->nvidia_path);
+	if (ret < 0) {
+		ULOGE("nvidia_get_path nvidia_path error");
 		goto err;
 	}
 

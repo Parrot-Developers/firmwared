@@ -46,7 +46,9 @@ LOCAL_CFLAGS := \
 
 LOCAL_LDFLAGS := -fopenmp
 
-LOCAL_LDLIBS := -lapparmor
+LOCAL_LDLIBS := \
+	-lapparmor \
+	-ldl
 
 LOCAL_REQUIRED_MODULES := \
 	ulogger
