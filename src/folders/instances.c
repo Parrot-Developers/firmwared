@@ -343,13 +343,12 @@ static void monitoring_src_cb(struct io_src *src)
 	int ret;
 	int program_status;
 	struct instance *i = ut_container_of(src, typeof(*i), monitoring_src);
+	char buf;
 
-	char buf[1];
-	ret = TEMP_FAILURE_RETRY(read(src->fd, buf, 1));
-	if (ret != 1) {
+	ret = TEMP_FAILURE_RETRY(read(src->fd, &buf, 1));
+	if (ret != 1)
 		ULOGE("%s read error: fd=%d ret=%d msg=%s",
 				__func__, src->fd, ret, strerror(errno));
-	}
 
 	ret = waitpid(i->pid, &program_status, 0);
 	if (ret < 0) {
@@ -520,12 +519,13 @@ static void launch_pid_1(struct instance *instance, int fd)
 static void handle_instance_death(struct instance *instance)
 {
 	ssize_t ret;
-	ret = TEMP_FAILURE_RETRY(write(instance->fd, (char[]){1}, 1));
-	if (ret != 1) {
+	char byte;
+
+	ret = TEMP_FAILURE_RETRY(write(instance->monitoring_fd, &byte, 1));
+	if (ret != 1)
 		ULOGE("%s write error: fd=%d ret=%ld msg=%s",
-				__func__, instance->fd, ret, strerror(errno));
-	}
-	close(instance->fd);
+				__func__, instance->monitoring_fd, ret, strerror(errno));
+	ut_file_fd_close(&instance->monitoring_fd);
 }
 
 __attribute__((noreturn))
@@ -640,12 +640,12 @@ static void launch_instance(struct instance *instance)
 	}
 	if (pid == 0)
 		launch_pid_1(instance, fd);
-	close(fd);
+	ut_file_fd_close(&fd);
 
 	ret = TEMP_FAILURE_RETRY(read(sfd, &si, sizeof(si)));
 	if (ret == -1)
 		ULOGE("read: %m");
-	close(sfd);
+	ut_file_fd_close(&sfd);
 
 	ret = kill(pid, SIGKILL);
 	if (ret == -1)
@@ -800,13 +800,12 @@ static int init_instance(struct instance *instance,
 		goto err;
 	}
 
-	/* create a signalling mechanism for the child processes */
 	ret = pipe2(pipefd, O_CLOEXEC);
 	if (ret < 0) {
 		ULOGE("pipe2: %s", strerror(-ret));
 		goto err;
 	}
-	instance->fd = pipefd[1]; /* write end of the pipe */
+	instance->monitoring_fd = pipefd[1]; /* write end of the pipe */
 
 	ret = io_src_init(&instance->monitoring_src,
 			pipefd[0] /* read end of the pipe */,
@@ -1019,7 +1018,7 @@ int instance_start(struct instance *instance)
 	/* in parent */
 	/* the pid must be set before being used, e.g. in invoke_net_helper() */
 	instance->pid = pid;
-	close(instance->fd);
+	ut_file_fd_close(&instance->monitoring_fd);
 
 	/*
 	 * wait until the child as setup it's network container, so that we can

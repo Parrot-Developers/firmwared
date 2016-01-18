@@ -32,9 +32,6 @@ enum instance_state {
 struct instance {
 	struct folder_entity entity;
 
-	pid_t pid;
-	int fd;
-	struct io_src monitoring_src;
 	enum instance_state state;
 	/* caching of sha1 computation */
 	char sha1[2 * SHA_DIGEST_LENGTH + 1];
@@ -48,6 +45,11 @@ struct instance {
 	char *ro_mount_point;
 	char *rw_dir;
 	char *union_mount_point;
+
+	/* signaling mechanism for the child processes */
+	struct io_src monitoring_src;
+	int monitoring_fd;
+	pid_t pid;
 
 	/* foo is the external pts, bar will be passed to the pid 1 */
 	struct ptspair ptspair;
