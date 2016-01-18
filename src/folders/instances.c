@@ -519,7 +519,7 @@ static void launch_pid_1(struct instance *instance, int fd)
 static void handle_instance_death(struct instance *instance)
 {
 	ssize_t ret;
-	char byte;
+	char byte = 0;
 
 	ret = TEMP_FAILURE_RETRY(write(instance->monitoring_fd, &byte, 1));
 	if (ret != 1)
