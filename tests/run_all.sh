@@ -8,12 +8,6 @@
 #  * the container_interface property equals "eth0"
 #  * firmwared will be restarted at least 20ms after it quits
 
-if [ -e Alchemy-out ]; then
-	. Alchemy-out/linux-native-x64/final/native-wrapper.sh
-else
-	.  out/sphinx-base-deb/final/native-wrapper.sh
-fi
-
 if [ -n "${VVV+x}" ]
 then
 	set -x

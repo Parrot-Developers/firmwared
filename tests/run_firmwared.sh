@@ -6,12 +6,6 @@ set -x
 
 mkdir -p mount firmwares
 
-if [ -e Alchemy-out ]; then
-	. Alchemy-out/linux-native-x64/final/native-wrapper.sh
-else
-	.  out/sphinx-base-deb/final/native-wrapper.sh 
-fi
-
 while ! [ -e stop_firmwared_tests ]; do
 	firmwared firmwared.conf
 	sleep 1
