@@ -8,6 +8,12 @@
 #  * the container_interface property equals "eth0"
 #  * firmwared will be restarted at least 20ms after it quits
 
+if [ -e Alchemy-out ]; then
+	. Alchemy-out/linux-native-x64/final/native-wrapper.sh
+else
+	.  out/sphinx-base-deb/final/native-wrapper.sh
+fi
+
 if [ -n "${VVV+x}" ]
 then
 	set -x
@@ -21,13 +27,15 @@ TESTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 on_exit() {
 	local result=$?
+	touch stop_firmwared_tests
+	fdc quit
 	if [ ${result} -ne 0 ]; then
-		echo "                 -> failed with status $? *******************"
+		echo "                 -> failed with status ${result} *******************"
 		exit 1
 	fi
 }
 
-trap on_exit EXIT
+trap on_exit EXIT SIGINT
 
 # enable extended pattern support required for the following +(...) pattern
 shopt -s extglob
