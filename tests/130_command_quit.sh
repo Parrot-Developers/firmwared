@@ -2,7 +2,7 @@
 
 # kill firmwared and check if it's still alive
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -x
 fi

@@ -2,7 +2,7 @@
 
 # prepares an instance, sets the "interface" property and check it worked
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -x
 fi

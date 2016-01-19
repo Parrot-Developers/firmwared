@@ -2,7 +2,7 @@
 
 # prepares a firmware and check the output of the show command looks ok
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -x
 fi

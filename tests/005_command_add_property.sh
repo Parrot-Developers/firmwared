@@ -2,7 +2,7 @@
 
 # registers a firmware, add and set a custom property and test if all went right
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -x
 fi

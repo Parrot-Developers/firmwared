@@ -2,7 +2,7 @@
 
 # registers a firmware, list the firmwares folder and check it contains it
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -xu
 fi

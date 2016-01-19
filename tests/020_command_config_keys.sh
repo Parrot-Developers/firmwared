@@ -2,7 +2,7 @@
 
 # asks for the list of registered firmwared configuration keys and check it
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -x
 fi

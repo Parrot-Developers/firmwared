@@ -8,7 +8,7 @@
 #  * the container_interface property equals "eth0"
 #  * firmwared will be restarted at least 20ms after it quits
 
-if [ -n "${V+x}" ]
+if [ -n "${VVV+x}" ]
 then
 	set -x
 fi

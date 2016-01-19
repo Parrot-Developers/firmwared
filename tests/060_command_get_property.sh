@@ -2,7 +2,7 @@
 
 # prepares a firmware and check it's "product" property equals "dragonfly"
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -x
 fi

@@ -3,7 +3,7 @@
 # sends a fdc get_config container_interface command and expects the reply to be
 # eth0. Of course, this will work iif the user hasn't changed this config key...
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -x
 fi

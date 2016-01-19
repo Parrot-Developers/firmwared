@@ -2,7 +2,7 @@
 
 # prepares an instance and check the return of the fdc kill instance
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -xu
 fi

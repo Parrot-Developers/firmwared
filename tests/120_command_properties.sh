@@ -2,7 +2,7 @@
 
 # asks for the list of registered firmwared commands and check it
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -x
 fi

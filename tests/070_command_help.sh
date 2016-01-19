@@ -2,7 +2,7 @@
 
 # ask for the help of the "help" command and check the answer's content
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -xu
 fi

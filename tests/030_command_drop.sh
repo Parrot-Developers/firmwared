@@ -2,7 +2,7 @@
 
 # registers a firmware and test if dropping it succeeds
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -x
 fi

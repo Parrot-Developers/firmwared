@@ -2,7 +2,7 @@
 
 # prepares an instance, issues an fdc remount and check what the command says
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -x
 fi

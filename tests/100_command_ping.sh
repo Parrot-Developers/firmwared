@@ -2,7 +2,7 @@
 
 # sends a ping and expects a pong
 
-if [ -n "${V+x}" ]
+if [ -n "${VV+x}" ]
 then
 	set -xu
 fi
