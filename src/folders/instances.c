@@ -45,6 +45,7 @@ ULOG_DECLARE_TAG(firmwared_instances);
 
 #include <io_mon.h>
 #include <io_process.h>
+#include <io_utils.h>
 
 #include <ut_utils.h>
 #include <ut_string.h>
@@ -345,7 +346,7 @@ static void monitoring_src_cb(struct io_src *src)
 	struct instance *i = ut_container_of(src, typeof(*i), monitoring_src);
 	char buf;
 
-	ret = TEMP_FAILURE_RETRY(read(src->fd, &buf, 1));
+	ret = io_read(src->fd, &buf, 1);
 	if (ret != 1)
 		ULOGE("%s read error: fd=%d ret=%d msg=%s",
 				__func__, src->fd, ret, strerror(errno));
@@ -521,7 +522,7 @@ static void handle_instance_death(struct instance *instance)
 	ssize_t ret;
 	char byte = 0;
 
-	ret = TEMP_FAILURE_RETRY(write(instance->monitoring_fd, &byte, 1));
+	ret = io_write(instance->monitoring_fd, &byte, 1);
 	if (ret != 1)
 		ULOGE("%s write error: fd=%d ret=%ld msg=%s",
 				__func__, instance->monitoring_fd, ret, strerror(errno));
@@ -642,7 +643,7 @@ static void launch_instance(struct instance *instance)
 		launch_pid_1(instance, fd);
 	ut_file_fd_close(&fd);
 
-	ret = TEMP_FAILURE_RETRY(read(sfd, &si, sizeof(si)));
+	ret = io_read(sfd, &si, sizeof(si));
 	if (ret == -1)
 		ULOGE("read: %m");
 	ut_file_fd_close(&sfd);
