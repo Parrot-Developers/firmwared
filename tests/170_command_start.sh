@@ -15,6 +15,7 @@ on_exit() {
 	set +e
 	rm example_firmware.ext2
 	if [ ${status} -eq 0 ]; then
+		sleep .5 # TODO bug, killing an instance too fast can block it in stopping stace
 		fdc kill ${instance}
 	fi
 	if [ -n "${instance}" ]; then

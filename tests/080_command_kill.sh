@@ -40,6 +40,7 @@ instance=$(fdc list instances)
 instance=${instance%[*}
 
 fdc start ${instance}
+sleep .5 # TODO bug, killing an instance too fast can block it in stopping stace
 answer=$(fdc kill ${instance})
 expected="${instance} killed"
 [ "${answer}" = "${expected}" ]
