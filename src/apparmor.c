@@ -35,11 +35,14 @@ ULOG_DECLARE_TAG(apparmor_config);
 #define APPARMOR_PARSER_COMMAND "/sbin/apparmor_parser"
 #endif /* APPARMOR_PARSER_COMMAND */
 #define PROFILE_NAME_PREFIX "firmwared_"
+#define PROFILE_NAME_PREFIX_LEN (sizeof(PROFILE_NAME_PREFIX) - 1)
 #define PROFILE_NAME_PATTERN PROFILE_NAME_PREFIX "%s"
 #define STATIC_PROFILE_PATTERN "@{root}=%s\nprofile "PROFILE_NAME_PATTERN" %s "
 #define REMOVE_PROFILE_PATTERN "profile "PROFILE_NAME_PATTERN" {\n}\n"
 
-#define APPARMOR_PROFILES_DIR "/sys/kernel/security/apparmor/policy/profiles/"
+#define APPARMOR_PROFILES_FILE "/sys/kernel/security/apparmor/profiles"
+/* e.g. firmwared_010f0520e5abb2a5a2f0813ebfe2a87a979a1c5c */
+#define APPARMOR_PROFILE_NAME_LENGTH (PROFILE_NAME_PREFIX_LEN + 40)
 
 static char *static_apparmor_profile;
 
@@ -142,25 +145,25 @@ int apparmor_remove_profile(const char *name)
 
 void apparmor_remove_all_firmwared_profiles(void)
 {
-	int count;
-	struct dirent **namelist;
-	char *dot;
+	FILE __attribute__((cleanup(ut_file_close)))*f = NULL;
+	char __attribute__((cleanup(ut_string_free)))*line = NULL;
+	ssize_t sret;
+	size_t len = 0;
+	char *needle;
 
-	count = scandir(APPARMOR_PROFILES_DIR, &namelist,
-			filter_dirent_without_firmwared_prefix, NULL);
-	if (count == -1) {
-		ULOGE("scandir(%s,...): %m", APPARMOR_PROFILES_DIR);
+	f = fopen(APPARMOR_PROFILES_FILE, "r");
+	if (f == NULL) {
+		ULOGE("opening "APPARMOR_PROFILES_FILE" failed: %m");
 		return;
 	}
-	while (count--) {
-		dot = strchr(namelist[count]->d_name, '.');
-		if (dot != NULL)
-			*dot = '\0';
-		apparmor_remove_profile(namelist[count]->d_name +
-				strlen(PROFILE_NAME_PREFIX));
-		free(namelist[count]);
+	while ((sret = getline(&line, &len, f)) != -1) {
+		if (len < APPARMOR_PROFILE_NAME_LENGTH)
+			continue;
+		/* strip the end of the line, keep the profile name */
+		if ((needle = strchr(line, ' ')) != NULL)
+			*needle = '\0';
+		apparmor_remove_profile(line + PROFILE_NAME_PREFIX_LEN);
 	}
-	free(namelist);
 }
 
 void apparmor_cleanup(void)
