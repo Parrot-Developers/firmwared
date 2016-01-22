@@ -15,7 +15,7 @@
 
 #include <openssl/sha.h>
 
-#include <io_src.h>
+#include <io_src_evt.h>
 
 #include <ut_process.h>
 
@@ -46,9 +46,8 @@ struct instance {
 	char *rw_dir;
 	char *union_mount_point;
 
-	/* signaling mechanism for the child processes */
-	struct io_src monitoring_src;
-	int monitoring_fd;
+	/* for monitoring the monitor process */
+	struct io_src_evt monitor_evt;
 	pid_t pid;
 
 	/* foo is the external pts, bar will be passed to the pid 1 */

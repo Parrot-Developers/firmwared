@@ -235,10 +235,10 @@ static void clean_instance(struct instance *i, bool only_unregister)
 		apparmor_remove_profile(instance_get_sha1(i));
 	ut_process_sync_clean(&i->sync);
 	io_mon_remove_sources(firmwared_get_mon(),
-			&i->monitoring_src, &i->ptspair_src,
+			io_src_evt_get_source(&i->monitor_evt),
+			&i->ptspair_src,
 			NULL /* guard */);
-	io_src_close_fd(&i->monitoring_src);
-	io_src_clean(&i->monitoring_src);
+	io_src_evt_clean(&i->monitor_evt);
 	io_src_clean(&i->ptspair_src);
 
 	ptspair_clean(&i->ptspair);
@@ -339,17 +339,11 @@ err:
 	return ret;
 }
 
-static void monitoring_src_cb(struct io_src *src)
+static void monitor_evt_cb(struct io_src_evt *evt, uint64_t ignored)
 {
 	int ret;
 	int program_status;
-	struct instance *i = ut_container_of(src, typeof(*i), monitoring_src);
-	char buf;
-
-	ret = io_read(src->fd, &buf, 1);
-	if (ret != 1)
-		ULOGE("%s read error: fd=%d ret=%d msg=%s",
-				__func__, src->fd, ret, strerror(errno));
+	struct instance *i = ut_container_of(evt, typeof(*i), monitor_evt);
 
 	ret = waitpid(i->pid, &program_status, 0);
 	if (ret < 0) {
@@ -517,18 +511,6 @@ static void launch_pid_1(struct instance *instance, int fd)
 	_exit(EXIT_FAILURE);
 }
 
-static void handle_instance_death(struct instance *instance)
-{
-	ssize_t ret;
-	char byte = 0;
-
-	ret = io_write(instance->monitoring_fd, &byte, 1);
-	if (ret != 1)
-		ULOGE("%s write error: fd=%d ret=%ld msg=%s",
-				__func__, instance->monitoring_fd, ret, strerror(errno));
-	ut_file_fd_close(&instance->monitoring_fd);
-}
-
 __attribute__((noreturn))
 static void launch_instance(struct instance *instance)
 {
@@ -542,8 +524,6 @@ static void launch_instance(struct instance *instance)
 	sigset_t mask;
 	struct signalfd_siginfo si;
 	int status;
-
-	io_src_close_fd(&instance->monitoring_src);
 
 	ret = prctl(PR_SET_PDEATHSIG, SIGKILL);
 	if (ret < 0)
@@ -676,7 +656,10 @@ static void launch_instance(struct instance *instance)
 
 	ULOGI("instance %s terminated with status %d", instance_name, status);
 
-	handle_instance_death(instance);
+	ret = io_src_evt_notify(&instance->monitor_evt, 1);
+	if (ret < 0)
+		ULOGE("io_src_evt_notify: %s", strerror(-ret));
+
 	_exit(EXIT_SUCCESS);
 }
 
@@ -759,7 +742,6 @@ static int init_instance(struct instance *instance,
 	int ret;
 	struct folder_entity *firmware_entity;
 	struct firmware *firmware;
-	int pipefd[2];
 
 	firmware_entity = folder_find_entity(FIRMWARES_FOLDER_NAME,
 			firmware_identifier);
@@ -801,24 +783,15 @@ static int init_instance(struct instance *instance,
 		goto err;
 	}
 
-	ret = pipe2(pipefd, O_CLOEXEC);
+	ret = io_src_evt_init(&instance->monitor_evt, monitor_evt_cb, false, 0);
 	if (ret < 0) {
-		ULOGE("pipe2: %s", strerror(-ret));
-		goto err;
-	}
-	instance->monitoring_fd = pipefd[1]; /* write end of the pipe */
-
-	ret = io_src_init(&instance->monitoring_src,
-			pipefd[0] /* read end of the pipe */,
-			IO_IN, monitoring_src_cb);
-	if (ret < 0) {
-		ULOGE("io_src_init: %s", strerror(-ret));
+		ULOGE("io_src_evt_init: %s", strerror(-ret));
 		goto err;
 	}
 
 	ret = io_mon_add_sources(firmwared_get_mon(),
 			&instance->ptspair_src,
-			&instance->monitoring_src,
+			io_src_evt_get_source(&instance->monitor_evt),
 			NULL /* guard */);
 	if (ret < 0) {
 		ULOGE("io_mon_add_sources: %s", strerror(-ret));
@@ -1019,7 +992,6 @@ int instance_start(struct instance *instance)
 	/* in parent */
 	/* the pid must be set before being used, e.g. in invoke_net_helper() */
 	instance->pid = pid;
-	ut_file_fd_close(&instance->monitoring_fd);
 
 	/*
 	 * wait until the child as setup it's network container, so that we can
