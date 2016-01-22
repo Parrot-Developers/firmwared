@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# prepares an instance and check the return of the fdc kill instance
+# prepares an instance and check if reading a whole array at once works
 
 if [ -n "${VV+x}" ]
 then
