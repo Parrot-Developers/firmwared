@@ -14,7 +14,8 @@ url=$2
 firmware_repository=$3
 uuid=$4
 
-curl_command="curl --location --silent"
+# use option "insecure" to accept HTTPS connection with unverified certificat
+curl_command="curl --location --silent --insecure"
 
 export LANG=C
 
@@ -31,9 +32,9 @@ if [ "${action}" = "uuid" ]; then
 
 	echo "uuid=${uuid}"
 elif [ "${action}" = "fetch" ]; then
-	# retrieve the size of the file with HEAD
-	# curl --head could have been used, but it keeps \r and is a PITA with redirects
-	size=$(HEAD ${url})
+	# retrieve the size of the file
+    # note: tail is used to cope with potential redirection(s)
+	size=$(${curl_command} --head ${url} |grep Content-Length| tail -n 1)
 	size=${size##*Content-Length: }
 	size=${size%%[[:space:]]*}
 
