@@ -19,6 +19,7 @@
 #include <limits.h>
 #include <inttypes.h>
 #include <argz.h>
+#include <wordexp.h>
 
 #include <ut_utils.h>
 #include <ut_string.h>
@@ -936,7 +937,8 @@ int folder_register_properties(const char *folder,
 
 	return 0;
 }
-static int read_index(const char *name)
+
+static unsigned read_index(const char *name)
 {
 	long index;
 	char *bracket;
@@ -951,16 +953,16 @@ static int read_index(const char *name)
 	errno = 0;
 	index = strtol(bracket + 1, &endptr, 0);
 	if (errno != 0)
-		return -1;
+		return UINT_MAX;
 	if (bracket + 1 == endptr)
-		return -1;
+		return UINT_MAX;
 	if (*endptr != ']') {
 		ULOGE("invalid array access near '%s'", bracket);
-		return -1;
+		return UINT_MAX;
 	}
 	if (index >= INT_MAX) {
 		ULOGE("index overflow: %ld", index);
-		return -1;
+		return UINT_MAX;
 	}
 
 	return index;
@@ -973,7 +975,7 @@ int folder_entity_get_property(struct folder_entity *entity, const char *name,
 	struct rs_node *property_node;
 	struct folder_property *property;
 	bool is_array_access;
-	int index;
+	unsigned index;
 
 	if (entity == NULL || ut_string_is_invalid(name) || value == NULL)
 		return -EINVAL;
@@ -995,7 +997,7 @@ int folder_entity_get_property(struct folder_entity *entity, const char *name,
 
 	if (is_array_access) {
 		index = read_index(name);
-		if (index == -1)
+		if (index == UINT_MAX)
 			return -EINVAL;
 		ret = property->geti(property, entity, index, value);
 		if (ret < 0) {
@@ -1021,14 +1023,12 @@ int folder_entity_get_property(struct folder_entity *entity, const char *name,
 int folder_entity_set_property(struct folder_entity *entity, const char *name,
 		const char *value)
 {
-	int ret = 0;
-	int index;
+	int ret;
+	unsigned index;
 	bool is_array_access;
 	struct rs_node *property_node;
 	struct folder_property *property;
-	char __attribute__((cleanup(ut_string_free))) *argz = NULL;
-	size_t argz_len = 0;
-	char *entry = 0;
+	wordexp_t __attribute__((cleanup(wordfree)))we = {0};
 
 	if (entity == NULL || ut_string_is_invalid(name) ||
 			ut_string_is_invalid(value))
@@ -1055,7 +1055,7 @@ int folder_entity_set_property(struct folder_entity *entity, const char *name,
 			return -EPERM;
 		}
 		index = read_index(name);
-		if (index == -1)
+		if (index == UINT_MAX)
 			return -EINVAL;
 		ret = property->seti(property, entity, index, value);
 		if (ret < 0) {
@@ -1069,27 +1069,20 @@ int folder_entity_set_property(struct folder_entity *entity, const char *name,
 						entity->folder->name, name);
 				return -EPERM;
 			}
-			argz = strdup(value);
-			if (argz == NULL) {
-				ret = -errno;
-				ULOGE("strdup:%m");
-				return ret;
+			ret = wordexp(value, &we, 0);
+			if (ret != 0) {
+				ULOGE("wordexp error %d", ret);
+				return ret == WRDE_NOSPACE ? ENOMEM : EINVAL;
 			}
-			ret = -argz_create_sep(value, ' ', &argz, &argz_len);
-			if (ret < 0) {
-				ULOGE("argz_create_sep:%s", strerror(-ret));
-				return ret;
-			}
-			index = 0;
-			while ((entry = argz_next(argz, argz_len, entry))) {
+
+			for (index = 0; index < we.we_wordc; index++) {
 				ret = property->seti(property, entity, index,
-						entry);
+						we.we_wordv[index]);
 				if (ret < 0) {
 					ULOGE("property->seti: %s",
 							strerror(-ret));
 					return ret;
 				}
-				index++;
 			}
 			ret = property->seti(property, entity, index, "nil");
 			if (ret < 0) {
