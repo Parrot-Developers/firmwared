@@ -162,6 +162,20 @@ is set, it's value is used as the path to the socket used to control firmwared,
 defaults to
 .BR /var/run/firmwared.sock .
 .TP
+.B FIRMWARED_X11_PATH
+If
+.RB $ FIRMWARED_X11_PATH
+is set, its value is used as the path to the directory that contains the socket
+used to communicate with the X-Server, defaults to
+.BR /tmp/.X11-unix/ .
+.TP
+.B FIRMWARED_NVIDIA_PATH
+If
+.RB $ FIRMWARED_NVIDIA_PATH
+is set, its value is used as the path to the directory that contains the NVIDIA
+libraries, defaults to
+.BR /usr/lib/nvidia-352/ .
+.TP
 .B FIRMWARED_VERBOSE_HOOK_SCRIPTS
 If
 .RB $ FIRMWARED_VERBOSE_HOOK_SCRIPTS

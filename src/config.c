@@ -55,6 +55,14 @@ ULOG_DECLARE_TAG(firmwared_config);
 #define NET_HOOK_DEFAULT "/usr/libexec/firmwared/net.hook"
 #endif /* NET_HOOK_DEFAULT */
 
+#ifndef X11_PATH_DEFAULT
+#define X11_PATH_DEFAULT "/tmp/.X11-unix/"
+#endif /* X11_PATH_DEFAULT */
+
+#ifndef NVIDIA_PATH_DEFAULT
+#define NVIDIA_PATH_DEFAULT ""
+#endif /* NVIDIA_PATH_DEFAULT */
+
 #ifndef PREVENT_REMOVAL
 #define PREVENT_REMOVAL "n"
 #endif /* PREVENT_REMOVAL */
@@ -332,6 +340,16 @@ static struct config configs[CONFIG_NB] = {
 		[CONFIG_SOCKET_PATH] = {
 				.env = CONFIG_KEYS_PREFIX"SOCKET_PATH",
 				.default_value = SOCKET_PATH_DEFAULT,
+				.valid = valid_accessible,
+		},
+		[CONFIG_X11_PATH] = {
+				.env = CONFIG_KEYS_PREFIX"X11_PATH",
+				.default_value = X11_PATH_DEFAULT,
+				.valid = valid_accessible,
+		},
+		[CONFIG_NVIDIA_PATH] = {
+				.env = CONFIG_KEYS_PREFIX"NVIDIA_PATH",
+				.default_value = NVIDIA_PATH_DEFAULT,
 				.valid = valid_accessible,
 		},
 		[CONFIG_VERBOSE_HOOK_SCRIPTS] = {

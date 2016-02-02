@@ -48,12 +48,21 @@ struct instance {
 
 	/* for monitoring the monitor process */
 	struct io_src_evt monitor_evt;
+
+	/* all 2 dirs must be subdirs of union_mount_point dir */
+	char *x11_mount_point;
+	char *nvidia_mount_point;
+
+	/* signaling mechanism for the child processes */
+	struct io_src monitoring_src;
+	int monitoring_fd;
 	pid_t pid;
 
 	/* foo is the external pts, bar will be passed to the pid 1 */
 	struct ptspair ptspair;
 	struct io_src ptspair_src;
 
+	char *nvidia_path;
 
 	/* run-time configurable properties */
 	char *interface;
