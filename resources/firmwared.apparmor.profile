@@ -66,5 +66,6 @@
    audit deny @{root}/union/dev/watchdog** lrwx,
    audit deny @{root}/union/dev/disk/** lrwx,
    audit deny @{root}/union/dev/disk/ lrwx,
+   audit deny @{root}/union/proc/sys/vm/** lwx,
    audit @{root}/union/{proc,dev,sys}/** lrwix,
 }
