@@ -12,13 +12,14 @@ OLDIFS=${IFS}
 IFS=:
 stolen_interface_configuration=($3)
 IFS=$OLDIFS
+stolen_btusb_id=$4
 
-host_interface_base=$4	# e.g. fd_veth_peer, base for building host's end name
-instance_id=$5		# e.g. 0, 1, ...
-ip_base=$6		# e.g. 10.202., ~ first two bytes of IP
-net_bits=$7		# number of bits of an IP's network part
-netns=$8		# normally, pid (in host ns) of the pid 1 (in container)
-verbose=$9
+host_interface_base=$5	# e.g. fd_veth_peer, base for building host's end name
+instance_id=$6		# e.g. 0, 1, ...
+ip_base=$7		# e.g. 10.202., ~ first two bytes of IP
+net_bits=$8		# number of bits of an IP's network part
+netns=$9		# normally, pid (in host ns) of the pid 1 (in container)
+verbose=$10
 
 if [ "${verbose}" = "y" ]; then
 	set -x
@@ -61,6 +62,11 @@ then
 			ip link set ${stolen_interface} netns ${netns}
 		fi
 	fi
+	if [ -n "${stolen_btusb_id}" ]; then
+		# unbind the bluetooth usb device from the btusb driver so that the
+		# instance can manage it
+		echo ${stolen_btusb_id} > "/sys/bus/usb/drivers/btusb/unbind"
+	fi
 elif [ "${action}" = "config" ];
 then
 	ip link set ${cont_temp_iface} name ${instance_interface}
@@ -74,6 +80,13 @@ then
 			ip address add ${stolen_interface_ip} dev \
 					${target_name}
 		fi
+	fi
+elif [ "${action}" = "clean" ];
+then
+	if [ -n "${stolen_btusb_id}" ]; then
+		# bind the bluetooth usb device to the btusb driver, only if we know
+		# it's id, if not, then it must not be bound
+		echo ${stolen_btusb_id} > "/sys/bus/usb/drivers/btusb/bind"
 	fi
 else
 	echo "wrong action string \"$action\""

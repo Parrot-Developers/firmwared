@@ -188,6 +188,7 @@ static int invoke_net_helper(struct instance *i, const char *action)
 			action,
 			i->interface,
 			i->stolen_interface == NULL ? "" : i->stolen_interface,
+			i->stolen_btusb_id,
 			config_get(CONFIG_HOST_INTERFACE_PREFIX),
 			id,
 			config_get(CONFIG_NET_FIRST_TWO_BYTES),
@@ -453,6 +454,10 @@ static void monitor_evt_cb(struct io_src_evt *evt, uint64_t ignored)
 		return;
 	}
 	ULOGD("waitpid said %d", program_status);
+
+	ret = invoke_net_helper(i, "clean");
+	if (ret != 0)
+		ULOGE("invoke_net_helper assign returned %d", ret);
 
 	i->state = INSTANCE_READY;
 
@@ -1056,6 +1061,41 @@ struct folder_entity *instance_to_entity(struct instance *instance)
 	return &instance->entity;
 }
 
+static int read_stolen_btusb_id(struct instance *instance)
+{
+	int ret;
+	char __attribute__((cleanup(ut_string_free))) *device_path = NULL;
+	const char *id;
+	size_t id_len;
+
+	if (ut_string_is_invalid(instance->stolen_btusb))
+		return 0;
+
+	ret = asprintf(&device_path, "/sys/class/bluetooth/%s/device",
+			instance->stolen_btusb);
+	if (ret == -1) {
+		device_path = NULL;
+		ULOGE("asprintf error");
+		return -ENOMEM;
+	}
+	ret = readlink(device_path, instance->stolen_btusb_id, PATH_MAX - 1);
+	if (ret < 0) {
+		if (errno == ENOENT) /* device isn't bound to btusb */
+			return 0;
+
+		ret = -errno;
+		ULOGE("readlink: %m");
+		return ret;
+	}
+	id = basename(instance->stolen_btusb_id);
+	id_len = strlen(id);
+	memmove(instance->stolen_btusb_id, id, id_len);
+	instance->stolen_btusb_id[id_len] = '\0';
+	ULOGI("stolen bluetooth device id is %s", instance->stolen_btusb_id);
+
+	return 0;
+}
+
 int instance_start(struct instance *instance)
 {
 	int ret;
@@ -1103,6 +1143,10 @@ int instance_start(struct instance *instance)
 	if (ret < 0)
 		ULOGE("ut_process_sync_parent_lock: parent/child "
 				"synchronisation failed: %s", strerror(-ret));
+
+	ret = read_stolen_btusb_id(instance);
+	if (ret != 0)
+		ULOGE("read_stolen_btusb_id: %s", strerror(-ret));
 	ret = invoke_net_helper(instance, "assign");
 	if (ret != 0)
 		ULOGE("invoke_net_helper assign returned %d", ret);

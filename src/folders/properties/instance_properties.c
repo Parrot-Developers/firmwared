@@ -229,6 +229,44 @@ static int set_stolen_interface(struct folder_property *property,
 	return instance->stolen_interface == NULL ? -errno : 0;
 }
 
+static int get_stolen_btusb(struct folder_property *property,
+		struct folder_entity *entity, char **value)
+{
+	struct instance *instance;
+
+	if (entity == NULL || value == NULL)
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	if (instance->stolen_btusb == NULL)
+		*value = strdup("");
+	else
+		*value = strdup(instance->stolen_btusb);
+
+	return *value == NULL ? -errno : 0;
+}
+
+static int set_stolen_btusb(struct folder_property *property,
+		struct folder_entity *entity, const char *value)
+{
+	struct instance *instance;
+
+	if (entity == NULL || ut_string_is_invalid(value))
+		return -EINVAL;
+	instance = to_instance(entity);
+
+	ut_string_free(&instance->stolen_btusb);
+
+	if (strcmp(value, "nil") == 0)
+		return 0;
+
+	instance->stolen_btusb = strdup(value);
+
+	/* TODO validate the input */
+
+	return instance->stolen_btusb == NULL ? -errno : 0;
+}
+
 static int geti_cmdline(struct folder_property *property,
 		struct folder_entity *entity, unsigned index,
 		char **value)
@@ -301,6 +339,11 @@ struct folder_property instance_properties[] = {
 				.name = "stolen_interface",
 				.get = get_stolen_interface,
 				.set = set_stolen_interface,
+		},
+		{
+				.name = "stolen_btusb",
+				.get = get_stolen_btusb,
+				.set = set_stolen_btusb,
 		},
 		{
 				.name = "cmdline",

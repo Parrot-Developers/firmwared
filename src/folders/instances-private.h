@@ -67,6 +67,10 @@ struct instance {
 	/* run-time configurable properties */
 	char *interface;
 	char *stolen_interface;
+	char *stolen_btusb;
+
+	/* stolen btusb device id for (un)binding it from the btusb driver */
+	char stolen_btusb_id[PATH_MAX];
 
 	char *command_line;
 	size_t command_line_len;
