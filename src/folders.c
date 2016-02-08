@@ -118,7 +118,6 @@ static int load_words(const char *resources_dir, const char *list_name,
 		ULOGE("failure opening %s: %s", path, strerror(-ret));
 		return ret;
 	}
-	ut_string_free(&path);
 
 	return store_word_list(list, f);
 }
