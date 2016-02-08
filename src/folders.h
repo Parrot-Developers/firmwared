@@ -23,6 +23,10 @@ struct folder_entity {
 	struct rs_node node;
 	struct folder *folder;
 	char *name;
+	/*
+	 * private directory of the entity in the mount points directory,
+	 * for exemple, contains union, ro... for an instance
+	 */
 	char *base_workspace;
 };
 
