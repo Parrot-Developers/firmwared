@@ -157,7 +157,9 @@ void apparmor_remove_all_firmwared_profiles(void)
 		return;
 	}
 	while ((sret = getline(&line, &len, f)) != -1) {
-		if (len < APPARMOR_PROFILE_NAME_LENGTH)
+		if (len < APPARMOR_PROFILE_NAME_LENGTH
+				|| !ut_string_match_prefix(line,
+					PROFILE_NAME_PREFIX))
 			continue;
 		/* strip the end of the line, keep the profile name */
 		needle = strchr(line, ' ');
