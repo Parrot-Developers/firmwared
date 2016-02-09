@@ -844,16 +844,11 @@ static int init_command_line(struct instance *instance)
 }
 
 static int init_instance(struct instance *instance,
-		const char *firmware_identifier)
+		struct folder_entity *firmware_entity)
 {
 	int ret;
-	struct folder_entity *firmware_entity;
 	struct firmware *firmware;
 
-	firmware_entity = folder_find_entity(FIRMWARES_FOLDER_NAME,
-			firmware_identifier);
-	if (firmware_entity == NULL)
-		return -ESRCH;
 	firmware = firmware_from_entity(firmware_entity);
 
 	instance->entity.folder = folder_find(INSTANCES_FOLDER_NAME);
@@ -940,12 +935,19 @@ static struct instance *instance_new(const char *firmware_identifier)
 {
 	int ret;
 	struct instance *instance;
+	struct folder_entity *firmware_entity;
 
 	instance = calloc(1, sizeof(*instance));
 	if (instance == NULL)
 		return NULL;
 
-	ret = init_instance(instance, firmware_identifier);
+	firmware_entity = folder_find_entity(FIRMWARES_FOLDER_NAME,
+			firmware_identifier);
+
+	if (firmware_entity == NULL)
+		return NULL;
+
+	ret = init_instance(instance, firmware_entity);
 	if (ret < 0) {
 		ULOGE("init_instance: %s", strerror(-ret));
 		goto err;
