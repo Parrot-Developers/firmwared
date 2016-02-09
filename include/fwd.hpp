@@ -14,6 +14,8 @@
 
 #include "fwd.h"
 
+typedef pomp::MessageFormat<FWD_COMMAND_ADD_PROPERTY, pomp::ArgU32, pomp::ArgStr,
+                pomp::ArgStr> MsgFmtCommandAddProperty;
 typedef pomp::MessageFormat<FWD_COMMAND_COMMANDS, pomp::ArgU32> MsgFmtCommandCommands;
 typedef pomp::MessageFormat<FWD_COMMAND_CONFIG_KEYS, pomp::ArgU32> MsgFmtCommandConfigKeys;
 typedef pomp::MessageFormat<FWD_COMMAND_DROP, pomp::ArgU32, pomp::ArgStr,
@@ -54,6 +56,8 @@ typedef pomp::MessageFormat<FWD_ANSWER_LIST, pomp::ArgU32, pomp::ArgStr,
 typedef pomp::MessageFormat<FWD_ANSWER_PONG, pomp::ArgU32> MsgFmtAnswerPong;
 typedef pomp::MessageFormat<FWD_ANSWER_PROPERTIES, pomp::ArgU32, pomp::ArgStr,
                 pomp::ArgStr> MsgFmtAnswerProperties;
+typedef pomp::MessageFormat<FWD_ANSWER_PROPERTY_ADDED, pomp::ArgU32, pomp::ArgStr,
+                pomp::ArgStr> MsgFmtAnswerPropertyAdded;
 typedef pomp::MessageFormat<FWD_ANSWER_PROPERTY_SET, pomp::ArgU32, pomp::ArgStr,
                 pomp::ArgStr, pomp::ArgStr, pomp::ArgStr> MsgFmtAnswerPropertySet;
 typedef pomp::MessageFormat<FWD_ANSWER_REMOUNTED, pomp::ArgU32> MsgFmtAnswerRemounted;
