@@ -201,21 +201,27 @@ static struct firmware *get_from_uuid(const char *uuid)
 	return NULL;
 }
 
-static struct firmware *get_from_path(const char *path)
+static int get_from_path(struct firmware **dst, const char *path)
 {
 	struct folder *folder = folder_find(FIRMWARES_FOLDER_NAME);
 	struct folder_entity *entity = NULL;
 	struct firmware *firmware;
+	char __attribute__((cleanup(ut_string_free))) *real_path = NULL;
 
+	real_path = realpath(path, NULL);
+	if (real_path == NULL)
+		return -errno;
 	for (entity = folder_next(folder, entity);
 			entity != NULL;
 			entity = folder_next(folder, entity)) {
 		firmware = firmware_from_entity(entity);
-		if (ut_string_match(path, firmware_get_path(firmware)))
-			return firmware;
+		if (ut_string_match(real_path, firmware_get_path(firmware))) {
+			*dst = firmware;
+			break;
+		}
 	}
 
-	return NULL;
+	return 0;
 }
 
 static bool uuid_already_registered(const char *uuid)
@@ -328,12 +334,13 @@ static struct firmware *firmware_new(const char *path)
 
 	firmware->entity.folder = folder_find(FIRMWARES_FOLDER_NAME);
 	if (ut_file_is_dir(path)) {
-		firmware->path = strdup(path);
-		if (path == NULL) {
+		firmware->path = realpath(path, NULL);
+		if (firmware->path == NULL) {
 			ret = -errno;
 			ULOGE("strdup: %m");
 			goto err;
 		}
+		ULOGI("real path is %s", firmware->path);
 	} else {
 		ret = asprintf(&firmware->path, "%s/%s",
 				firmware_repository_path, path);
@@ -409,14 +416,16 @@ static int firmware_preparation_start(struct preparation *preparation)
 {
 	int ret;
 	struct firmware_preparation *firmware_preparation;
-	struct firmware *firmware;
+	struct firmware *firmware = NULL;
 	char buf[0x200] = {0};
 	char *pbuf = &buf[0];
 	const char *uuid = buf + 5;
 	const char *id = preparation->identification_string;
 
 	if (ut_file_is_dir(id)) {
-		firmware = get_from_path(id);
+		ret = get_from_path(&firmware, id);
+		if (ret < 0)
+			return ret;
 		if (firmware == NULL)
 			firmware = firmware_new(id);
 		return preparation->completion(preparation, &firmware->entity);
