@@ -757,7 +757,7 @@ static void launch_instance(struct instance *instance)
 	else
 		if (!ut_string_match(buf, instance_name))
 			ULOGW("hostname has been changed during the life of the"
-					"instance, this is bad as it can break"
+					" instance, this is bad as it can break"
 					" some functionalities like ulog's "
 					"pseudo name-spacing");
 
