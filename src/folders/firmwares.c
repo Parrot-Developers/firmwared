@@ -377,7 +377,6 @@ static void firmware_preparation_termination(struct io_process *process,
 	struct firmware_preparation *firmware_preparation;
 	struct preparation *preparation;
 	struct firmware *firmware;
-	char __attribute__((cleanup(ut_string_free)))*file_path = NULL;
 
 	firmware_preparation = ut_container_of(process,
 			struct firmware_preparation, process);
